@@ -80,21 +80,21 @@ export default function EduAISuite() {
 
   const testimonials = [
     {
-      name: "Dr. Sarah Johnson",
+      name: "Dr Benson Mwangi",
       role: "Computer Science Professor",
-      image: "/assets/prof1.jpg",
+      image: "/assets/ben.jpg",
       quote: "EduAI Suite has completely transformed how I manage assessments. The AI-powered grading has saved me countless hours, and the analytics provide incredible insights into student learning patterns."
     },
     {
-      name: "Michael Chen",
+      name: "Joseph Kiprotich",
       role: "Engineering Student",
-      image: "/assets/student1.jpg",
+      image: "/assets/stud.jpg",
       quote: "As a student with a busy schedule, the personalized learning paths and instant feedback have helped me stay on track. I've seen my grades improve significantly since using this platform."
     },
     {
-      name: "Prof. David Williams",
+      name: "Lecturer David Maina",
       role: "Department Head, Mathematics",
-      image: "/assets/prof2.jpg",
+      image: "/assets/lec2.jpg",
       quote: "The implementation across our department has been seamless. We've seen increased student engagement and improved performance metrics. The customizable assessments are particularly valuable."
     }
   ];
@@ -258,7 +258,7 @@ export default function EduAISuite() {
                     className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold text-lg shadow-lg flex items-center justify-center space-x-2"
                     onClick={() => handleNavigation('/auth')}
                   >
-                    <span>Try it Free</span>
+                    <span>Get Started</span>
                     <ArrowRight className="w-5 h-5" />
                   </motion.button>
                   
@@ -799,17 +799,25 @@ export default function EduAISuite() {
                   className="bg-white rounded-xl p-8 shadow-xl relative"
                 >
                   <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 text-emerald-500 text-8xl opacity-10">
-                    "
+                    &quot;
                   </div>
                   
                   <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
-                      <Users className="w-8 h-8 text-emerald-600" />
+                    <div className="w-16 h-16  rounded-full flex items-center justify-center">
+                      {/* <Users className="w-8 h-8 text-emerald-600" /> */}
+                      <Image
+                        src={testimonial.image}
+                        alt={testimonial.name}
+                        className="w-16 h-16 rounded-full absolute inset-0 ml-[8%] mt-[9%] sm:ml-[7%] sm:mt-[7%]"
+                        width={64}
+                        height={64}
+                        quality={100}
+                      />
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-lg">{testimonial.name}</h4>
-                      <p className="text-emerald-600">{testimonial.role}</p>
-                    </div>
+                    <div className='mt-1 sm:mt-4 md:mt-1'>
+  <h4 className="font-semibold text-lg">{testimonial.name}</h4>
+  <p className="text-emerald-600">{testimonial.role}</p>
+</div>
                   </div>
                   
                   <p className="text-gray-600 italic leading-relaxed mb-6">"{testimonial.quote}"</p>
