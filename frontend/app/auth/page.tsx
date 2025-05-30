@@ -278,7 +278,7 @@ export default function AuthPage() {
           </div>
 
           <motion.div 
-            className="absolute bottom-3 left-0 right-0 mx-auto w-[90%] max-w-xs bg-white bg-opacity-95 p-4 rounded-lg shadow-md"
+            className="absolute bottom-10 left-0 right-0 mx-auto w-[90%] max-w-xs bg-white bg-opacity-95 p-4 rounded-lg shadow-md"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
