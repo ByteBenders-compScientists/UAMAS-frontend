@@ -698,7 +698,7 @@ export default function EduAISuite() {
               >
                 <div className="bg-white rounded-2xl shadow-2xl p-6 transform -rotate-2 hover:rotate-0 transition-transform duration-500">
                   <Image
-                    src="/assets/thumb5.png"
+                    src="/assets/student.png"
                     alt="Student using EduAI Suite on tablet"
                     className="w-full rounded-xl shadow-lg"
                     width={500}
