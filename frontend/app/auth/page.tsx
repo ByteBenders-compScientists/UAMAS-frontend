@@ -30,14 +30,14 @@ const lecturerContent = {
   title: "Teaching Excellence",
   description: "Empowering educators with advanced teaching tools and analytics",
   image: "/assets/lec.jpg",
-  bgImage: "/assets/lec3.png"
+  bgImage: "/assets/back.png"
 }
 
 const adminContent = {
   title: "System Management",
   description: "Complete control and oversight of your educational platform",
-  image: "/assets/admin.jpg", 
-  bgImage: "/assets/hobby.jpg"
+  image: "/assets/admin.webp", 
+  bgImage: "/assets/bg.png"
 }
 
 const userTypes = {
