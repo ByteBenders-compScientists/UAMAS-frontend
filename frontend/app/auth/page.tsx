@@ -110,7 +110,7 @@ export default function AuthPage() {
     setCurrentSlide((prev) => (prev - 1 + carouselItems.length) % carouselItems.length)
   }
 
-  const handleLogin = (e) => {
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (email === 'test@gmail.com' && password === 'test1234') {
       if (userType === userTypes.STUDENT) {
@@ -128,7 +128,7 @@ export default function AuthPage() {
     }
   }
 
-  const handleSignUp = (e) => {
+  const handleSignUp = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (password !== confirmPassword) {
       setError('Passwords do not match')
