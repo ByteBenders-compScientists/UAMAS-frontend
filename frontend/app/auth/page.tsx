@@ -114,8 +114,8 @@ export default function AuthPage() {
     e.preventDefault()
     if (email === 'test@gmail.com' && password === 'test1234') {
       if (userType === userTypes.STUDENT) {
-        console.log('Redirecting to /hobbies')
-        window.location.href = '/hobbies'
+        console.log('Redirecting to /hobby')
+        window.location.href = '/hobby'
       } else if (userType === userTypes.LECTURER) {
         console.log('Redirecting to /lecturer/dashboard')
         window.location.href = '/lecturer/dashboard'
