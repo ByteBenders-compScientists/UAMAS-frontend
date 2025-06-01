@@ -51,13 +51,13 @@ export default function AuthPage() {
     setCurrentSlide((prev) => (prev - 1 + carouselItems.length) % carouselItems.length)
   }
 
-  const handleLogin = (e) => {
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     // Login logic would go here
     console.log('Login with:', { email, password, rememberMe })
   }
 
-  const handleSignUp = (e) => {
+  const handleSignUp = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (password !== confirmPassword) {
       setError('Passwords do not match')
