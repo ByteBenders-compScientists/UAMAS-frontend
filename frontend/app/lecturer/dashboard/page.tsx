@@ -68,7 +68,7 @@ interface RecentActivity {
 const STATS_DATA: StatData[] = [
   { icon: Users, label: 'Total Students', value: '132' },
   { icon: Clock, label: 'Pending Approvals', value: '6' },
-  { icon: Monitor, label: 'AI Marked Submissions', value: '45' },
+  { icon: Monitor, label: 'Pending reviews', value: '45' },
   { icon: BookMarked, label: 'Marking Progress', value: '12' }
 ]
 
@@ -87,7 +87,7 @@ const STUDENT_PROGRESS: StudentProgress[] = [
 const MARKED_WORK: MarkedWork[] = [
   { title: 'Assignment 2 - DBMS', status: 'Completed' },
   { title: 'CAT 3 - Networks', status: 'In Review' },
-  { title: 'Assignment 1 - AI Ethics', status: 'AI Marked' }
+  { title: 'Assignment 1 - AI Ethics', status: 'Completed' },
 ]
 
 const RECENT_ACTIVITIES: RecentActivity[] = [
@@ -102,7 +102,7 @@ const getStatusBadgeClass = (status: string): string => {
     'Completed': 'bg-green-100 text-green-700',
     'Pending': 'bg-yellow-100 text-yellow-700',
     'In Review': 'bg-yellow-100 text-yellow-700',
-    'AI Marked': 'bg-blue-100 text-blue-700'
+    
   }
   return statusClasses[status] || 'bg-gray-100 text-gray-700'
 }
@@ -265,7 +265,7 @@ const Sidebar: React.FC<{
   isCreateDropdownOpen: boolean
   onCreateDropdownToggle: () => void
 }> = ({ isOpen, onClose, navigationItems, isCreateDropdownOpen, onCreateDropdownToggle }) => (
-  <aside className={`w-64 bg-rose-400 text-black fixed top-0 left-0 h-full shadow-lg z-30 transform transition-transform duration-300 ease-in-out ${
+  <aside className={`w-64 bg-rose-400 text-white fixed top-0 left-0 h-full shadow-lg z-30 transform transition-transform duration-300 ease-in-out ${
     isOpen ? 'translate-x-0' : '-translate-x-full'
   } lg:translate-x-0`}>
     <SidebarHeader onClose={onClose} />
