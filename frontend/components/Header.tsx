@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLayout } from './LayoutController';
 import { Menu, Bell, Search, ChevronDown } from 'lucide-react';
 
@@ -11,6 +11,13 @@ interface HeaderProps {
 const Header = ({ title = "Dashboard" }: HeaderProps) => {
   const { setMobileMenuOpen, isMobileView, isTabletView } = useLayout();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [user, setUser] = useState<{ name?: string }>({});
+  useEffect(() => {
+        const storedUser = localStorage.getItem("userData");
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      }, []);
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-20">
@@ -79,11 +86,11 @@ const Header = ({ title = "Dashboard" }: HeaderProps) => {
           
           <div className="flex items-center">
             <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 font-medium text-sm">
-              JO
+              {user.name ? user.name.slice(0, 2).toUpperCase() : ''}
             </div>
             <div className="hidden md:block ml-2">
               <div className="flex items-center text-sm">
-                <span className="font-medium text-gray-800">John Opondo</span>
+                <span className="font-medium text-gray-800">{user.name ? user.name : 'User'}</span>
                 <ChevronDown size={16} className="ml-1 text-gray-500" />
               </div>
             </div>

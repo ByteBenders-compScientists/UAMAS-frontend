@@ -79,6 +79,7 @@ export default function AuthPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const colors = userTypeColors[userType]
 
@@ -110,23 +111,78 @@ export default function AuthPage() {
     setCurrentSlide((prev) => (prev - 1 + carouselItems.length) % carouselItems.length)
   }
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (email === 'test@gmail.com' && password === 'test1234') {
-      if (userType === userTypes.STUDENT) {
-        console.log('Redirecting to /hobby')
-        window.location.href = '/hobby'
-      } else if (userType === userTypes.LECTURER) {
-        console.log('Redirecting to /lecturer/dashboard')
-        window.location.href = '/lecturer/dashboard'
-      } else if (userType === userTypes.ADMIN) {
-        console.log('Redirecting to /admin/dashboard')
-        window.location.href = '/admin/dashboard'
+const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError('');
+
+  try {
+    const response = await fetch('http://localhost:8080/api/v1/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert('Login successful:' + JSON.stringify(data));
+
+      // Call fetchUserInfo to get the name and role
+      await fetchUserInfo(); 
+
+      // Then redirect based on role if you have the info stored
+      const user = JSON.parse(localStorage.getItem('userData') || '{}');
+
+      switch ((user.role || '').toLowerCase()) {
+        case 'student':
+          window.location.href = '/hobby';
+          break;
+        case 'lecturer':
+        case 'teacher':
+          window.location.href = '/lecturer/dashboard';
+          break;
+        case 'admin':
+          window.location.href = '/admin/dashboard';
+          break;
+        default:
+          window.location.href = '/hobby';
       }
     } else {
-      setError('Invalid credentials. Try test@gmail.com / test1234')
+      setError(data.message || 'Invalid credentials. Please try again.');
     }
+  } catch (error) {
+    console.error('Login error:', error);
+    setError('Network error. Please check your connection and try again.');
+  } finally {
+    setIsLoading(false);
   }
+};
+
+
+const fetchUserInfo = async () => {
+  try {
+    const response = await fetch('http://localhost:8080/api/v1/auth/me', {
+      method: 'GET',
+      credentials: 'include', // important to include cookies
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      localStorage.setItem('userData', JSON.stringify(data));
+      console.log('User data:', data);
+      // You can use data.role and data.name here
+    } else {
+      console.error('Failed to get user data', data);
+    }
+  } catch (error) {
+    console.error('Error fetching user info:', error);
+  }
+};
 
   const handleSignUp = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -355,6 +411,7 @@ export default function AuthPage() {
                 placeholder="Enter your email"
                 className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-${colors.highlight} focus:border-${colors.highlight} transition`}
                 required
+                disabled= {isLoading}
               />
             </div>
 
@@ -370,6 +427,7 @@ export default function AuthPage() {
                 placeholder="Enter your password"
                 className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-${colors.highlight} focus:border-${colors.highlight} transition`}
                 required
+                disabled = {isLoading}
               />
             </div>
 
@@ -414,6 +472,7 @@ export default function AuthPage() {
 
             <button
               type="submit"
+              disabled = {isLoading}
               className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-${colors.highlight} hover:bg-${colors.hover} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-${colors.highlight} transition-colors`}
             >
               {isLogin ? 'Sign in' : 'Sign up'}
