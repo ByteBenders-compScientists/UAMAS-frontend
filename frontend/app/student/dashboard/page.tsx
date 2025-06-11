@@ -138,7 +138,7 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="mb-8 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-6 md:p-8 shadow-md text-white relative overflow-hidden"
+                className="mb-8 bg-gradient-to-br from-slate-400 to-gray-300 rounded-xl p-6 md:p-8 shadow-md text-white relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
                   <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
