@@ -63,7 +63,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     { name: 'My CATs', icon: <BookOpen size={20} />, path: '/student/cats' },
     { name: 'Assignments', icon: <ClipboardList size={20} />, path: '/student/assignments', badge: 3 },
     { name: 'Grades', icon: <GraduationCap size={20} />, path: '/student/grades' },
-    { name: 'Schedule', icon: <Calendar size={20} />, path: '/student/schedule' },
+    { name: 'My Courses', icon: <Calendar size={20} />, path: '/student/courses' },
     { name: 'Library', icon: <Library size={20} />, path: '/student/library' },
     { name: 'Forums', icon: <MessageSquare size={20} />, path: '/student/forums', badge: 'New' },
   ];
