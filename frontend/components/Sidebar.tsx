@@ -18,12 +18,21 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  X
+  X,
+  LucideIcon
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface SidebarProps {
   showMobileOnly?: boolean;
 }
+
+type NavItemType = {
+  name: string;
+  icon: React.ReactNode;
+  path: string;
+  badge?: number | string;
+};
 
 const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const pathname = usePathname();
@@ -50,18 +59,18 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   // Hide desktop sidebar on mobile/tablet unless menu is open
   if (!showMobileOnly && (isMobileView || isTabletView) && !isMobileMenuOpen) return null;
 
-  const navItems = [
+  const navItems: NavItemType[] = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/student/dashboard' },
     { name: 'My CATs', icon: <BookOpen size={20} />, path: '/student/cats' },
-    { name: 'Assignments', icon: <ClipboardList size={20} />, path: '/student/assignments' },
+    { name: 'Assignments', icon: <ClipboardList size={20} />, path: '/student/assignments', badge: 3 },
     { name: 'Grades', icon: <GraduationCap size={20} />, path: '/student/grades' },
     { name: 'Schedule', icon: <Calendar size={20} />, path: '/student/schedule' },
     { name: 'Library', icon: <Library size={20} />, path: '/student/library' },
-    { name: 'Messages', icon: <MessageSquare size={20} />, path: '/student/messages', badge: 2 },
+    { name: 'Forums', icon: <MessageSquare size={20} />, path: '/student/forums', badge: 'New' },
   ];
 
-  const bottomNavItems = [
-    { name: 'Profile', icon: <User size={20} />, path: '/profile' },
+  const bottomNavItems: NavItemType[] = [
+    { name: 'Profile', icon: <User size={20} />, path: '/student/profile' },
     { name: 'Settings', icon: <Settings size={20} />, path: '/settings' },
     { name: 'Logout', icon: <LogOut size={20} />, path: '/logout' },
   ];
@@ -97,6 +106,39 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     return null;
   };
 
+  const renderNavItem = (item: NavItemType) => {
+    const isActive = pathname === item.path;
+    
+    return (
+      <Link
+        key={item.path}
+        href={item.path}
+        className={`
+          flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
+          ${isActive 
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium' 
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+          }
+          ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
+        `}
+      >
+        <div className={`${isActive ? 'text-emerald-600' : 'text-gray-500'}`}>
+          {item.icon}
+        </div>
+        
+        {(!sidebarCollapsed || isMobileView || isTabletView) && (
+          <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{item.name}</span>
+        )}
+        
+        {(!sidebarCollapsed || isMobileView || isTabletView) && item.badge && (
+          <div className={`ml-auto ${typeof item.badge === 'number' ? 'bg-emerald-500' : 'bg-amber-500'} text-white text-xs px-2 py-0.5 rounded-full`}>
+            {item.badge}
+          </div>
+        )}
+      </Link>
+    );
+  };
+
   return (
     <>
       {renderOverlay()}
@@ -110,32 +152,32 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
         variants={sidebarVariants}
         className={`
           h-screen fixed left-0 top-0 z-40 flex flex-col
-          bg-gradient-to-b from-emerald-400 to-emerald-700 text-white shadow-xl
+          bg-white text-gray-700 shadow-xl border-r border-gray-200
           ${(isMobileView || isTabletView) ? 'w-[270px]' : ''}
         `}
       >
         {/* Header Section */}
-        <div className="flex items-center justify-between p-4 border-b border-emerald-500/30">
+        <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
           <div className="flex items-center">
-            <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-emerald-600 font-extrabold text-lg">E</span>
+            <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center shadow-md">
+              <span className="text-white font-extrabold text-lg">E</span>
             </div>
             {(!sidebarCollapsed || isMobileView || isTabletView) && (
-              <span className="ml-3 font-semibold text-lg tracking-wide">EduPortal</span>
+              <span className="ml-3 font-semibold text-lg tracking-wide text-gray-800">EduPortal</span>
             )}
           </div>
           
           {(isMobileView || isTabletView) ? (
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="text-white hover:bg-emerald-600/50 rounded-full p-1.5 transition-colors"
+              className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
             >
               <X size={18} />
             </button>
           ) : (
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="text-white hover:bg-emerald-600/50 rounded-full p-1.5 transition-colors"
+              className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
             >
               {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </button>
@@ -144,14 +186,14 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
 
         {/* User Profile Section */}
         {(!sidebarCollapsed || isMobileView || isTabletView) && (
-          <div className="px-4 py-3 border-b border-emerald-500/30 bg-emerald-500/20">
+          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center">
-              <div className="h-10 w-10 rounded-xl bg-white/90 flex items-center justify-center text-emerald-600 font-medium text-sm shadow-sm">
+              <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-medium text-sm shadow-sm">
                 JO
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-white">John Opondo</p>
-                <p className="text-xs text-emerald-100">Student ID: 2028061</p>
+                <p className="text-sm font-medium text-gray-800">John Opondo</p>
+                <p className="text-xs text-gray-500">Student ID: 2028061</p>
               </div>
             </div>
           </div>
@@ -160,59 +202,32 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
         {/* Navigation Section */}
         <div className="flex flex-col flex-1 overflow-y-auto py-4">
           <nav className="flex-1 px-3 space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  className={`
-                    flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
-                    ${isActive 
-                      ? 'bg-white text-emerald-600 shadow-md font-medium' 
-                      : 'text-white hover:bg-emerald-500/30'
-                    }
-                    ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
-                  `}
-                >
-                  <div className={`${isActive ? 'text-emerald-600' : 'text-white'}`}>
-                    {item.icon}
-                  </div>
-                  
-                  {(!sidebarCollapsed || isMobileView || isTabletView) && (
-                    <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{item.name}</span>
-                  )}
-                  
-                  {item.badge && (!sidebarCollapsed || isMobileView || isTabletView) && (
-                    <span className="ml-auto bg-red-500 text-white px-1.5 py-0.5 rounded-full text-xs">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
+            {navItems.map((item) => renderNavItem(item))}
           </nav>
           
           {/* Bottom Navigation Section */}
-          <div className="mt-auto px-3 py-4 border-t border-emerald-500/30">
-            {bottomNavItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`
-                  flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
-                  text-white hover:bg-emerald-500/30
-                  ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
-                `}
-              >
-                <div className="text-white">{item.icon}</div>
-                
-                {(!sidebarCollapsed || isMobileView || isTabletView) && (
-                  <span className="ml-3">{item.name}</span>
-                )}
-              </Link>
-            ))}
+          <div className="mt-auto px-3 py-4 border-t border-gray-200">
+            {bottomNavItems.map((item) => renderNavItem(item))}
           </div>
+          
+          {/* Bottom SVG Illustration */}
+          {(!sidebarCollapsed || isMobileView || isTabletView) && (
+            <div className="px-4 pb-4">
+              <div className="bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl p-4 text-center">
+                {/* We'll use an inline SVG instead of an Image component */}
+                <div className="mx-auto mb-2 -mt-6 h-24 w-full flex justify-center">
+                  <Image
+                    src="/assets/academic-excellence.svg"
+                    alt="Academic Excellence"
+                    width={100}
+                    height={100}
+                  />
+                </div>
+                <p className="text-xs text-emerald-800 font-medium">Academic Excellence</p>
+                <p className="text-xs text-emerald-600 mt-1">Track your progress</p>
+              </div>
+            </div>
+          )}
         </div>
       </motion.div>
     </>
