@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react'
-import Image from 'next/image'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import {
   ArrowBigRight,
   Book,
@@ -21,126 +21,137 @@ import {
   Sparkles,
   Trophy,
   Heart,
-  Target
-} from 'lucide-react'
+  Target,
+} from "lucide-react";
 
 function Page() {
-  const [selectedHobbies, setSelectedHobbies] = useState<string[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [activeFilter, setActiveFilter] = useState('All')
-  const [showSuccess, setShowSuccess] = useState(false)
-  const router = useRouter()
-  
+  const [selectedHobbies, setSelectedHobbies] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [user, setUser] = useState<{ name?: string }>({});
+  const router = useRouter();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("userData");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
   const hobbies = [
-    { name: 'Reading', type: 'Hobby' },
-    { name: 'Music', type: 'Hobby' },
-    { name: 'Technology', type: 'Interest' },
-    { name: 'Sports', type: 'Hobby' },
-    { name: 'Science', type: 'Hobby' },
-    { name: 'Art & Design', type: 'Interest' },
-    { name: 'Volunteering', type: 'Interest' },
-    { name: 'Travel', type: 'Interest' },
-    { name: 'Cooking', type: 'Hobby' },
-  ]
+    { name: "Reading", type: "Hobby" },
+    { name: "Music", type: "Hobby" },
+    { name: "Technology", type: "Interest" },
+    { name: "Sports", type: "Hobby" },
+    { name: "Science", type: "Hobby" },
+    { name: "Art & Design", type: "Interest" },
+    { name: "Volunteering", type: "Interest" },
+    { name: "Travel", type: "Interest" },
+    { name: "Cooking", type: "Hobby" },
+  ];
 
   const getIconForItem = (name: string, type: string) => {
-    const iconClass = "w-8 h-8 text-green-600"
-    
-    if (type === 'Hobby') {
+    const iconClass = "w-8 h-8 text-green-600";
+
+    if (type === "Hobby") {
       switch (name) {
-        case 'Reading':
-          return <Book className={iconClass} />
-        case 'Music':
-          return <Music className={iconClass} />
-        case 'Sports':
-          return <Gamepad className={iconClass} />
-        case 'Cooking':
-          return <CookingPot className={iconClass} />
-        case 'Science':
-          return <Lightbulb className={iconClass} />
+        case "Reading":
+          return <Book className={iconClass} />;
+        case "Music":
+          return <Music className={iconClass} />;
+        case "Sports":
+          return <Gamepad className={iconClass} />;
+        case "Cooking":
+          return <CookingPot className={iconClass} />;
+        case "Science":
+          return <Lightbulb className={iconClass} />;
         default:
-          return <Book className={iconClass} />
+          return <Book className={iconClass} />;
       }
     } else {
       switch (name) {
-        case 'Technology':
-          return <Computer className={iconClass} />
-        case 'Art & Design':
-          return <PaintBucket className={iconClass} />
-        case 'Volunteering':
-          return <Handshake className={iconClass} />
-        case 'Travel':
-          return <Plane className={iconClass} />
+        case "Technology":
+          return <Computer className={iconClass} />;
+        case "Art & Design":
+          return <PaintBucket className={iconClass} />;
+        case "Volunteering":
+          return <Handshake className={iconClass} />;
+        case "Travel":
+          return <Plane className={iconClass} />;
         default:
-          return <Star className={iconClass} />
+          return <Star className={iconClass} />;
       }
     }
-  }
+  };
 
   const getSmallIconForItem = (name: string, type: string) => {
-    const iconClass = "w-5 h-5 text-green-600"
-    
-    if (type === 'Hobby') {
+    const iconClass = "w-5 h-5 text-green-600";
+
+    if (type === "Hobby") {
       switch (name) {
-        case 'Reading':
-          return <Book className={iconClass} />
-        case 'Music':
-          return <Music className={iconClass} />
-        case 'Sports':
-          return <Gamepad className={iconClass} />
-        case 'Cooking':
-          return <CookingPot className={iconClass} />
-        case 'Science':
-          return <Lightbulb className={iconClass} />
+        case "Reading":
+          return <Book className={iconClass} />;
+        case "Music":
+          return <Music className={iconClass} />;
+        case "Sports":
+          return <Gamepad className={iconClass} />;
+        case "Cooking":
+          return <CookingPot className={iconClass} />;
+        case "Science":
+          return <Lightbulb className={iconClass} />;
         default:
-          return <Book className={iconClass} />
+          return <Book className={iconClass} />;
       }
     } else {
       switch (name) {
-        case 'Technology':
-          return <Computer className={iconClass} />
-        case 'Art & Design':
-          return <PaintBucket className={iconClass} />
-        case 'Volunteering':
-          return <Handshake className={iconClass} />
-        case 'Travel':
-          return <Plane className={iconClass} />
+        case "Technology":
+          return <Computer className={iconClass} />;
+        case "Art & Design":
+          return <PaintBucket className={iconClass} />;
+        case "Volunteering":
+          return <Handshake className={iconClass} />;
+        case "Travel":
+          return <Plane className={iconClass} />;
         default:
-          return <Star className={iconClass} />
+          return <Star className={iconClass} />;
       }
     }
-  }
+  };
 
-  const filteredHobbies = hobbies.filter(hobby => {
-    const matchesSearch = hobby.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter = activeFilter === 'All' || 
-      (activeFilter === 'Hobbies' && hobby.type === 'Hobby') ||
-      (activeFilter === 'Interests' && hobby.type === 'Interest')
-    return matchesSearch && matchesFilter
-  })
+  const filteredHobbies = hobbies.filter((hobby) => {
+    const matchesSearch = hobby.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesFilter =
+      activeFilter === "All" ||
+      (activeFilter === "Hobbies" && hobby.type === "Hobby") ||
+      (activeFilter === "Interests" && hobby.type === "Interest");
+    return matchesSearch && matchesFilter;
+  });
 
   const toggleHobby = (hobbyName: string) => {
-    setSelectedHobbies(prev => 
+    setSelectedHobbies((prev) =>
       prev.includes(hobbyName)
-        ? prev.filter(h => h !== hobbyName)
+        ? prev.filter((h) => h !== hobbyName)
         : [...prev, hobbyName]
-    )
-  }
+    );
+  };
 
   const handleContinue = () => {
     if (selectedHobbies.length >= 2) {
-      setShowSuccess(true)
+      setShowSuccess(true);
     }
-  }
+  };
 
   const navigateToDashboard = () => {
-    router.push('/student/dashboard')
-  }
+    router.push("/student/dashboard");
+  };
 
-  const selectedHobbiesWithType = selectedHobbies.map(hobbyName => {
-    const hobby = hobbies.find(h => h.name === hobbyName)
-    return hobby || { name: hobbyName, type: 'Hobby' }
-  })
+  const selectedHobbiesWithType = selectedHobbies.map((hobbyName) => {
+    const hobby = hobbies.find((h) => h.name === hobbyName);
+    return hobby || { name: hobbyName, type: "Hobby" };
+  });
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-white">
@@ -178,7 +189,8 @@ function Page() {
                 Personalize your learning journey
               </h1>
               <p className="opacity-90 text-sm sm:text-base">
-                Tell us what excites you! Select your hobbies and interests to get the most relevant content, communities, and events.
+                Tell us what excites you! Select your hobbies and interests to
+                get the most relevant content, communities, and events.
               </p>
             </motion.div>
           ) : (
@@ -192,14 +204,19 @@ function Page() {
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 0.3, duration: 0.5, type: "spring", stiffness: 200 }}
+                transition={{
+                  delay: 0.3,
+                  duration: 0.5,
+                  type: "spring",
+                  stiffness: 200,
+                }}
                 className="mb-4"
               >
                 <CheckCircle className="w-16 h-16 mx-auto text-green-400" />
               </motion.div>
-              
+
               <p className="text-sm opacity-80">Step 2 of 3</p>
-              <motion.h1 
+              <motion.h1
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.6 }}
@@ -207,13 +224,14 @@ function Page() {
               >
                 Perfect Choice!
               </motion.h1>
-              <motion.p 
+              <motion.p
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.7, duration: 0.6 }}
                 className="opacity-90 text-sm sm:text-base"
               >
-                Your preferences have been saved successfully. We'll personalize your experience based on your interests.
+                Your preferences have been saved successfully. We'll personalize
+                your experience based on your interests.
               </motion.p>
             </motion.div>
           )}
@@ -264,7 +282,9 @@ function Page() {
                   <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-lg">
                     S
                   </div>
-                  <span className="font-semibold text-green-700">Welcome, Sara!</span>
+                  <span className="font-semibold text-green-700">
+                    Welcome, {user.name ? user.name : "User"}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1 text-green-600 text-sm">
                   <Star className="w-4 h-4" />
@@ -285,16 +305,16 @@ function Page() {
                     className="flex-1 outline-none text-sm bg-transparent"
                   />
                 </div>
-                
+
                 {/* Filter Buttons */}
                 <div className="flex gap-2 flex-wrap">
-                  {['All', 'Hobbies', 'Interests'].map((filter) => (
+                  {["All", "Hobbies", "Interests"].map((filter) => (
                     <button
                       key={filter}
                       className={`px-4 py-1 text-sm rounded-full transition-all duration-200 ${
                         activeFilter === filter
-                          ? 'bg-green-600 text-white'
-                          : 'border border-green-500 text-green-700 hover:bg-green-50'
+                          ? "bg-green-600 text-white"
+                          : "border border-green-500 text-green-700 hover:bg-green-50"
                       }`}
                       onClick={() => setActiveFilter(filter)}
                     >
@@ -307,7 +327,7 @@ function Page() {
               {/* Hobby Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 {filteredHobbies.map((item, index) => {
-                  const isSelected = selectedHobbies.includes(item.name)
+                  const isSelected = selectedHobbies.includes(item.name);
                   return (
                     <motion.div
                       key={index}
@@ -315,13 +335,19 @@ function Page() {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => toggleHobby(item.name)}
                       className={`bg-white rounded-xl shadow-md p-4 text-center cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                        isSelected ? 'bg-green-50 border-2 border-green-500' : 'border border-gray-100 hover:bg-green-50'
+                        isSelected
+                          ? "bg-green-50 border-2 border-green-500"
+                          : "border border-gray-100 hover:bg-green-50"
                       }`}
                     >
                       <div className="flex items-center justify-center mb-2">
                         {getIconForItem(item.name, item.type)}
                       </div>
-                      <h3 className={`font-medium mb-1 ${isSelected ? 'text-green-800' : 'text-green-700'}`}>
+                      <h3
+                        className={`font-medium mb-1 ${
+                          isSelected ? "text-green-800" : "text-green-700"
+                        }`}
+                      >
                         {item.name}
                       </h3>
                       <p className="text-sm text-gray-500">{item.type}</p>
@@ -335,24 +361,26 @@ function Page() {
                         </motion.div>
                       )}
                     </motion.div>
-                  )
+                  );
                 })}
               </div>
 
               {/* No Results Message */}
               {filteredHobbies.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">No hobbies found. Try adjusting your search or filters.</p>
+                  <p className="text-gray-500">
+                    No hobbies found. Try adjusting your search or filters.
+                  </p>
                 </div>
               )}
 
               {/* Continue Button */}
               <div className="pt-4">
-                <button 
+                <button
                   className={`w-full sm:w-auto px-6 py-3 rounded-xl shadow-md flex items-center justify-center transition-all duration-200 ${
                     selectedHobbies.length >= 2
-                      ? 'bg-green-500 hover:bg-green-600 text-white'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      ? "bg-green-500 hover:bg-green-600 text-white"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
                   }`}
                   disabled={selectedHobbies.length < 2}
                   onClick={handleContinue}
@@ -361,9 +389,17 @@ function Page() {
                   <ArrowBigRight className="w-4 h-4 ml-2" />
                 </button>
                 {selectedHobbies.length > 0 && (
-                  <p className={`text-sm mt-2 ${selectedHobbies.length >= 2 ? 'text-green-600' : 'text-orange-500'}`}>
-                    {selectedHobbies.length} interest{selectedHobbies.length !== 1 ? 's' : ''} selected
-                    {selectedHobbies.length < 2 && ' (Select at least 2 to continue)'}
+                  <p
+                    className={`text-sm mt-2 ${
+                      selectedHobbies.length >= 2
+                        ? "text-green-600"
+                        : "text-orange-500"
+                    }`}
+                  >
+                    {selectedHobbies.length} interest
+                    {selectedHobbies.length !== 1 ? "s" : ""} selected
+                    {selectedHobbies.length < 2 &&
+                      " (Select at least 2 to continue)"}
                   </p>
                 )}
               </div>
@@ -386,7 +422,11 @@ function Page() {
                 <div className="relative">
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
                     className="absolute -inset-4"
                   >
                     <div className="w-24 h-24 border-4 border-green-200 border-t-green-500 rounded-full"></div>
@@ -417,7 +457,8 @@ function Page() {
                   Awesome Selection!
                 </h2>
                 <p className="text-gray-600 text-lg mb-6">
-                  We've saved your preferences and will personalize your learning experience.
+                  We've saved your preferences and will personalize your
+                  learning experience.
                 </p>
               </motion.div>
 
@@ -430,7 +471,9 @@ function Page() {
               >
                 <div className="flex items-center justify-center gap-2 mb-4">
                   <Heart className="w-5 h-5 text-red-500" />
-                  <h3 className="text-lg font-semibold text-gray-700">Your Interests</h3>
+                  <h3 className="text-lg font-semibold text-gray-700">
+                    Your Interests
+                  </h3>
                   <Heart className="w-5 h-5 text-red-500" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -444,7 +487,9 @@ function Page() {
                     >
                       {getSmallIconForItem(hobby.name, hobby.type)}
                       <div className="text-left">
-                        <p className="text-sm font-medium text-green-800">{hobby.name}</p>
+                        <p className="text-sm font-medium text-green-800">
+                          {hobby.name}
+                        </p>
                         <p className="text-xs text-green-600">{hobby.type}</p>
                       </div>
                     </motion.div>
@@ -469,7 +514,7 @@ function Page() {
                   Take me to my Dashboard
                   <ArrowBigRight className="w-6 h-6" />
                 </motion.button>
-                
+
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -482,30 +527,30 @@ function Page() {
 
               {/* Floating Elements */}
               <motion.div
-                animate={{ 
+                animate={{
                   y: [-10, 10, -10],
-                  rotate: [0, 5, -5, 0]
+                  rotate: [0, 5, -5, 0],
                 }}
-                transition={{ 
-                  repeat: Infinity, 
+                transition={{
+                  repeat: Infinity,
                   duration: 4,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
                 className="absolute top-10 left-10 opacity-20"
               >
                 <Sparkles className="w-8 h-8 text-green-400" />
               </motion.div>
-              
+
               <motion.div
-                animate={{ 
+                animate={{
                   y: [10, -10, 10],
-                  rotate: [0, -5, 5, 0]
+                  rotate: [0, -5, 5, 0],
                 }}
-                transition={{ 
-                  repeat: Infinity, 
+                transition={{
+                  repeat: Infinity,
                   duration: 3,
                   ease: "easeInOut",
-                  delay: 1
+                  delay: 1,
                 }}
                 className="absolute top-20 right-10 opacity-20"
               >
@@ -516,7 +561,7 @@ function Page() {
         </AnimatePresence>
       </div>
     </div>
-  )
+  );
 }
 
-export default Page
+export default Page;
