@@ -27,13 +27,6 @@ interface SidebarProps {
   showMobileOnly?: boolean;
 }
 
-type NavItemType = {
-  name: string;
-  icon: React.ReactNode;
-  path: string;
-  badge?: number | string;
-};
-
 const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const pathname = usePathname();
   const { 
@@ -46,10 +39,18 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   } = useLayout();
   
   const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState<{ name?: string }>({});
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+   useEffect(() => {
+      const storedUser = localStorage.getItem("userData");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    }, []);
 
   if (!mounted) return null;
 
@@ -192,8 +193,8 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
                 JO
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-800">John Opondo</p>
-                <p className="text-xs text-gray-500">Student ID: 2028061</p>
+                <p className="text-sm font-medium text-white">John Opondo</p>
+                <p className="text-xs text-emerald-100">Student ID: 2028061</p>
               </div>
             </div>
           </div>
