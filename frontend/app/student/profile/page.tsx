@@ -21,7 +21,29 @@ import {
 } from 'lucide-react';
 
 // Mock data
-const mockProfile = {
+type Profile = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  dateOfBirth: string;
+  admissionDate: string;
+  studentId: string;
+  faculty: string;
+  year: number;
+  semester: number;
+  bio: string;
+  hobbies: string[];
+  socialLinks: {
+    github: string;
+    linkedin: string;
+    twitter: string;
+  };
+  avatar: string | null; // Allow both string and null
+};
+
+const mockProfile: Profile = {
   id: 1,
   name: 'John Doe',
   email: 'john.doe@university.edu',
