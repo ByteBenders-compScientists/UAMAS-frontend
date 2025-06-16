@@ -2,485 +2,257 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookText, ChevronLeft, ChevronRight, School, User, Shield } from 'lucide-react'
+import { BookOpen, Sparkles, LucideIcon, Brain, Lightbulb, Users, Award } from 'lucide-react'
 import Image from 'next/image'
 
-const carouselItems = [
-  {
-    id: 1,
+// Educational roles that will animate through the tagline
+const educationRoles = [
+  { text: "Lecturers", icon: BookOpen, color: "text-amber-500" },
+  { text: "Students", icon: Lightbulb, color: "text-emerald-500" },
+  { text: "Admins", icon: Users, color: "text-purple-500" }
+]
+
+// Features to highlight in background cards
+const features = [
+  { 
     title: "AI-Powered Learning",
-    description: "Smart assessment creation and grading for modern education",
-    images: ["/assets/students1.jpg", "/assets/students2.jpg"]
+    description: "Smart assessment tools for modern education",
+    icon: Brain,
+    color: "bg-gradient-to-br from-emerald-500/90 to-teal-600/90"
   },
-  {
-    id: 2,
-    title: "Personalized Learning", 
-    description: "Adaptive content delivery based on student performance",
-    images: ["/assets/students3.jpg", "/assets/students4.jpg"]
+  { 
+    title: "Personalized Education",
+    description: "Adaptive content based on performance",
+    icon: Sparkles,
+    color: "bg-gradient-to-br from-amber-500/90 to-orange-600/90"
   },
-  {
-    id: 3,
-    title: "Collaborative Education",
-    description: "Connect students and educators in interactive environments",
-    images: ["/assets/students5.jpg", "/assets/students6.jpg"]
+  { 
+    title: "Academic Excellence",
+    description: "Tools designed for educational success",
+    icon: Award, 
+    color: "bg-gradient-to-br from-purple-500/90 to-indigo-600/90"
   }
 ]
 
-const lecturerContent = {
-  title: "Teaching Excellence",
-  description: "Empowering educators with advanced teaching tools and analytics",
-  image: "/assets/lec.jpg",
-  bgImage: "/assets/back.png"
-}
-
-const adminContent = {
-  title: "System Management",
-  description: "Complete control and oversight of your educational platform",
-  image: "/assets/admin.webp", 
-  bgImage: "/assets/bg.png"
-}
-
-const userTypes = {
-  STUDENT: 'student',
-  LECTURER: 'lecturer', 
-  ADMIN: 'admin'
-}
-
-const userTypeColors = {
-  [userTypes.STUDENT]: {
-    primary: 'emerald',
-    bg: 'emerald-50',
-    highlight: 'emerald-500',
-    hover: 'emerald-600',
-    toggle: 'bg-emerald-500'
-  },
-  [userTypes.LECTURER]: {
-    primary: 'amber',
-    bg: 'amber-50', 
-    highlight: 'amber-500',
-    hover: 'amber-600',
-    toggle: 'bg-amber-500'
-  },
-  [userTypes.ADMIN]: {
-    primary: 'purple',
-    bg: 'purple-50',
-    highlight: 'purple-500', 
-    hover: 'purple-600',
-    toggle: 'bg-purple-500'
-  }
-}
-
 export default function AuthPage() {
-  const [userType, setUserType] = useState(userTypes.STUDENT)
-  const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
-  const [currentSlide, setCurrentSlide] = useState(0)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [currentRoleIndex, setCurrentRoleIndex] = useState(0)
 
-  const colors = userTypeColors[userType]
-
-  // Reset form when changing user type
+  // Animate through different user roles
   useEffect(() => {
-    setEmail('')
-    setPassword('')
-    setConfirmPassword('')
-    setRememberMe(false)
-    setError('')
-    setIsLogin(true)
-  }, [userType])
+    const interval = setInterval(() => {
+      setCurrentRoleIndex((prevIndex) => (prevIndex + 1) % educationRoles.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
 
-  // Auto-advance carousel only for students
-  useEffect(() => {
-    if (userType === userTypes.STUDENT) {
-      const interval = setInterval(() => {
-        setCurrentSlide((prev) => (prev + 1) % carouselItems.length)
-      }, 5000)
-      return () => clearInterval(interval)
-    }
-  }, [userType])
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % carouselItems.length)
-  }
+    try {
+      const response = await fetch('http://localhost:8080/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + carouselItems.length) % carouselItems.length)
-  }
+      const data = await response.json();
 
-const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
+      if (response.ok) {
+        // Call fetchUserInfo to get the name and role
+        await fetchUserInfo(); 
 
-  try {
-    const response = await fetch('http://localhost:8080/api/v1/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
+        // Then redirect based on role
+        const user = JSON.parse(localStorage.getItem('userData') || '{}');
 
-    const data = await response.json();
-
-    if (response.ok) {
-      alert('Login successful:' + JSON.stringify(data));
-
-      // Call fetchUserInfo to get the name and role
-      await fetchUserInfo(); 
-
-      // Then redirect based on role if you have the info stored
-      const user = JSON.parse(localStorage.getItem('userData') || '{}');
-
-      switch ((user.role || '').toLowerCase()) {
-        case 'student':
-          window.location.href = '/hobby';
-          break;
-        case 'lecturer':
-        case 'teacher':
-          window.location.href = '/lecturer/dashboard';
-          break;
-        case 'admin':
-          window.location.href = '/admin/dashboard';
-          break;
-        default:
-          window.location.href = '/hobby';
+        switch ((user.role || '').toLowerCase()) {
+          case 'student':
+            window.location.href = '/hobby';
+            break;
+          case 'lecturer':
+          case 'teacher':
+            window.location.href = '/lecturer/dashboard';
+            break;
+          case 'admin':
+            window.location.href = '/admin/dashboard';
+            break;
+          default:
+            window.location.href = '/hobby';
+        }
+      } else {
+        setError(data.message || 'Invalid credentials. Please try again.');
       }
-    } else {
-      setError(data.message || 'Invalid credentials. Please try again.');
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error('Login error:', error);
-    setError('Network error. Please check your connection and try again.');
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
+  const fetchUserInfo = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/v1/auth/me', {
+        method: 'GET',
+        credentials: 'include',
+      });
 
-const fetchUserInfo = async () => {
-  try {
-    const response = await fetch('http://localhost:8080/api/v1/auth/me', {
-      method: 'GET',
-      credentials: 'include', // important to include cookies
-    });
+      const data = await response.json();
 
-    const data = await response.json();
-
-    if (response.ok) {
-      localStorage.setItem('userData', JSON.stringify(data));
-      console.log('User data:', data);
-      // You can use data.role and data.name here
-    } else {
-      console.error('Failed to get user data', data);
+      if (response.ok) {
+        localStorage.setItem('userData', JSON.stringify(data));
+      } else {
+        console.error('Failed to get user data', data);
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
     }
-  } catch (error) {
-    console.error('Error fetching user info:', error);
-  }
-};
+  };
 
-  const handleSignUp = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        when: "beforeChildren",
+        staggerChildren: 0.1
+      }
     }
-    console.log('Sign up with:', { email, password, userType })
-  }
+  };
 
-  const getPageTitle = () => {
-    if (userType === userTypes.STUDENT) {
-      return isLogin ? 'Welcome back!' : 'Create an account'
-    } else if (userType === userTypes.LECTURER) {
-      return 'Welcome back, Educator!'
-    } else {
-      return 'Admin Portal Access'
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { type: "spring", stiffness: 300, damping: 24 }
     }
-  }
+  };
 
-  const getPageSubtitle = () => {
-    if (userType === userTypes.STUDENT) {
-      return isLogin 
-        ? 'Please enter your details to sign in' 
-        : 'Sign up to get started with learning'
-    } else if (userType === userTypes.LECTURER) {
-      return 'Please enter your details to sign in'
-    } else {
-      return 'Enter your credentials to access admin controls'
-    }
-  }
-
-  const renderStudentCarousel = () => (
-    <div className={`relative w-full md:w-1/2 h-[40vh] md:h-full bg-${colors.bg} overflow-hidden rounded-b-[2rem] md:rounded-none order-1 md:order-1`}>
-      <div className="absolute inset-0 w-full h-full">
-        <Image 
-          src="/assets/new.png" 
-          alt="Background Pattern"
-          fill
-          style={{ objectFit: 'cover' }}
-          priority
-        />
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div 
-          key={currentSlide}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative h-full w-full p-6 flex flex-col justify-center"
-        >
-          <div className="relative h-[70%] md:h-[60%] w-full">
-            <div className="border-4 border-white absolute left-28 -top-[20%] md:left-28 md:-top-[20%] w-[50%] h-[100%] rounded-lg overflow-hidden shadow-lg">
-              <Image 
-                src={carouselItems[currentSlide].images[0]} 
-                alt="Students learning"
-                fill
-                style={{ objectFit: 'cover' }}
-                quality={100}
-              />
-            </div>
-            <div className="border-4 border-white absolute right-4 bottom-[10%] w-[45%] h-[80%] rounded-lg overflow-hidden shadow-lg">
-              <Image 
-                src={carouselItems[currentSlide].images[1]} 
-                alt="Students learning" 
-                fill
-                style={{ objectFit: 'cover' }}
-                quality={100}
-              />
-            </div>
-          </div>
-
-          <motion.div 
-            className="absolute bottom-3 left-0 right-0 mx-auto w-[90%] max-w-xs bg-white bg-opacity-90 p-4 rounded-lg shadow-md items-center"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h3 className="font-semibold text-gray-900 text-center">{carouselItems[currentSlide].title}</h3>
-            <p className="text-sm text-gray-700 mt-1 text-center">{carouselItems[currentSlide].description}</p>
-            <div className={`flex justify-center items-center text-center gap-1.5 mt-2 text-sm text-${colors.highlight}`}>
-              <BookText size={16} />
-              <span className='text-center'>Smart Learning</span>
-            </div>
-            
-            <div className="flex items-center justify-center mt-4 gap-2">
-              <button 
-                onClick={prevSlide}
-                className={`p-1 rounded-full bg-${colors.primary}-100 hover:bg-${colors.primary}-200 transition-colors`}
-              >
-                <ChevronLeft size={16} className={`text-${colors.highlight}`} />
-              </button>
-              
-              <div className="flex gap-1">
-                {carouselItems.map((_, index) => (
-                  <div 
-                    key={index}
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      index === currentSlide ? `bg-${colors.highlight}` : 'bg-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              
-              <button 
-                onClick={nextSlide}
-                className={`p-1 rounded-full bg-${colors.primary}-100 hover:bg-${colors.primary}-200 transition-colors`}
-              >
-                <ChevronRight size={16} className={`text-${colors.highlight}`} />
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  )
-
-  const renderLecturerAdminImage = () => {
-    const content = userType === userTypes.LECTURER ? lecturerContent : adminContent
-    
-    return (
-      <div className={`relative w-full md:w-1/2 h-[40vh] md:h-full bg-${colors.bg} overflow-hidden rounded-b-[2rem] md:rounded-none order-1 md:order-2`}>
-        <div className="absolute inset-0 w-full h-full">
-          <Image 
-            src={content.bgImage} 
-            alt="Background Pattern"
-            fill
-            style={{ objectFit: 'cover' }}
-            priority
-          />
-        </div>
-
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="relative h-full w-full p-6 flex flex-col justify-center items-center"
-        >
-          <div className="relative w-[80%] h-[60%] rounded-xl overflow-hidden shadow-2xl border-4 border-white">
-            <Image 
-              src={content.image} 
-              alt={`${userType} interface`}
-              fill
-              style={{ objectFit: 'cover' }}
-              quality={100}
-            />
-          </div>
-
-          <motion.div 
-            className="absolute bottom-10 left-0 right-0 mx-auto w-[90%] max-w-xs bg-white bg-opacity-95 p-4 rounded-lg shadow-md"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h3 className="font-semibold text-gray-900 text-center">{content.title}</h3>
-            <p className="text-sm text-gray-700 mt-1 text-center">{content.description}</p>
-            <div className={`flex justify-center items-center text-center gap-1.5 mt-2 text-sm text-${colors.highlight}`}>
-              {userType === userTypes.LECTURER ? <School size={16} /> : <Shield size={16} />}
-              <span className='text-center'>
-                {userType === userTypes.LECTURER ? 'Academic Excellence' : 'System Management'}
-              </span>
-            </div>
-          </motion.div>
-        </motion.div>
-      </div>
-    )
-  }
-
-  const renderForm = () => (
-    <div className={`w-full md:w-1/2 flex items-center justify-center p-4 md:p-8 ${
-      userType === userTypes.STUDENT ? 'order-2 md:order-2' : 'order-2 md:order-1'
-    }`}>
-      <div className="w-full max-w-md">
+  return (
+    <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden bg-gray-50">
+      {/* Left side: Login form */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-10 order-2 md:order-1 z-10">
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative"
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="w-full max-w-md"
         >
-          {/* User Type Toggle */}
-          <div className="mb-8 flex justify-center">
-            <div className={`flex p-1 rounded-xl bg-gray-100 shadow-inner text-sm mb-2`}>
-              {Object.values(userTypes).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setUserType(type)}
-                  className={`relative px-4 py-2 rounded-lg font-medium transition-all duration-200 
-                    ${userType === type 
-                      ? `text-white shadow-sm` 
-                      : 'text-gray-600 hover:text-gray-800'}`}
+          <motion.div variants={itemVariants} className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">Welcome to EduAI</h1>
+            <div className="h-8 mt-2 overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentRoleIndex}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -20, opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="flex items-center"
                 >
-                  {userType === type && (
-                    <motion.div
-                      layoutId="activeUserType"
-                      className={`absolute inset-0 rounded-lg ${userTypeColors[type].toggle}`}
-                      initial={false}
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                  <span className="relative flex items-center justify-center gap-1.5">
-                    {type === userTypes.STUDENT && <User size={14} />}
-                    {type === userTypes.LECTURER && <School size={14} />}
-                    {type === userTypes.ADMIN && <Shield size={14} />}
-                    <span className="capitalize">{type}</span>
+                  {React.createElement(educationRoles[currentRoleIndex].icon, { 
+                    size: 18, 
+                    className: educationRoles[currentRoleIndex].color
+                  })}
+                  <span className={`ml-2 text-lg ${educationRoles[currentRoleIndex].color}`}>
+                    Empowering {educationRoles[currentRoleIndex].text}
                   </span>
-                </button>
-              ))}
+                </motion.div>
+              </AnimatePresence>
             </div>
-          </div>
+          </motion.div>
 
-          <h2 className="text-2xl font-semibold text-gray-800 mb-1">{getPageTitle()}</h2>
-          <p className="text-gray-600 mb-6">{getPageSubtitle()}</p>
-
-          <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-4">
+          <motion.form 
+            variants={itemVariants} 
+            onSubmit={handleLogin} 
+            className="space-y-5 bg-white p-8 rounded-xl shadow-md"
+          >
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+                Email Address
               </label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-${colors.highlight} focus:border-${colors.highlight} transition`}
+                placeholder="your@email.com"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                 required
-                disabled= {isLoading}
+                disabled={isLoading}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <a href="#" className="text-sm font-medium text-emerald-600 hover:text-emerald-500">
+                  Forgot password?
+                </a>
+              </div>
               <input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-${colors.highlight} focus:border-${colors.highlight} transition`}
+                placeholder="••••••••"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                 required
-                disabled = {isLoading}
+                disabled={isLoading}
               />
             </div>
 
-            {!isLogin && userType === userTypes.STUDENT && (
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password
-                </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your password"
-                  className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-${colors.highlight} focus:border-${colors.highlight} transition`}
-                  required
-                />
-              </div>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-red-50 text-red-600 text-sm rounded-lg"
+              >
+                {error}
+              </motion.div>
             )}
 
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className={`h-4 w-4 text-${colors.highlight} border-gray-300 rounded focus:ring-${colors.primary}-400`}
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Remember me
-                </label>
-              </div>
-              <div className="text-sm">
-                <a href="#" className={`text-${colors.highlight} hover:text-${colors.hover}`}>
-                  Forgot password?
-                </a>
-              </div>
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                Remember me
+              </label>
             </div>
 
             <button
               type="submit"
-              disabled = {isLoading}
-              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-${colors.highlight} hover:bg-${colors.hover} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-${colors.highlight} transition-colors`}
+              disabled={isLoading}
+              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all"
             >
-              {isLogin ? 'Sign in' : 'Sign up'}
+              {isLoading ? (
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : null}
+              Sign in
             </button>
-          </form>
 
-          <div className="mt-6">
-            <div className="relative">
+            <div className="relative mt-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
               </div>
@@ -492,7 +264,7 @@ const fetchUserInfo = async () => {
             <div className="mt-6 grid grid-cols-3 gap-3">
               <button
                 type="button"
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                className="w-full inline-flex justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
               >
                 <Image
                   src="/assets/google.svg"
@@ -502,10 +274,9 @@ const fetchUserInfo = async () => {
                   className="h-5 w-5"
                 />
               </button>
-
               <button
                 type="button"
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                className="w-full inline-flex justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
               >
                 <Image
                   src="/assets/apple.svg"
@@ -515,10 +286,9 @@ const fetchUserInfo = async () => {
                   className="h-5 w-5"
                 />
               </button>
-
               <button
                 type="button"
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                className="w-full inline-flex justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
               >
                 <Image
                   src="/assets/facebook.svg"
@@ -529,44 +299,107 @@ const fetchUserInfo = async () => {
                 />
               </button>
             </div>
-          </div>
+          </motion.form>
 
-          {/* Only show sign up option for students */}
-          {userType === userTypes.STUDENT && (
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                {isLogin ? "Don't have an account?" : "Already have an account?"}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(!isLogin)
-                    setError('')
-                  }}
-                  className={`ml-1 text-${colors.highlight} hover:text-${colors.hover} font-medium`}
-                >
-                  {isLogin ? 'Sign up' : 'Sign in'}
-                </button>
-              </p>
-            </div>
-          )}
+          <motion.p variants={itemVariants} className="mt-6 text-center text-sm text-gray-600">
+            Need an account?{' '}
+            <a href="#" className="font-medium text-emerald-600 hover:text-emerald-500">
+              Contact your administrator
+            </a>
+          </motion.p>
         </motion.div>
       </div>
-    </div>
-  )
 
-  return (
-    <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden">
-      {userType === userTypes.STUDENT ? (
-        <>
-          {renderStudentCarousel()}
-          {renderForm()}
-        </>
-      ) : (
-        <>
-          {renderForm()}
-          {renderLecturerAdminImage()}
-        </>
-      )}
+      {/* Right side: Visual elements */}
+      <div className="relative w-full md:w-1/2 h-[40vh] md:h-full order-1 md:order-2 overflow-hidden">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-800"></div>
+        
+        {/* Pattern overlay */}
+        <div className="absolute inset-0 opacity-10">
+          <Image 
+            src="/assets/new.png" 
+            alt="Background Pattern"
+            fill
+            style={{ objectFit: 'cover' }}
+            priority
+          />
+        </div>
+
+        {/* Content */}
+        <div className="relative h-full w-full p-6 md:p-10 flex flex-col justify-center items-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col items-center"
+          >
+            {/* Logo/Brand */}
+            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg mb-6">
+              <Brain size={50} className="text-emerald-500" />
+            </div>
+            
+            <h2 className="text-white text-3xl md:text-4xl font-bold text-center mb-4">
+              EduAI Portal
+            </h2>
+            
+            <p className="text-emerald-50 text-xl text-center max-w-md mb-10">
+              The next generation of AI-powered educational tools for modern learning
+            </p>
+          </motion.div>
+
+          {/* Feature cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl">
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + index * 0.1, duration: 0.5 }}
+                className={`${feature.color} p-5 rounded-xl shadow-lg backdrop-blur-sm`}
+              >
+                <feature.icon size={24} className="text-white mb-3" />
+                <h3 className="text-white font-semibold text-lg">{feature.title}</h3>
+                <p className="text-white/80 text-sm mt-1">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Floating decorative elements */}
+          <div className="absolute top-10 right-10 opacity-20">
+            <motion.div
+              animate={{ 
+                y: [0, -10, 0],
+                rotate: [0, 5, 0]
+              }}
+              transition={{ 
+                repeat: Infinity,
+                duration: 4,
+                ease: "easeInOut"
+              }}
+            >
+              <BookOpen size={80} className="text-white" />
+            </motion.div>
+          </div>
+          
+          <div className="absolute bottom-20 left-10 opacity-20">
+            <motion.div
+              animate={{ 
+                y: [0, 10, 0],
+                rotate: [0, -5, 0] 
+              }}
+              transition={{ 
+                repeat: Infinity,
+                duration: 5,
+                ease: "easeInOut",
+                delay: 1
+              }}
+            >
+              <Lightbulb size={60} className="text-white" />
+            </motion.div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
