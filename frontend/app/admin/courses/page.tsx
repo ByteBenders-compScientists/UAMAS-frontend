@@ -9,29 +9,6 @@ import EmptyState from "@/components/EmptyState"
 import AddCourseModal from "@/components/admin/AddCourseModal"
 import { GraduationCap, Plus, Search, Filter, Edit, Trash2, Eye, Building, MoreVertical } from "lucide-react"
 
-// Mock data
-const mockCourses = [
-  {
-    id: "1",
-    code: "CS",
-    name: "BSc. Computer Science",
-    department: "Computer Science",
-    school: "CS & IT",
-    units: [
-      { unit_code: "CS 4102", unit_name: "Machine Learning", level: 4, semester: 1 },
-      { unit_code: "CS 3208", unit_name: "Multimedia Systems", level: 3, semester: 2 },
-    ],
-  },
-  {
-    id: "2",
-    code: "IT",
-    name: "BSc. Information Technology",
-    department: "Information Technology",
-    school: "CS & IT",
-    units: [{ unit_code: "IT 2101", unit_name: "Database Systems", level: 2, semester: 1 }],
-  },
-]
-
 type Course = {
   id: string
   code: string
@@ -152,11 +129,22 @@ export default function CoursesPage() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setCourses(mockCourses)
+    const fetchCourses = async () => {
+      setIsLoading(true)
+      const res = await fetch("http://localhost:8080/api/v1/admin/courses", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const data = await res.json()
+      setCourses(data)
       setIsLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
+    }
+
+    fetchCourses()
   }, [])
 
   const filteredCourses = courses.filter(

@@ -9,43 +9,6 @@ import EmptyState from "@/components/EmptyState"
 import AddUnitModal from "@/components/admin/AddUnitModal"
 import { BookOpen, Plus, Search, Filter, Edit, Trash2, Eye, GraduationCap, Calendar, MoreVertical } from "lucide-react"
 
-// Mock data
-const mockUnits = [
-  {
-    id: "1",
-    unit_code: "CS 4102",
-    unit_name: "Machine Learning",
-    level: 4,
-    semester: 1,
-    course: {
-      name: "BSc. Computer Science",
-      code: "CS",
-    },
-  },
-  {
-    id: "2",
-    unit_code: "CS 3208",
-    unit_name: "Multimedia Systems",
-    level: 3,
-    semester: 2,
-    course: {
-      name: "BSc. Computer Science",
-      code: "CS",
-    },
-  },
-  {
-    id: "3",
-    unit_code: "IT 2101",
-    unit_name: "Database Systems",
-    level: 2,
-    semester: 1,
-    course: {
-      name: "BSc. Information Technology",
-      code: "IT",
-    },
-  },
-]
-
 type Unit = {
   id: string
   unit_code: string
@@ -118,7 +81,7 @@ const UnitCard = ({
       <div className="flex items-center text-sm text-gray-600">
         <GraduationCap size={14} className="mr-2" />
         <span>
-          {unit.course.name} ({unit.course.code})
+          {unit.unit_name} ({unit.unit_code})
         </span>
       </div>
 
@@ -144,11 +107,28 @@ export default function UnitsPage() {
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setUnits(mockUnits)
-      setIsLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
+    const fetchUnits = async () => {
+      setIsLoading(true)
+      try {
+        const res = await fetch("http://localhost:8080/api/v1/admin/units", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+        const data = await res.json()
+        setUnits(data)
+        // console.log("Fetched units:", data)
+        setIsLoading(false)
+      } catch (error) {
+        setIsLoading(false)
+        setUnits([])
+        console.error("Failed to fetch units:", error)
+      }
+    }
+
+    fetchUnits()
   }, [])
 
   const filteredUnits = units.filter(

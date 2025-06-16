@@ -9,29 +9,6 @@ import EmptyState from "@/components/EmptyState"
 import AddLecturerModal from "@/components/admin/AddLecturerModal"
 import { UserCheck, Plus, Search, Filter, Edit, Trash2, Eye, Mail, BookOpen, MoreVertical } from "lucide-react"
 
-// Mock data
-const mockLecturers = [
-  {
-    id: "1",
-    firstname: "John",
-    surname: "Doe",
-    othernames: "Kibet",
-    email: "john.doe@dekut.edu",
-    units: [
-      { unit_code: "CS 4102", unit_name: "Machine Learning" },
-      { unit_code: "CS 3208", unit_name: "Multimedia Systems" },
-    ],
-  },
-  {
-    id: "2",
-    firstname: "Jane",
-    surname: "Smith",
-    othernames: "Wanjiku",
-    email: "jane.smith@dekut.edu",
-    units: [{ unit_code: "IT 2101", unit_name: "Database Systems" }],
-  },
-]
-
 type Lecturer = {
   id: string
   firstname: string
@@ -150,11 +127,20 @@ export default function LecturersPage() {
   const [selectedLecturer, setSelectedLecturer] = useState<Lecturer | null>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLecturers(mockLecturers)
+    const fetchLecturers = async () => {
+      setIsLoading(true)
+      const res = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+      const data = await res.json()
+      setLecturers(data)
       setIsLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
+    }
+    fetchLecturers()
   }, [])
 
   const filteredLecturers = lecturers.filter(
