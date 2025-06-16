@@ -210,7 +210,7 @@ export default function AdminDashboard() {
 
                 <div className="relative z-10">
                   <h1 className="text-3xl md:text-4xl font-bold mb-2">Admin Dashboard</h1>
-                  <p className="text-gray-200 mb-4">Manage your university's academic system efficiently</p>
+                  <p className="text-gray-200 mb-4">Manage your university&apos;s academic system efficiently</p>
 
                   <div className="flex items-center bg-white/20 backdrop-blur-sm rounded-lg p-4 max-w-md">
                     <Bell size={18} className="text-white mr-3 flex-shrink-0" />
