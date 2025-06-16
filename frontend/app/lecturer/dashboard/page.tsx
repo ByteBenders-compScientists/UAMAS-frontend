@@ -322,256 +322,193 @@ interface StatsCardProps {
   stat: StatData;
 }
 
-const CreateFormButtons: React.FC<CreateFormButtonsProps> = ({ onFormSelect }) => (
-  <div className="space-y-4 mb-6">
-    <h3 className="text-lg font-semibold text-gray-800">Create New Content</h3>
-    
-    {/* Assignment Creation Options */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-      <h4 className="font-medium text-gray-700 mb-3 flex items-center">
-        <FileText className="w-5 h-5 mr-2 text-rose-500" />
-        Create Assignment
-      </h4>
-      <div className="flex flex-wrap gap-3">
-        <button
-          className="flex items-center bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors"
-          onClick={() => onFormSelect('assignment', 'manual')}
-        >
-          <Edit3 className="w-4 h-4 mr-2" />
-          Manual Creation
-        </button>
-        <button
-          className="flex items-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-colors"
-          onClick={() => onFormSelect('assignment', 'ai')}
-        >
-          <Bot className="w-4 h-4 mr-2" />
-          AI-Assisted Creation
-        </button>
-      </div>
+const StatsCard: React.FC<StatsCardProps> = ({ stat }) => (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center space-x-4">
+    <div className="p-2 rounded-full bg-rose-100 text-rose-600">
+      <stat.icon className="w-6 h-6" />
     </div>
-
-    {/* CAT Creation Options */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-      <h4 className="font-medium text-gray-700 mb-3 flex items-center">
-        <Calendar className="w-5 h-5 mr-2 text-blue-500" />
-        Create CAT
-      </h4>
-      <div className="flex flex-wrap gap-3">
-        <button
-          className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-          onClick={() => onFormSelect('cat', 'manual')}
-        >
-          <Edit3 className="w-4 h-4 mr-2" />
-          Manual Creation
-        </button>
-        <button
-          className="flex items-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-colors"
-          onClick={() => onFormSelect('cat', 'ai')}
-        >
-          <Bot className="w-4 h-4 mr-2" />
-          AI-Assisted Creation
-        </button>
-      </div>
-    </div>
-
-    {/* Task Creation Options */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-      <h4 className="font-medium text-gray-700 mb-3 flex items-center">
-        <Users className="w-5 h-5 mr-2 text-yellow-500" />
-        Create Task
-      </h4>
-      <div className="flex flex-wrap gap-3">
-        <button
-          className="flex items-center bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
-          onClick={() => onFormSelect('task', 'manual')}
-        >
-          <Edit3 className="w-4 h-4 mr-2" />
-          Manual Creation
-        </button>
-        <button
-          className="flex items-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-colors"
-          onClick={() => onFormSelect('task', 'ai')}
-        >
-          <Bot className="w-4 h-4 mr-2" />
-          AI-Assisted Creation
-        </button>
-      </div>
+    <div>
+      <div className="text-lg font-bold">{stat.value}</div>
+      <div className="text-sm text-gray-500">{stat.label}</div>
+      {typeof stat.change === 'number' && (
+        <div className={`text-xs font-semibold mt-1 ${stat.change > 0 ? 'text-green-600' : stat.change < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+          {stat.change > 0 && '+'}{stat.change}
+        </div>
+      )}
     </div>
   </div>
 );
 
-// AI Prompt Form Component
-interface AIPromptFormProps {
-  type: 'assignment' | 'task' | 'cat';
-  onGenerate: (prompt: string, preferences: any) => void;
-  onCancel: () => void;
+interface AssignmentsCardProps {
+  assignments: Assignment[];
 }
 
-const AIPromptForm: React.FC<AIPromptFormProps> = ({ type, onGenerate, onCancel }) => {
-  const [prompt, setPrompt] = useState('');
-  const [difficulty, setDifficulty] = useState('medium');
-  const [duration, setDuration] = useState('1');
-  const [questionCount, setQuestionCount] = useState('10');
-  const [topics, setTopics] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  const handleGenerate = async () => {
-    if (!prompt.trim()) return;
-    
-    setIsGenerating(true);
-    
-    // Simulate AI generation delay
-    setTimeout(() => {
-      onGenerate(prompt, {
-        difficulty,
-        duration,
-        questionCount,
-        topics: topics.split(',').map(t => t.trim()).filter(t => t)
-      });
-      setIsGenerating(false);
-    }, 2000);
-  };
-
-  const getTypeSpecificFields = () => {
-    switch (type) {
-      case 'assignment':
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Topics to Cover</label>
-              <input
-                type="text"
-                className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="e.g., Linear equations, Matrix operations (comma-separated)"
-                value={topics}
-                onChange={e => setTopics(e.target.value)}
-              />
+const AssignmentsCard: React.FC<AssignmentsCardProps> = ({ assignments }) => (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+    <h2 className="text-lg font-bold mb-4">Assignments This Week</h2>
+    {assignments.length === 0 ? (
+      <div className="text-gray-500">No assignments for this week.</div>
+    ) : (
+      <ul className="space-y-3">
+        {assignments.map(assignment => (
+          <li key={assignment.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex flex-col space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">{assignment.title}</span>
+              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeClass(assignment.status)}`}>
+                {assignment.status}
+              </span>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Question Count</label>
-              <select
-                className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                value={questionCount}
-                onChange={e => setQuestionCount(e.target.value)}
-              >
-                <option value="5">5 Questions</option>
-                <option value="10">10 Questions</option>
-                <option value="15">15 Questions</option>
-                <option value="20">20 Questions</option>
-              </select>
+            <div className="text-xs text-gray-500">
+              {assignment.course} &middot; Due: {formatDate(assignment.dueDate)} &middot; {assignment.submissions}/{assignment.totalStudents} submitted
             </div>
-          </div>
-        );
-      case 'cat':
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Exam Duration (hours)</label>
-              <select
-                className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                value={duration}
-                onChange={e => setDuration(e.target.value)}
-              >
-                <option value="1">1 Hour</option>
-                <option value="2">2 Hours</option>
-                <option value="3">3 Hours</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Question Count</label>
-              <select
-                className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                value={questionCount}
-                onChange={e => setQuestionCount(e.target.value)}
-              >
-                <option value="10">10 Questions</option>
-                <option value="20">20 Questions</option>
-                <option value="30">30 Questions</option>
-                <option value="50">50 Questions</option>
-              </select>
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 mb-6">
-      <div className="flex items-center mb-4">
-        <Bot className="w-6 h-6 mr-2 text-purple-500" />
-        <h3 className="font-bold text-lg">
-          AI-Assisted {type === 'assignment' ? 'Assignment' : type === 'cat' ? 'CAT' : 'Task'} Creation
-        </h3>
-      </div>
-      
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Describe what you want to create
-          </label>
-          <textarea
-            className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            placeholder={`e.g., Create a ${type} about calculus derivatives for intermediate level students...`}
-            value={prompt}
-            onChange={e => setPrompt(e.target.value)}
-            rows={4}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty Level</label>
-          <select
-            className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            value={difficulty}
-            onChange={e => setDifficulty(e.target.value)}
-          >
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-            <option value="advanced">Advanced</option>
-          </select>
-        </div>
-
-        {getTypeSpecificFields()}
-
-        <div className="flex space-x-3 pt-4">
-          <button
-            onClick={handleGenerate}
-            disabled={!prompt.trim() || isGenerating}
-            className="flex items-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-6 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isGenerating ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Generating...
-              </>
-            ) : (
-              <>
-                <Bot className="w-4 h-4 mr-2" />
-                Generate with AI
-              </>
+            {assignment.files && assignment.files.length > 0 && (
+              <div className="flex items-center space-x-2 mt-1">
+                {assignment.files.map((file, idx) => {
+                  const Icon = getFileIcon(file.name);
+                  return (
+                    <span key={idx} className="flex items-center text-xs text-gray-600">
+                      <Icon className="w-4 h-4 mr-1" />
+                      {file.name}
+                    </span>
+                  );
+                })}
+              </div>
             )}
-          </button>
-          <button
-            onClick={onCancel}
-            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
 
-// Main Page Component
-const Page: React.FC = () => {
+interface CATsCardProps {
+  cats: CAT[];
+}
+
+const CATsCard: React.FC<CATsCardProps> = ({ cats }) => (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+    <h2 className="text-lg font-bold mb-4">CATs This Week</h2>
+    {cats.length === 0 ? (
+      <div className="text-gray-500">No CATs scheduled for this week.</div>
+    ) : (
+      <ul className="space-y-3">
+        {cats.map(cat => (
+          <li key={cat.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex flex-col space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">{cat.title}</span>
+              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeClass(cat.status)}`}>
+                {cat.status}
+              </span>
+            </div>
+            <div className="text-xs text-gray-500">
+              {cat.course} &middot; {formatDate(cat.date)} &middot; Duration: {cat.duration} hr(s)
+            </div>
+            {cat.files && cat.files.length > 0 && (
+              <div className="flex items-center space-x-2 mt-1">
+                {cat.files.map((file, idx) => {
+                  const Icon = getFileIcon(file.name);
+                  return (
+                    <span key={idx} className="flex items-center text-xs text-gray-600">
+                      <Icon className="w-4 h-4 mr-1" />
+                      {file.name}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
+
+interface WeekAndCourseSelectorProps {
+  selectedWeek: number;
+  selectedCourse: string;
+  onWeekChange: (week: number) => void;
+  onCourseChange: (courseId: string) => void;
+}
+
+const WeekAndCourseSelector: React.FC<WeekAndCourseSelectorProps> = ({
+  selectedWeek,
+  selectedCourse,
+  onWeekChange,
+  onCourseChange
+}) => (
+  <div className="flex flex-col md:flex-row md:space-x-4 mb-6">
+    <div className="flex-1 mb-3 md:mb-0">
+      <label className="block text-sm font-medium text-gray-700 mb-1">Select Course</label>
+      <select
+        className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+        value={selectedCourse}
+        onChange={e => onCourseChange(e.target.value)}
+      >
+        <option value="">All Courses</option>
+        {SAMPLE_COURSES.map(course => (
+          <option key={course.id} value={course.id}>{course.name}</option>
+        ))}
+      </select>
+    </div>
+    <div className="flex-1">
+      <label className="block text-sm font-medium text-gray-700 mb-1">Select Week</label>
+      <select
+        className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+        value={selectedWeek}
+        onChange={e => onWeekChange(Number(e.target.value))}
+      >
+        {WEEK_OPTIONS.map(week => (
+          <option key={week.value} value={week.value}>{week.label} ({week.dateRange})</option>
+        ))}
+      </select>
+    </div>
+  </div>
+);
+
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  navigationItems: NavigationItem[];
+  isCreateDropdownOpen: boolean;
+  onCreateDropdownToggle: () => void;
+  onDropdownItemClick: (path: string) => void;
+}
+
+// Add CreateFormButtons component
+interface CreateFormButtonsProps {
+  activeForm: 'assignment' | 'task' | 'cat' | null;
+  onFormSelect: (form: 'assignment' | 'task' | 'cat') => void;
+}
+
+const CreateFormButtons: React.FC<CreateFormButtonsProps> = ({ onFormSelect }) => (
+  <div className="flex flex-wrap gap-4 mb-6">
+    <button
+      className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors"
+      onClick={() => onFormSelect('assignment')}
+    >
+      Create Assignment
+    </button>
+    <button
+      className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
+      onClick={() => onFormSelect('task')}
+    >
+      Create Task
+    </button>
+    <button
+      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+      onClick={() => onFormSelect('cat')}
+    >
+      Create CAT
+    </button>
+  </div>
+);
+
+const page: React.FC = () => {
+  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(2);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [activeForm, setActiveForm] = useState<'assignment' | 'task' | 'cat' | null>(null);
-  const [creationMode, setCreationMode] = useState<'manual' | 'ai' | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -580,35 +517,16 @@ const Page: React.FC = () => {
     files: [] as FileItem[]
   });
 
-  // State for quick creation lists
+  // State for assignments and CATs from the second code snippet
   const [assignmentsList, setAssignmentsList] = useState<string[]>(['Math Assignment 1', 'Science Assignment 2']);
   const [catsList, setCatsList] = useState<string[]>(['Math CAT 1', 'Science CAT 2']);
   const [assignmentDetails, setAssignmentDetails] = useState('');
   const [catDetails, setCATDetails] = useState('');
 
-  const handleFormSelect = (form: 'assignment' | 'task' | 'cat', mode: 'manual' | 'ai') => {
-    setActiveForm(form);
-    setCreationMode(mode);
-  };
 
-  const handleAIGenerate = (prompt: string, preferences: any) => {
-    // Here you would typically call your AI service
-    console.log('AI Generation requested:', { type: activeForm, prompt, preferences });
-    
-    // For demo, we'll generate a mock result
-    const mockTitle = `AI-Generated ${activeForm} based on: ${prompt.substring(0, 50)}...`;
-    const mockDescription = `This ${activeForm} was automatically generated using AI based on your requirements. Difficulty: ${preferences.difficulty}`;
-    
-    setFormData({
-      title: mockTitle,
-      description: mockDescription,
-      dueDate: '',
-      duration: preferences.duration || '1',
-      files: []
-    });
-    
-    setCreationMode('manual'); // Switch to manual mode to show the populated form
-  };
+
+
+  const toggleCreateDropdown = () => setCreateDropdownOpen(!createDropdownOpen);
 
   const handleFormChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -635,9 +553,9 @@ const Page: React.FC = () => {
   const handleFormSubmit = () => {
     if (!formData.title || !selectedCourse || !formData.dueDate) return;
     
+    // Here you would typically send the data to your backend
     console.log('Form submitted:', {
       type: activeForm,
-      mode: creationMode,
       ...formData,
       courseId: selectedCourse,
       week: selectedWeek
@@ -652,9 +570,9 @@ const Page: React.FC = () => {
       files: []
     });
     setActiveForm(null);
-    setCreationMode(null);
   };
 
+  // Functions from the second code snippet
   const handleCreateAssignment = () => {
     if (assignmentDetails) {
       setAssignmentsList([...assignmentsList, assignmentDetails]);
@@ -669,130 +587,133 @@ const Page: React.FC = () => {
     }
   };
 
+  const handleDropdownItemClick = (path: string) => {
+    // Handle navigation to the selected path
+    console.log('Navigating to:', path);
+    setCreateDropdownOpen(false);
+  };
+
+  // Filter assignments and CATs for the selected week
   const filteredAssignments = SAMPLE_ASSIGNMENTS.filter(a => a.week === selectedWeek);
   const filteredCATs = SAMPLE_CATS.filter(c => c.week === selectedWeek);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">Welcome back, Dr. Alex Kimani</h1>
-          <p className="text-gray-600 mt-2">Spring 2025 Semester - Here's your course overview today.</p>
-        </div>
-
-        <WeekAndCourseSelector 
-          selectedWeek={selectedWeek}
-          selectedCourse={selectedCourse}
-          onWeekChange={setSelectedWeek}
-          onCourseChange={setSelectedCourse}
-        />
+    <div className="min-h-screen bg-gray-50 flex border-red-500">
+      <Sidebar 
+    
+      />
+      
+      {/* <Sidebar isOpen={sidebarOpen} onClose={()=>setSidebarOpen(false) navigationItemsna}/> */}
+      <div className="flex-1 flex flex-col lg:ml-64">
+        <TopHeader onSidebarToggle={toggleCreateDropdown} />
         
-        {activeForm && creationMode === 'ai' ? (
-          <AIPromptForm
-            type={activeForm}
-            onGenerate={handleAIGenerate}
-            onCancel={() => {
-              setActiveForm(null);
-              setCreationMode(null);
-            }}
+        <main className="flex-1 p-4 lg:p-6 max-w-7xl mx-auto w-full">
+          <div className="mb-6">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">Welcome back, Dr. Alex Kimani</h1>
+            <p className="text-gray-600 mt-2">Spring 2025 Semester - Here's your course overview today.</p>
+          </div>
+
+          <WeekAndCourseSelector 
+            selectedWeek={selectedWeek}
+            selectedCourse={selectedCourse}
+            onWeekChange={setSelectedWeek}
+            onCourseChange={setSelectedCourse}
           />
-        ) : activeForm && creationMode === 'manual' ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 mb-6">
-            <h3 className="font-bold text-lg mb-3 flex items-center">
-              <Edit3 className="w-5 h-5 mr-2 text-gray-600" />
-              Create {activeForm === 'assignment' ? 'Assignment' : activeForm === 'cat' ? 'CAT' : 'Task'} - Manual Mode
-            </h3>
-            <div className="space-y-4">
-              <input
-                type="text"
-                className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                placeholder="Title"
-                value={formData.title}
-                onChange={e => handleFormChange('title', e.target.value)}
-              />
-              <textarea
-                className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                placeholder="Description"
-                value={formData.description}
-                onChange={e => handleFormChange('description', e.target.value)}
-                rows={3}
-              />
-              <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
+          
+          {activeForm ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 mb-6">
+              <h3 className="font-bold text-lg mb-3">
+                {activeForm === 'assignment' && 'Create Assignment'}
+                {activeForm === 'task' && 'Create Task'}
+                {activeForm === 'cat' && 'Create CAT'}
+              </h3>
+              <div className="space-y-4">
                 <input
-                  type="date"
-                  className="border p-3 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent flex-1"
-                  value={formData.dueDate}
-                  onChange={e => handleFormChange('dueDate', e.target.value)}
+                  type="text"
+                  className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  placeholder="Title"
+                  value={formData.title}
+                  onChange={e => handleFormChange('title', e.target.value)}
                 />
-                {activeForm === 'cat' && (
+                <textarea
+                  className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  placeholder="Description"
+                  value={formData.description}
+                  onChange={e => handleFormChange('description', e.target.value)}
+                  rows={3}
+                />
+                <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
                   <input
-                    type="number"
-                    min={1}
-                    className="border p-3 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent w-32"
-                    placeholder="Duration (hrs)"
-                    value={formData.duration}
-                    onChange={e => handleFormChange('duration', e.target.value)}
+                    type="date"
+                    className="border p-3 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent flex-1"
+                    value={formData.dueDate}
+                    onChange={e => handleFormChange('dueDate', e.target.value)}
                   />
-                )}
-              </div>
-              <select
-                className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                value={selectedCourse}
-                onChange={e => setSelectedCourse(e.target.value)}
-              >
-                <option value="">Select Course</option>
-                {SAMPLE_COURSES.map(course => (
-                  <option key={course.id} value={course.id}>{course.name}</option>
-                ))}
-              </select>
-              <select
-                className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                value={selectedWeek}
-                onChange={e => setSelectedWeek(Number(e.target.value))}
-              >
-                {WEEK_OPTIONS.map(week => (
-                  <option key={week.value} value={week.value}>{week.label} ({week.dateRange})</option>
-                ))}
-              </select>
-              <div>
-                <label className="block font-medium mb-1">Attach Files</label>
-                <input
-                  type="file"
-                  multiple
-                  onChange={e => e.target.files && handleFileUpload(e.target.files)}
-                />
-                <ul className="mt-2 space-y-1">
-                  {formData.files.map((file, idx) => (
-                    <li key={idx} className="flex items-center space-x-2 text-sm">
-                      <span>{file.name} ({formatFileSize(file.size)})</span>
-                      <button
-                        type="button"
-                        className="text-rose-500 hover:text-rose-700"
-                        onClick={() => handleRemoveFile(idx)}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </li>
+                  {activeForm === 'cat' && (
+                    <input
+                      type="number"
+                      min={1}
+                      className="border p-3 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent w-32"
+                      placeholder="Duration (hrs)"
+                      value={formData.duration}
+                      onChange={e => handleFormChange('duration', e.target.value)}
+                    />
+                  )}
+                </div>
+                <select
+                  className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  value={selectedCourse}
+                  onChange={e => setSelectedCourse(e.target.value)}
+                >
+                  <option value="">Select Course</option>
+                  {SAMPLE_COURSES.map(course => (
+                    <option key={course.id} value={course.id}>{course.name}</option>
                   ))}
-                </ul>
-              </div>
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleFormSubmit}
-                  className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors"
+                </select>
+                <select
+                  className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  value={selectedWeek}
+                  onChange={e => setSelectedWeek(Number(e.target.value))}
                 >
-                  Submit
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveForm(null);
-                    setCreationMode(null);
-                  }}
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-              
+                  {WEEK_OPTIONS.map(week => (
+                    <option key={week.value} value={week.value}>{week.label} ({week.dateRange})</option>
+                  ))}
+                </select>
+                <div>
+                  <label className="block font-medium mb-1">Attach Files</label>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={e => e.target.files && handleFileUpload(e.target.files)}
+                  />
+                  <ul className="mt-2 space-y-1">
+                    {formData.files.map((file, idx) => (
+                      <li key={idx} className="flex items-center space-x-2 text-sm">
+                        <span>{file.name} ({formatFileSize(file.size)})</span>
+                        <button
+                          type="button"
+                          className="text-rose-500 hover:text-rose-700"
+                          onClick={() => handleRemoveFile(idx)}
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleFormSubmit}
+                    className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors"
+                  >
+                    Submit
+                  </button>
+                  <button
+                    onClick={() => setActiveForm(null)}
+                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>
