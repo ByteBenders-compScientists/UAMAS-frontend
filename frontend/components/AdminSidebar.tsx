@@ -1,206 +1,191 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useLayout } from './LayoutController';
+"use client"
+import { motion } from "framer-motion"
+import { useLayout } from "@/components/LayoutController"
 import {
   LayoutDashboard,
   Users,
+  UserCheck,
+  GraduationCap,
   BookOpen,
-  AlertCircle,
-  BarChart2,
-  Bell,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Menu,
   X,
-  GraduationCap,
-  FileText
-} from 'lucide-react';
+  Shield,
+} from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
-interface AdminSidebarProps {
-  showMobileOnly?: boolean;
-}
+const menuItems = [
+  {
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    href: "/admin/dashboard",
+    color: "text-gray-600 hover:text-emerald-600",
+  },
+  {
+    icon: Users,
+    label: "Students",
+    href: "/admin/students",
+    color: "text-gray-600 hover:text-blue-600",
+  },
+  {
+    icon: UserCheck,
+    label: "Lecturers",
+    href: "/admin/lecturers",
+    color: "text-gray-600 hover:text-emerald-600",
+  },
+  {
+    icon: GraduationCap,
+    label: "Courses",
+    href: "/admin/courses",
+    color: "text-gray-600 hover:text-violet-600",
+  },
+  {
+    icon: BookOpen,
+    label: "Units",
+    href: "/admin/units",
+    color: "text-gray-600 hover:text-amber-600",
+  },
+  {
+    icon: Settings,
+    label: "Settings",
+    href: "/admin/settings",
+    color: "text-gray-600 hover:text-gray-800",
+  },
+]
 
-const AdminSidebar = ({ showMobileOnly = false }: AdminSidebarProps) => {
-  const pathname = usePathname();
-  const { 
-    sidebarCollapsed, 
-    setSidebarCollapsed, 
-    isMobileMenuOpen, 
-    setMobileMenuOpen,
-    isMobileView,
-    isTabletView
-  } = useLayout();
-  
-  const [mounted, setMounted] = useState(false);
+export default function AdminSidebar() {
+  const { sidebarCollapsed, setSidebarCollapsed, isMobileView, isTabletView, mobileMenuOpen, setMobileMenuOpen } =
+    useLayout()
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const pathname = usePathname()
 
-  if (!mounted) return null;
+  const isActive = (href: string) => pathname === href
 
-  // Only show the mobile version if explicitly requested
-  if (showMobileOnly && !isMobileView && !isTabletView) return null;
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <motion.div
+          initial={false}
+          animate={{
+            opacity: sidebarCollapsed && !isMobileView ? 0 : 1,
+            scale: sidebarCollapsed && !isMobileView ? 0.8 : 1,
+          }}
+          transition={{ duration: 0.2 }}
+          className="flex items-center space-x-3"
+        >
+          <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+            <Shield size={20} className="text-white" />
+          </div>
+          {(!sidebarCollapsed || isMobileView) && (
+            <div>
+              <h2 className="font-bold text-gray-800">Admin Panel</h2>
+              <p className="text-xs text-gray-500">University Management</p>
+            </div>
+          )}
+        </motion.div>
 
-  // Hide desktop sidebar on mobile/tablet unless menu is open
-  if (!showMobileOnly && (isMobileView || isTabletView) && !isMobileMenuOpen) return null;
+        {isMobileView ? (
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X size={20} className="text-gray-600" />
+          </button>
+        ) : (
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight size={20} className="text-gray-600" />
+            ) : (
+              <ChevronLeft size={20} className="text-gray-600" />
+            )}
+          </button>
+        )}
+      </div>
 
-  const navItems = [
-    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/admin/dashboard' },
-    { name: 'User Management', icon: <Users size={20} />, path: '/admin/users' },
-    { name: 'Units & Courses', icon: <BookOpen size={20} />, path: '/admin/courses' },
-    { name: 'Account Issues', icon: <AlertCircle size={20} />, path: '/admin/issues' },
-    { name: 'AI Tools Usage', icon: <FileText size={20} />, path: '/admin/ai-tools' },
-    { name: 'Analytics', icon: <BarChart2 size={20} />, path: '/admin/analytics' },
-    { name: 'Notifications', icon: <Bell size={20} />, path: '/admin/notifications', badge: 5 },
-  ];
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2">
+        {menuItems.map((item, index) => {
+          const Icon = item.icon
+          const active = isActive(item.href)
 
-  const bottomNavItems = [
-    { name: 'Settings', icon: <Settings size={20} />, path: '/admin/settings' },
-    { name: 'Logout', icon: <LogOut size={20} />, path: '/logout' },
-  ];
+          return (
+            <Link key={index} href={item.href}>
+              <motion.div
+                whileHover={{ x: 2 }}
+                className={`flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 ${
+                  active
+                    ? "bg-emerald-50 text-emerald-600 border-r-2 border-emerald-600"
+                    : "hover:bg-gray-50 text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                <Icon size={20} className={active ? "text-emerald-600" : item.color} />
+                {(!sidebarCollapsed || isMobileView) && (
+                  <span className={`font-medium ${active ? "text-emerald-600" : "text-gray-700"}`}>{item.label}</span>
+                )}
+              </motion.div>
+            </Link>
+          )
+        })}
+      </nav>
 
-  const sidebarVariants = {
-    desktop: {
-      width: sidebarCollapsed ? 80 : 240,
-      transition: { duration: 0.3, ease: "easeInOut" }
-    },
-    mobile: {
-      x: 0,
-      transition: { duration: 0.3, ease: "easeInOut" }
-    },
-    mobileHidden: {
-      x: "-100%",
-      transition: { duration: 0.3, ease: "easeInOut" }
-    }
-  };
+      {/* Footer */}
+      <div className="p-4 border-t border-gray-100">
+        <button className="flex items-center space-x-3 p-3 w-full rounded-lg hover:bg-red-50 text-gray-600 hover:text-red-600 transition-all duration-200">
+          <LogOut size={20} />
+          {(!sidebarCollapsed || isMobileView) && <span className="font-medium">Logout</span>}
+        </button>
+      </div>
+    </div>
+  )
 
-  // Mobile/tablet overlay when sidebar is open
-  const renderOverlay = () => {
-    if ((isMobileView || isTabletView) && isMobileMenuOpen) {
-      return (
-        <motion.div 
-          className="fixed inset-0 bg-black/50 z-30"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      );
-    }
-    return null;
-  };
+  if (isMobileView) {
+    return (
+      <>
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200 lg:hidden"
+        >
+          <Menu size={20} className="text-gray-600" />
+        </button>
+
+        {/* Mobile Sidebar Overlay */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setMobileMenuOpen(false)} />
+            <motion.div
+              initial={{ x: -240 }}
+              animate={{ x: 0 }}
+              exit={{ x: -240 }}
+              transition={{ duration: 0.3 }}
+              className="absolute left-0 top-0 h-full w-64 bg-white shadow-xl"
+            >
+              <SidebarContent />
+            </motion.div>
+          </div>
+        )}
+      </>
+    )
+  }
 
   return (
-    <>
-      {renderOverlay()}
-      <motion.div 
-        initial={isMobileView || isTabletView ? "mobileHidden" : "desktop"}
-        animate={
-          isMobileView || isTabletView 
-            ? (isMobileMenuOpen ? "mobile" : "mobileHidden") 
-            : "desktop"
-        }
-        variants={sidebarVariants}
-        className={`
-          h-screen fixed left-0 top-0 z-40 flex flex-col
-          bg-gradient-to-b from-purple-500 to-purple-700 text-white shadow-xl
-          ${(isMobileView || isTabletView) ? 'w-[270px]' : ''}
-        `}
-      >
-        {/* Header Section */}
-        <div className="flex items-center justify-between p-4 border-b border-purple-500/30">
-          <div className="flex items-center">
-            <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-purple-600 font-extrabold text-lg">E</span>
-            </div>
-            {(!sidebarCollapsed || isMobileView || isTabletView) && (
-              <span className="ml-3 font-semibold text-lg tracking-wide">EduPortal</span>
-            )}
-          </div>
-          
-          {(isMobileView || isTabletView) ? (
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-white hover:bg-purple-600/50 rounded-full p-1.5 transition-colors"
-            >
-              <X size={18} />
-            </button>
-          ) : (
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="text-white hover:bg-purple-600/50 rounded-full p-1.5 transition-colors"
-            >
-              {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-            </button>
-          )}
-        </div>
-
-        {/* Navigation Section */}
-        <div className="flex flex-col flex-1 overflow-y-auto py-4">
-          <nav className="flex-1 px-3 space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  className={`
-                    flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
-                    ${isActive 
-                      ? 'bg-white text-purple-600 shadow-md font-medium' 
-                      : 'text-white hover:bg-purple-500/30'
-                    }
-                    ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
-                  `}
-                >
-                  <div className={`${isActive ? 'text-purple-600' : 'text-white'}`}>
-                    {item.icon}
-                  </div>
-                  
-                  {(!sidebarCollapsed || isMobileView || isTabletView) && (
-                    <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{item.name}</span>
-                  )}
-                  
-                  {item.badge && (!sidebarCollapsed || isMobileView || isTabletView) && (
-                    <span className="ml-auto bg-red-500 text-white px-1.5 py-0.5 rounded-full text-xs">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-          
-          {/* Bottom Navigation Section */}
-          <div className="mt-auto px-3 py-4 border-t border-purple-500/30">
-            {bottomNavItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`
-                  flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
-                  text-white hover:bg-purple-500/30
-                  ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
-                `}
-              >
-                <div className="text-white">{item.icon}</div>
-                
-                {(!sidebarCollapsed || isMobileView || isTabletView) && (
-                  <span className="ml-3">{item.name}</span>
-                )}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-    </>
-  );
-};
-
-export default AdminSidebar;
+    <motion.div
+      initial={false}
+      animate={{
+        width: sidebarCollapsed ? 80 : 240,
+      }}
+      transition={{ duration: 0.3 }}
+      className="fixed left-0 top-0 h-full bg-white border-r border-gray-200 shadow-sm z-40"
+    >
+      <SidebarContent />
+    </motion.div>
+  )
+}
