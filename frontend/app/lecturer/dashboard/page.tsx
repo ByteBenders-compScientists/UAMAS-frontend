@@ -1,210 +1,266 @@
 'use client'
-
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
-import Image from 'next/image'
+import React, { useState, useEffect } from 'react';
+import lecturerSidebar from '@/components/lecturerSidebar';
 import { 
-  BookMarked, 
-  BarChart3, 
-  Clock, 
-  Monitor, 
-  Loader, 
-  Plus, 
-  Star, 
-  User, 
-  Users, 
-  Bell, 
-  Menu, 
-  X, 
-  LetterText, 
-  ChevronDown, 
-  ChevronUp 
-} from 'lucide-react'
+  BookMarked, BarChart3, Clock, Monitor, Loader, Plus, Star, User, 
+  Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp, GraduationCap,
+  FileText, MessageSquare, Library, Settings, Upload, Image, Calendar,
+  File, CheckCircle, AlertCircle, BookOpen, ChevronRight, Download,
+  MessageCircle, Book
+} from 'lucide-react';
+import Link from 'next/link';
 
 // ===== TYPES =====
-type DropdownItem = {
-  label: string
-  href: string
+interface NavigationItem {
+  icon: React.ElementType;
+  label: string;
+  active?: boolean;
+  count?: number;
+  hasDropdown?: boolean;
+  dropdownItems?: DropdownItem[];
+  path?: string;
 }
 
-interface NavigationItem {
-  icon: React.ElementType
-  label: string
-  active?: boolean
-  count?: number
-  hasDropdown?: boolean
-  dropdownItems?: DropdownItem[]
+interface DropdownItem {
+  label: string;
+  path: string;
+  icon?: React.ElementType;
 }
 
 interface StatData {
-  icon: React.ElementType
-  label: string
-  value: string
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  change?: number;
 }
 
-interface PendingApproval {
-  title: string
-  buttonColor: string
+interface Assignment {
+  id: string;
+  title: string;
+  course: string;
+  dueDate: string;
+  status: 'Active' | 'Completed' | 'Draft' | 'Pending Review';
+  submissions: number;
+  totalStudents: number;
+  week: number;
+  type: 'assignment' | 'task';
+  files?: File[];
 }
 
-interface StudentProgress {
-  name: string
-  assignment: string
-  cat: string
-  status: string
+interface CAT {
+  id: string;
+  title: string;
+  course: string;
+  date: string;
+  status: 'Scheduled' | 'Completed' | 'Draft';
+  duration: string;
+  week: number;
+  files?: File[];
 }
 
-interface MarkedWork {
-  title: string
-  status: string
+interface WeekOption {
+  value: number;
+  label: string;
+  dateRange: string;
 }
 
-interface RecentActivity {
-  activity: string
-  time: string
+interface Course {
+  id: string;
+  name: string;
+  code: string;
+  color: string;
+}
+
+interface FileItem {
+  name: string;
+  size: number;
+  type: string;
+  lastModified: number;
 }
 
 // ===== CONSTANTS =====
 const STATS_DATA: StatData[] = [
-  { icon: Users, label: 'Total Students', value: '132' },
-  { icon: Clock, label: 'Pending Approvals', value: '6' },
-  { icon: Monitor, label: 'Pending reviews', value: '45' },
-  { icon: BookMarked, label: 'Marking Progress', value: '12' }
-]
+  { icon: Users, label: 'Total Students', value: '132', change: 5 },
+  { icon: FileText, label: 'Active Assignments', value: '8', change: -2 },
+  { icon: Clock, label: 'Pending Reviews', value: '15', change: 3 },
+  { icon: BookMarked, label: 'Upcoming CATs', value: '3', change: 0 }
+];
 
-const PENDING_APPROVALS: PendingApproval[] = [
-  { title: 'CAT 3 - Data Structures', buttonColor: 'bg-blue-600' },
-  { title: 'Assignment 4 - Algorithms', buttonColor: 'bg-green-600' },
-  { title: 'AI Marked CAT 1 - OS', buttonColor: 'bg-purple-600' }
-]
+const WEEK_OPTIONS: WeekOption[] = Array.from({ length: 15 }, (_, i) => ({
+  value: i + 1,
+  label: `Week ${i + 1}`,
+  dateRange: `Jan ${15 + i * 7} - Jan ${21 + i * 7}`
+}));
 
-const STUDENT_PROGRESS: StudentProgress[] = [
-  { name: 'Faith W.', assignment: 'Pending', cat: 'Pending', status: 'Pending' },
-  { name: 'David M.', assignment: 'Completed', cat: 'Completed', status: '-' },
-  { name: 'Mark O.', assignment: 'Pending', cat: 'Pending', status: '-' }
-]
+const SAMPLE_COURSES: Course[] = [
+  { id: '1', name: 'Computer Science 201', code: 'CS201', color: 'bg-rose-500' },
+  { id: '2', name: 'Computer Science 301', code: 'CS301', color: 'bg-blue-500' },
+  { id: '3', name: 'Database Management', code: 'CS202', color: 'bg-purple-500' },
+  { id: '4', name: 'Operating Systems', code: 'CS203', color: 'bg-green-500' },
+  { id: '5', name: 'Software Engineering', code: 'CS302', color: 'bg-yellow-500' }
+];
 
-const MARKED_WORK: MarkedWork[] = [
-  { title: 'Assignment 2 - DBMS', status: 'Completed' },
-  { title: 'CAT 3 - Networks', status: 'In Review' },
-  { title: 'Assignment 1 - AI Ethics', status: 'Completed' },
-]
+const SAMPLE_ASSIGNMENTS: Assignment[] = [
+  {
+    id: '1',
+    title: 'Data Structures Project',
+    course: 'CS201',
+    dueDate: '2025-02-15',
+    status: 'Active',
+    submissions: 45,
+    totalStudents: 132,
+    week: 2,
+    type: 'assignment',
+    files: [{ name: 'project_guidelines.pdf', size: 1024 }] as unknown as File[]
+  },
+  {
+    id: '2',
+    title: 'Database Design Task',
+    course: 'CS202',
+    dueDate: '2025-02-18',
+    status: 'Pending Review',
+    submissions: 120,
+    totalStudents: 132,
+    week: 2,
+    type: 'task'
+  }
+];
 
-const RECENT_ACTIVITIES: RecentActivity[] = [
-  { activity: 'CAT Created', time: '19 minutes ago' },
-  { activity: 'Assignment Submitted', time: '25 minutes ago' },
-  { activity: 'Grade Updated', time: '1 hour ago' }
-]
+const SAMPLE_CATS: CAT[] = [
+  {
+    id: '1',
+    title: 'Midterm Assessment',
+    course: 'CS201',
+    date: '2025-03-01',
+    status: 'Scheduled',
+    duration: '2',
+    week: 4,
+    files: [{ name: 'sample_questions.pdf', size: 2048 }] as unknown as File[]
+  }
+];
 
 // ===== UTILITY FUNCTIONS =====
+const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+};
+
 const getStatusBadgeClass = (status: string): string => {
   const statusClasses: Record<string, string> = {
-    'Completed': 'bg-green-100 text-green-700',
-    'Pending': 'bg-yellow-100 text-yellow-700',
-    'In Review': 'bg-yellow-100 text-yellow-700',
-    
+    'Active': 'bg-green-100 text-green-700',
+    'Completed': 'bg-blue-100 text-blue-700',
+    'Scheduled': 'bg-yellow-100 text-yellow-700',
+    'Draft': 'bg-gray-100 text-gray-700',
+    'Pending Review': 'bg-orange-100 text-orange-700'
+  };
+  return statusClasses[status] || 'bg-gray-100 text-gray-700';
+};
+
+const getFileIcon = (fileName: string) => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension || '')) {
+    return Image;
   }
-  return statusClasses[status] || 'bg-gray-100 text-gray-700'
-}
-
-// ===== CUSTOM HOOKS =====
-const useDashboardState = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isCreateDropdownOpen, setIsCreateDropdownOpen] = useState(false)
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
-  const closeSidebar = () => setIsSidebarOpen(false)
-  const toggleCreateDropdown = () => setIsCreateDropdownOpen(!isCreateDropdownOpen)
-
-  return {
-    isSidebarOpen,
-    isCreateDropdownOpen,
-    toggleSidebar,
-    closeSidebar,
-    toggleCreateDropdown
+  if (['pdf'].includes(extension || '')) {
+    return FileText;
   }
-}
+  return File;
+};
 
-const useNavigationItems = (pendingCount: number): NavigationItem[] => [
-  { icon: BarChart3, label: 'Dashboard', active: true },
-  { icon: Loader, label: 'Pending Approvals', count: pendingCount },
-  { 
-    icon: Plus, 
-    label: 'Create', 
-    hasDropdown: true,
-    dropdownItems: [
-      { label: 'CAT', href: '#create-cat' },
-      { label: 'Assignment', href: '#create-assignment' }
-    ]
-  },
-  { icon: Users, label: 'Student Status' },
-  { icon: Star, label: 'Graded CATs' },
-  { icon: BarChart3, label: 'Analytics' }
-]
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 // ===== COMPONENTS =====
 const SidebarHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-  <div className="flex items-center justify-between p-6 border-b border-rose-300">
+  <div className="flex items-center justify-between p-6 border-b border-rose-200">
     <div className="flex items-center space-x-2 text-xl font-bold">
-      <LetterText className="w-6 h-6" />
-      <span>EduPortal</span>
+      <LetterText className="w-6 h-6 text-rose-600" />
+      <span className="text-white">EduPortal</span>
     </div>
     <button 
-      className="lg:hidden"
+      className="lg:hidden text-white hover:text-rose-100 transition-colors"
       onClick={onClose}
       aria-label="Close sidebar"
     >
       <X className="w-6 h-6" />
     </button>
   </div>
-)
+);
+
+// ===== TOP HEADER COMPONENT =====
+const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle }) => (
+  <header className="flex items-center justify-between px-4 py-4 lg:py-6 bg-white border-b border-gray-200 shadow-sm lg:shadow-none">
+    <div className="flex items-center space-x-3">
+      <button
+        className="lg:hidden text-rose-600 hover:text-rose-800 transition-colors"
+        onClick={onSidebarToggle}
+        aria-label="Open sidebar"
+      >
+        <Menu className="w-6 h-6" />
+      </button>
+      <span className="text-xl font-bold text-rose-600 hidden lg:inline">EduPortal</span>
+    </div>
+    <div className="flex items-center space-x-4">
+      <button className="relative text-gray-500 hover:text-rose-600 transition-colors">
+        <Bell className="w-6 h-6" />
+        <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full px-1.5 py-0.5">3</span>
+      </button>
+      <div className="flex items-center space-x-2">
+        <div className="w-8 h-8 bg-rose-200 rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-rose-600" />
+        </div>
+        <span className="text-sm font-semibold text-gray-700 hidden md:inline">Dr. Alex Kimani</span>
+      </div>
+    </div>
+  </header>
+);
 
 const UserProfile: React.FC = () => (
   <div className="flex p-6 items-center space-x-3 text-sm border-b border-rose-300 font-medium">
     <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
-      <div className="w-8 h-8 bg-white-300 rounded-full flex items-center justify-center">
-        <User className="w-4 h-4 text-gray-600" />
+      <div className="w-8 h-8 bg-rose-200 rounded-full flex items-center justify-center">
+        <User className="w-4 h-4 text-rose-600" />
       </div>
     </div>
-    <div>
-      <div className="font-semibold">Jane Doe</div>
-      <div className="text-xs opacity-80">Lecturer</div>
+    <div className="text-white">
+      <div className="font-semibold">Dr. Alex Kimani</div>
+      <div className="text-xs opacity-80">Senior Lecturer</div>
     </div>
   </div>
-)
+);
 
-const NavigationDropdown: React.FC<{ 
-  items: DropdownItem[]
-  isOpen: boolean
-}> = ({ items, isOpen }) => {
-  if (!isOpen) return null
+const NavigationDropdown: React.FC<{
+  items: DropdownItem[];
+  isOpen: boolean;
+  onItemClick: (path: string) => void;
+}> = ({ items, isOpen, onItemClick }) => {
+  if (!isOpen) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
-      exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.2 }}
-      className="ml-8 mt-2 space-y-1"
-    >
+    <div className="ml-8 mt-2 space-y-1">
       {items.map((item, index) => (
-        <a
+        <Link
           key={index}
-          href={item.href}
-          className="block p-2 text-sm font-medium rounded-lg hover:bg-rose-300 hover:bg-opacity-50 transition-all duration-200"
+          href={item.path}
+          className="w-full text-left block p-2 text-sm font-medium rounded-lg hover:bg-rose-300 hover:bg-opacity-50 transition-all duration-200 text-white flex items-center"
         >
+          {item.icon && <item.icon className="w-4 h-4 mr-2" />}
           {item.label}
-        </a>
+        </Link>
       ))}
-    </motion.div>
-  )
-}
+    </div>
+  );
+};
 
 const NavigationItemComponent: React.FC<{
-  item: NavigationItem
-  isDropdownOpen: boolean
-  onDropdownToggle: () => void
-}> = ({ item, isDropdownOpen, onDropdownToggle }) => {
+  item: NavigationItem;
+  isDropdownOpen: boolean;
+  onDropdownToggle: () => void;
+  onDropdownItemClick: (path: string) => void;
+}> = ({ item, isDropdownOpen, onDropdownToggle, onDropdownItemClick }) => {
   if (item.hasDropdown) {
     return (
       <div>
@@ -213,7 +269,7 @@ const NavigationItemComponent: React.FC<{
           className={`w-full flex items-center justify-between space-x-3 p-3 rounded-lg transition-all duration-200 ${
             item.active 
               ? 'bg-white text-rose-500 shadow-sm' 
-              : 'hover:bg-rose-300 hover:bg-opacity-50'
+              : 'hover:bg-rose-300 hover:bg-opacity-50 text-white'
           }`}
           aria-expanded={isDropdownOpen}
         >
@@ -230,19 +286,20 @@ const NavigationItemComponent: React.FC<{
         
         <NavigationDropdown 
           items={item.dropdownItems || []} 
-          isOpen={isDropdownOpen} 
+          isOpen={isDropdownOpen}
+          onItemClick={onDropdownItemClick}
         />
       </div>
-    )
+    );
   }
 
   return (
-    <a 
-      href="#" 
+    <Link 
+      href={item.path || "#"} 
       className={`flex items-center justify-between space-x-3 p-3 rounded-lg transition-all duration-200 ${
         item.active 
           ? 'bg-white text-rose-500 shadow-sm' 
-          : 'hover:bg-rose-300 hover:bg-opacity-50'
+          : 'hover:bg-rose-300 hover:bg-opacity-50 text-white'
       }`}
     >
       <div className="flex items-center space-x-3">
@@ -254,361 +311,561 @@ const NavigationItemComponent: React.FC<{
           {item.count}
         </span>
       )}
-    </a>
-  )
+    </Link>
+  );
+};
+
+// ... (keep all other components the same as before)
+
+interface StatsCardProps {
+  stat: StatData;
 }
 
-const Sidebar: React.FC<{
-  isOpen: boolean
-  onClose: () => void
-  navigationItems: NavigationItem[]
-  isCreateDropdownOpen: boolean
-  onCreateDropdownToggle: () => void
-}> = ({ isOpen, onClose, navigationItems, isCreateDropdownOpen, onCreateDropdownToggle }) => (
-  <aside className={`w-64 bg-rose-400 text-white fixed top-0 left-0 h-full shadow-lg z-30 transform transition-transform duration-300 ease-in-out ${
-    isOpen ? 'translate-x-0' : '-translate-x-full'
-  } lg:translate-x-0`}>
-    <SidebarHeader onClose={onClose} />
-    <UserProfile />
-    
-    <nav className="flex flex-col gap-1 p-4">
-      {navigationItems.map((item, index) => (
-        <NavigationItemComponent
-          key={index}
-          item={item}
-          isDropdownOpen={isCreateDropdownOpen}
-          onDropdownToggle={onCreateDropdownToggle}
-        />
-      ))}
-    </nav>
-  </aside>
-)
-
-const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle }) => (
-  <header className="bg-white shadow-sm border-b border-gray-200 p-4 lg:p-6">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
-        <button 
-          className="lg:hidden"
-          onClick={onSidebarToggle}
-          aria-label="Open sidebar"
-        >
-          <Menu className="w-6 h-6 text-gray-600" />
-        </button>
-        <div>
-          <h1 className="text-xl lg:text-3xl font-bold text-gray-800">
-            Welcome, Dr Alex Kimani
-          </h1>
-          <p className="text-sm lg:text-base text-gray-600 hidden sm:block">
-            Here's what's happening in your courses today.
-          </p>
-        </div>
-      </div>
-      
-      <div className="flex items-center space-x-4">
-        <div className="relative cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <Bell className="w-5 h-5 lg:w-6 lg:h-6 text-gray-600" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-        </div>
-
-        <div className="cursor-pointer">
-          <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-            <div className="w-full h-full bg-gradient-to-br from-rose-400 to-rose-500 rounded-full flex items-center justify-center">
-              <Image
-                src="/assets/ben.jpg"
-                alt="Profile"
-                width={36}
-                height={36}
-                className="rounded-full object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+const StatsCard: React.FC<StatsCardProps> = ({ stat }) => (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center space-x-4">
+    <div className="p-2 rounded-full bg-rose-100 text-rose-600">
+      <stat.icon className="w-6 h-6" />
     </div>
-  </header>
-)
-
-const StatsCard: React.FC<{ stat: StatData; index: number }> = ({ stat, index }) => (
-  <div 
-    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 hover:shadow-md transition-all duration-200 hover:scale-105 cursor-pointer"
-  >
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-xs lg:text-sm text-gray-600 mb-1">{stat.label}</p>
-        <p className="text-xl lg:text-2xl font-bold text-gray-800">{stat.value}</p>
-      </div>
-      <div className="w-10 h-10 lg:w-12 lg:h-12 bg-rose-100 rounded-lg flex items-center justify-center">
-        <stat.icon className="w-5 h-5 lg:w-6 lg:h-6 text-rose-500" />
-      </div>
+    <div>
+      <div className="text-lg font-bold">{stat.value}</div>
+      <div className="text-sm text-gray-500">{stat.label}</div>
+      {typeof stat.change === 'number' && (
+        <div className={`text-xs font-semibold mt-1 ${stat.change > 0 ? 'text-green-600' : stat.change < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+          {stat.change > 0 && '+'}{stat.change}
+        </div>
+      )}
     </div>
   </div>
-)
+);
 
-const StatsCards: React.FC<{ stats: StatData[] }> = ({ stats }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay: 0.1 }}
-    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8"
-  >
-    {stats.map((stat, index) => (
-      <StatsCard key={index} stat={stat} index={index} />
-    ))}
-  </motion.div>
-)
+interface AssignmentsCardProps {
+  assignments: Assignment[];
+}
 
-const PendingApprovalsCard: React.FC<{ approvals: PendingApproval[] }> = ({ approvals }) => (
-  <motion.div 
-    initial={{ opacity: 0, x: -20 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ duration: 0.6, delay: 0.2 }}
-    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6"
-  >
-    <h2 className="text-lg lg:text-xl font-semibold text-gray-800 mb-4 lg:mb-6 flex items-center">
-      <Clock className="w-4 h-4 lg:w-5 lg:h-5 mr-2 text-rose-500" />
-      Pending Approvals
-      <span className="ml-2 bg-rose-100 text-rose-600 text-xs font-bold px-2 py-1 rounded-full">
-        {approvals.length}
-      </span>
-    </h2>
-    <ul className="space-y-3 lg:space-y-4">
-      {approvals.map((item, index) => (
-        <li 
-          key={index} 
-          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 lg:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <span className="text-gray-700 font-medium text-sm lg:text-base">
-            {item.title}
-          </span>
-          <button 
-            className={`${item.buttonColor} text-white px-3 lg:px-4 py-1.5 lg:py-2 text-xs lg:text-sm rounded-lg hover:opacity-90 transition-all hover:scale-105 w-fit`}
-          >
-            Approve
-          </button>
-        </li>
-      ))}
-    </ul>
-  </motion.div>
-)
+const AssignmentsCard: React.FC<AssignmentsCardProps> = ({ assignments }) => (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+    <h2 className="text-lg font-bold mb-4">Assignments This Week</h2>
+    {assignments.length === 0 ? (
+      <div className="text-gray-500">No assignments for this week.</div>
+    ) : (
+      <ul className="space-y-3">
+        {assignments.map(assignment => (
+          <li key={assignment.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex flex-col space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">{assignment.title}</span>
+              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeClass(assignment.status)}`}>
+                {assignment.status}
+              </span>
+            </div>
+            <div className="text-xs text-gray-500">
+              {assignment.course} &middot; Due: {formatDate(assignment.dueDate)} &middot; {assignment.submissions}/{assignment.totalStudents} submitted
+            </div>
+            {assignment.files && assignment.files.length > 0 && (
+              <div className="flex items-center space-x-2 mt-1">
+                {assignment.files.map((file, idx) => {
+                  const Icon = getFileIcon(file.name);
+                  return (
+                    <span key={idx} className="flex items-center text-xs text-gray-600">
+                      <Icon className="w-4 h-4 mr-1" />
+                      {file.name}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
 
-const StudentProgressCard: React.FC<{ students: StudentProgress[] }> = ({ students }) => (
-  <motion.div 
-    initial={{ opacity: 0, x: 20 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ duration: 0.6, delay: 0.2 }}
-    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6"
-  >
-    <h2 className="text-lg lg:text-xl font-semibold text-gray-800 mb-4 lg:mb-6 flex items-center">
-      <Users className="w-4 h-4 lg:w-5 lg:h-5 mr-2 text-rose-500" />
-      Student Progress
-    </h2>
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs lg:text-sm text-left">
-        <thead>
-          <tr className="text-gray-500 border-b border-gray-200">
-            <th className="py-2 lg:py-3 px-1 lg:px-2 font-semibold">Student</th>
-            <th className="py-2 lg:py-3 px-1 lg:px-2 font-semibold">Assignment</th>
-            <th className="py-2 lg:py-3 px-1 lg:px-2 font-semibold">CAT</th>
-            <th className="py-2 lg:py-3 px-1 lg:px-2 font-semibold">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.map((student, index) => (
-            <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-              <td className="py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-800">
-                {student.name}
-              </td>
-              <td className="py-2 lg:py-3 px-1 lg:px-2">
-                <span className={`px-2 py-1 text-xs rounded-full ${getStatusBadgeClass(student.assignment)}`}>
-                  {student.assignment}
-                </span>
-              </td>
-              <td className="py-2 lg:py-3 px-1 lg:px-2">
-                <span className={`px-2 py-1 text-xs rounded-full ${getStatusBadgeClass(student.cat)}`}>
-                  {student.cat}
-                </span>
-              </td>
-              <td className="py-2 lg:py-3 px-1 lg:px-2 text-gray-600">
-                {student.status}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+interface CATsCardProps {
+  cats: CAT[];
+}
+
+const CATsCard: React.FC<CATsCardProps> = ({ cats }) => (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+    <h2 className="text-lg font-bold mb-4">CATs This Week</h2>
+    {cats.length === 0 ? (
+      <div className="text-gray-500">No CATs scheduled for this week.</div>
+    ) : (
+      <ul className="space-y-3">
+        {cats.map(cat => (
+          <li key={cat.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex flex-col space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">{cat.title}</span>
+              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeClass(cat.status)}`}>
+                {cat.status}
+              </span>
+            </div>
+            <div className="text-xs text-gray-500">
+              {cat.course} &middot; {formatDate(cat.date)} &middot; Duration: {cat.duration} hr(s)
+            </div>
+            {cat.files && cat.files.length > 0 && (
+              <div className="flex items-center space-x-2 mt-1">
+                {cat.files.map((file, idx) => {
+                  const Icon = getFileIcon(file.name);
+                  return (
+                    <span key={idx} className="flex items-center text-xs text-gray-600">
+                      <Icon className="w-4 h-4 mr-1" />
+                      {file.name}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
+
+interface WeekAndCourseSelectorProps {
+  selectedWeek: number;
+  selectedCourse: string;
+  onWeekChange: (week: number) => void;
+  onCourseChange: (courseId: string) => void;
+}
+
+const WeekAndCourseSelector: React.FC<WeekAndCourseSelectorProps> = ({
+  selectedWeek,
+  selectedCourse,
+  onWeekChange,
+  onCourseChange
+}) => (
+  <div className="flex flex-col md:flex-row md:space-x-4 mb-6">
+    <div className="flex-1 mb-3 md:mb-0">
+      <label className="block text-sm font-medium text-gray-700 mb-1">Select Course</label>
+      <select
+        className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+        value={selectedCourse}
+        onChange={e => onCourseChange(e.target.value)}
+      >
+        <option value="">All Courses</option>
+        {SAMPLE_COURSES.map(course => (
+          <option key={course.id} value={course.id}>{course.name}</option>
+        ))}
+      </select>
     </div>
-  </motion.div>
-)
+    <div className="flex-1">
+      <label className="block text-sm font-medium text-gray-700 mb-1">Select Week</label>
+      <select
+        className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+        value={selectedWeek}
+        onChange={e => onWeekChange(Number(e.target.value))}
+      >
+        {WEEK_OPTIONS.map(week => (
+          <option key={week.value} value={week.value}>{week.label} ({week.dateRange})</option>
+        ))}
+      </select>
+    </div>
+  </div>
+);
 
-const MarkedWorkCard: React.FC<{ work: MarkedWork[] }> = ({ work }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay: 0.3 }}
-    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6"
-  >
-    <h2 className="text-lg lg:text-xl font-semibold text-gray-800 mb-4 lg:mb-6 flex items-center">
-      <BookMarked className="w-4 h-4 lg:w-5 lg:h-5 mr-2 text-rose-500" />
-      Marked Work
-    </h2>
-    <ul className="space-y-3 lg:space-y-4">
-      {work.map((item, index) => (
-        <li 
-          key={index} 
-          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 lg:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <span className="text-gray-700 font-medium text-sm lg:text-base">
-            {item.title}
-          </span>
-          <span className={`text-xs lg:text-sm font-semibold px-3 py-1 rounded-full w-fit ${getStatusBadgeClass(item.status)}`}>
-            {item.status}
-          </span>
-        </li>
-      ))}
-    </ul>
-  </motion.div>
-)
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  navigationItems: NavigationItem[];
+  isCreateDropdownOpen: boolean;
+  onCreateDropdownToggle: () => void;
+  onDropdownItemClick: (path: string) => void;
+}
 
-const RecentActivitiesCard: React.FC<{ activities: RecentActivity[] }> = ({ activities }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay: 0.4 }}
-    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6"
-  >
-    <h2 className="text-lg lg:text-xl font-semibold text-gray-800 mb-4 lg:mb-6 flex items-center">
-      <BarChart3 className="w-4 h-4 lg:w-5 lg:h-5 mr-2 text-rose-500" />
-      Recent Activities
-    </h2>
-    <ul className="space-y-3 lg:space-y-4">
-      {activities.map((activity, index) => (
-        <li 
-          key={index} 
-          className="flex justify-between items-center p-3 lg:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <span className="text-gray-700 font-medium text-sm lg:text-base">
-            {activity.activity}
-          </span>
-          <span className="text-xs lg:text-sm text-gray-500 bg-white px-2 py-1 rounded whitespace-nowrap">
-            {activity.time}
-          </span>
-        </li>
-      ))}
-    </ul>
-  </motion.div>
-)
+const Sidebar: React.FC<SidebarProps> = ({
+  isOpen,
+  onClose,
+  navigationItems,
+  isCreateDropdownOpen,
+  onCreateDropdownToggle,
+  onDropdownItemClick
+}) => {
+  const [dropdownOpenIndex, setDropdownOpenIndex] = useState<number | null>(null);
 
-const PerformanceAnalyticsCard: React.FC = () => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay: 0.5 }}
-    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6"
-  >
-    <h2 className="text-lg lg:text-xl font-semibold text-gray-800 mb-4 lg:mb-6 flex items-center">
-      <BarChart3 className="w-4 h-4 lg:w-5 lg:h-5 mr-2 text-rose-500" />
-      Performance Analytics
-    </h2>
-    
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 lg:p-8">
-      <div className="w-full h-64 sm:h-80 lg:h-96 bg-white rounded-lg shadow-inner flex items-center justify-center mb-4 lg:mb-6">
-        <div className="w-full h-full p-4 lg:p-6">
-          <div className="w-full h-full bg-gradient-to-r from-rose-100 to-blue-100 rounded-lg flex items-center justify-center relative overflow-hidden">
-            <div className="flex items-end justify-center space-x-2 lg:space-x-4 h-3/4 w-3/4">
-              {[40, 65, 35, 80, 55, 90, 45].map((height, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <div 
-                    className="bg-rose-400 rounded-t-sm w-4 lg:w-8 transition-all duration-1000 ease-out"
-                    style={{ height: `${height}%` }}
-                  />
-                  <Image 
-                    src="/assets/graph.jpeg" 
-                    alt="Graph 1" 
-                    width={1300} 
-                    height={600} 
-                  />
-                  <span className="text-xs text-gray-600 mt-1">W{index + 1}</span>
-                </div>
-              ))}
-            </div>
-            <div className="absolute top-4 left-4 text-sm font-medium text-gray-700">
-              Student Performance Trends
-            </div>
+  const handleDropdownToggle = (index: number) => {
+    setDropdownOpenIndex(dropdownOpenIndex === index ? null : index);
+  };
+
+  return (
+    <aside
+      className={`fixed inset-y-0 left-0 z-40 w-64 bg-rose-600 shadow-lg transform transition-transform duration-300 lg:translate-x-0 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      } lg:static lg:inset-auto lg:shadow-none`}
+      aria-label="Sidebar"
+    >
+      <SidebarHeader onClose={onClose} />
+      <UserProfile />
+      <nav className="flex-1 px-4 py-6 space-y-1">
+        {navigationItems.map((item, idx) => (
+          <div key={item.label}>
+            <NavigationItemComponent
+              item={item}
+              isDropdownOpen={dropdownOpenIndex === idx || (item.label === 'Create' && isCreateDropdownOpen)}
+              onDropdownToggle={() => {
+                if (item.label === 'Create') {
+                  onCreateDropdownToggle();
+                } else {
+                  handleDropdownToggle(idx);
+                }
+              }}
+              onDropdownItemClick={onDropdownItemClick}
+            />
           </div>
-        </div>
-      </div>
-      
-      <div className="text-center">
-        <h3 className="text-base lg:text-lg font-semibold text-gray-700 mb-2">
-          Comprehensive Analytics Dashboard
-        </h3>
-        <p className="text-sm lg:text-base text-gray-600 mb-4">
-          Track student performance, assignment completion rates, and course analytics
-        </p>
-        <button className="bg-rose-500 text-white px-4 lg:px-6 py-2 rounded-lg hover:bg-rose-600 transition-colors text-sm lg:text-base">
-          View Detailed Analytics
-        </button>
-      </div>
-    </div>
-  </motion.div>
-)
+        ))}
+      </nav>
+    </aside>
+  );
+};
 
-// ===== MAIN COMPONENT =====
+// Add CreateFormButtons component
+interface CreateFormButtonsProps {
+  activeForm: 'assignment' | 'task' | 'cat' | null;
+  onFormSelect: (form: 'assignment' | 'task' | 'cat') => void;
+}
+
+const CreateFormButtons: React.FC<CreateFormButtonsProps> = ({ onFormSelect }) => (
+  <div className="flex flex-wrap gap-4 mb-6">
+    <button
+      className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors"
+      onClick={() => onFormSelect('assignment')}
+    >
+      Create Assignment
+    </button>
+    <button
+      className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
+      onClick={() => onFormSelect('task')}
+    >
+      Create Task
+    </button>
+    <button
+      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+      onClick={() => onFormSelect('cat')}
+    >
+      Create CAT
+    </button>
+  </div>
+);
+
 const page: React.FC = () => {
-  const {
-    isSidebarOpen,
-    isCreateDropdownOpen,
-    toggleSidebar,
-    closeSidebar,
-    toggleCreateDropdown
-  } = useDashboardState()
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
+  const [selectedWeek, setSelectedWeek] = useState(2);
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [activeForm, setActiveForm] = useState<'assignment' | 'task' | 'cat' | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    dueDate: '',
+    duration: '1',
+    files: [] as FileItem[]
+  });
 
-  const navigationItems = useNavigationItems(PENDING_APPROVALS.length)
+  // State for assignments and CATs from the second code snippet
+  const [assignmentsList, setAssignmentsList] = useState<string[]>(['Math Assignment 1', 'Science Assignment 2']);
+  const [catsList, setCatsList] = useState<string[]>(['Math CAT 1', 'Science CAT 2']);
+  const [assignmentDetails, setAssignmentDetails] = useState('');
+  const [catDetails, setCATDetails] = useState('');
+
+  const navigationItems: NavigationItem[] = [
+    { icon: Monitor, label: 'Dashboard', active: true, path: '/lecturer/dashboard' },
+    { icon: GraduationCap, label: 'Courses', path: '/lecturer/courses' },
+    { 
+      icon: Plus, 
+      label: 'Create', 
+      hasDropdown: true,
+      dropdownItems: [
+        { label: 'New Assignment', path: '/lecturer/assignment/create', icon: FileText },
+        { label: 'New Task', path: '/lecturer/task/create', icon: BookOpen },
+        { label: 'New CAT', path: '/lecturer/cat/create', icon: BookMarked }
+      ] 
+    },
+    { icon: FileText, label: 'Assignment', count: 8, path: '/lecturer/assignment' },
+    { icon: BookMarked, label: 'CATs', path: '/lecturer/cats' },
+    { icon: MessageCircle, label: 'Forums', path: '/lecturer/forums' },
+    { icon: BarChart3, label: 'Grades', path: '/lecturer/grades' },
+    { icon: Book, label: 'Library', path: '/lecturer/library' },
+    { icon: User, label: 'Profile', path: '/lecturer/profile' },
+    { icon: Settings, label: 'Settings', path: '/lecturer/settings' }
+  ];
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const toggleCreateDropdown = () => setCreateDropdownOpen(!createDropdownOpen);
+
+  const handleFormChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileUpload = (files: FileList) => {
+    const newFiles = Array.from(files).map(file => ({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified
+    }));
+    setFormData(prev => ({ ...prev, files: [...prev.files, ...newFiles] }));
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setFormData(prev => {
+      const newFiles = [...prev.files];
+      newFiles.splice(index, 1);
+      return { ...prev, files: newFiles };
+    });
+  };
+
+  const handleFormSubmit = () => {
+    if (!formData.title || !selectedCourse || !formData.dueDate) return;
+    
+    // Here you would typically send the data to your backend
+    console.log('Form submitted:', {
+      type: activeForm,
+      ...formData,
+      courseId: selectedCourse,
+      week: selectedWeek
+    });
+    
+    // Reset form
+    setFormData({
+      title: '',
+      description: '',
+      dueDate: '',
+      duration: '1',
+      files: []
+    });
+    setActiveForm(null);
+  };
+
+  // Functions from the second code snippet
+  const handleCreateAssignment = () => {
+    if (assignmentDetails) {
+      setAssignmentsList([...assignmentsList, assignmentDetails]);
+      setAssignmentDetails('');
+    }
+  };
+
+  const handleCreateCAT = () => {
+    if (catDetails) {
+      setCatsList([...catsList, catDetails]);
+      setCATDetails('');
+    }
+  };
+
+  const handleDropdownItemClick = (path: string) => {
+    // Handle navigation to the selected path
+    console.log('Navigating to:', path);
+    setCreateDropdownOpen(false);
+  };
+
+  // Filter assignments and CATs for the selected week
+  const filteredAssignments = SAMPLE_ASSIGNMENTS.filter(a => a.week === selectedWeek);
+  const filteredCATs = SAMPLE_CATS.filter(c => c.week === selectedWeek);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Mobile Overlay */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
-          onClick={closeSidebar}
-        />
-      )}
-
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={closeSidebar}
+      <Sidebar 
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
         navigationItems={navigationItems}
-        isCreateDropdownOpen={isCreateDropdownOpen}
+        isCreateDropdownOpen={createDropdownOpen}
         onCreateDropdownToggle={toggleCreateDropdown}
+        onDropdownItemClick={handleDropdownItemClick}
       />
-
-      {/* Main Content */}
-      <main className="flex-1 lg:ml-64 flex flex-col">
+      
+      <div className="flex-1 flex flex-col lg:ml-64">
         <TopHeader onSidebarToggle={toggleSidebar} />
-
-        {/* Content Area */}
-        <div className="flex-1 p-4 lg:p-8">
-          <StatsCards stats={STATS_DATA} />
-
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-6 lg:mb-8">
-            <PendingApprovalsCard approvals={PENDING_APPROVALS} />
-            <StudentProgressCard students={STUDENT_PROGRESS} />
+        
+        <main className="flex-1 p-4 lg:p-6 max-w-7xl mx-auto w-full">
+          <div className="mb-6">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">Welcome back, Dr. Alex Kimani</h1>
+            <p className="text-gray-600 mt-2">Spring 2025 Semester - Here's your course overview today.</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-6 lg:mb-8">
-            <MarkedWorkCard work={MARKED_WORK} />
-            <RecentActivitiesCard activities={RECENT_ACTIVITIES} />
+          <WeekAndCourseSelector 
+            selectedWeek={selectedWeek}
+            selectedCourse={selectedCourse}
+            onWeekChange={setSelectedWeek}
+            onCourseChange={setSelectedCourse}
+          />
+          
+          {activeForm ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 mb-6">
+              <h3 className="font-bold text-lg mb-3">
+                {activeForm === 'assignment' && 'Create Assignment'}
+                {activeForm === 'task' && 'Create Task'}
+                {activeForm === 'cat' && 'Create CAT'}
+              </h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  placeholder="Title"
+                  value={formData.title}
+                  onChange={e => handleFormChange('title', e.target.value)}
+                />
+                <textarea
+                  className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  placeholder="Description"
+                  value={formData.description}
+                  onChange={e => handleFormChange('description', e.target.value)}
+                  rows={3}
+                />
+                <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
+                  <input
+                    type="date"
+                    className="border p-3 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent flex-1"
+                    value={formData.dueDate}
+                    onChange={e => handleFormChange('dueDate', e.target.value)}
+                  />
+                  {activeForm === 'cat' && (
+                    <input
+                      type="number"
+                      min={1}
+                      className="border p-3 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent w-32"
+                      placeholder="Duration (hrs)"
+                      value={formData.duration}
+                      onChange={e => handleFormChange('duration', e.target.value)}
+                    />
+                  )}
+                </div>
+                <select
+                  className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  value={selectedCourse}
+                  onChange={e => setSelectedCourse(e.target.value)}
+                >
+                  <option value="">Select Course</option>
+                  {SAMPLE_COURSES.map(course => (
+                    <option key={course.id} value={course.id}>{course.name}</option>
+                  ))}
+                </select>
+                <select
+                  className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  value={selectedWeek}
+                  onChange={e => setSelectedWeek(Number(e.target.value))}
+                >
+                  {WEEK_OPTIONS.map(week => (
+                    <option key={week.value} value={week.value}>{week.label} ({week.dateRange})</option>
+                  ))}
+                </select>
+                <div>
+                  <label className="block font-medium mb-1">Attach Files</label>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={e => e.target.files && handleFileUpload(e.target.files)}
+                  />
+                  <ul className="mt-2 space-y-1">
+                    {formData.files.map((file, idx) => (
+                      <li key={idx} className="flex items-center space-x-2 text-sm">
+                        <span>{file.name} ({formatFileSize(file.size)})</span>
+                        <button
+                          type="button"
+                          className="text-rose-500 hover:text-rose-700"
+                          onClick={() => handleRemoveFile(idx)}
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleFormSubmit}
+                    className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors"
+                  >
+                    Submit
+                  </button>
+                  <button
+                    onClick={() => setActiveForm(null)}
+                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <CreateFormButtons 
+              activeForm={activeForm}
+              onFormSelect={setActiveForm}
+            />
+          )}
+
+          {/* Simple Create Forms from the second code snippet */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+              <h3 className="font-bold text-lg mb-3">Quick Create Assignment</h3>
+              <textarea 
+                value={assignmentDetails} 
+                onChange={(e) => setAssignmentDetails(e.target.value)} 
+                className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                placeholder="Enter assignment details"
+                rows={3}
+              />
+              <button 
+                onClick={handleCreateAssignment} 
+                className="mt-3 bg-rose-500 text-white p-2 rounded-lg hover:bg-rose-600 transition-colors w-full"
+              >
+                Create Assignment
+              </button>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+              <h3 className="font-bold text-lg mb-3">Quick Create CAT</h3>
+              <textarea 
+                value={catDetails} 
+                onChange={(e) => setCATDetails(e.target.value)} 
+                className="border p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                placeholder="Enter CAT details"
+                rows={3}
+              />
+              <button 
+                onClick={handleCreateCAT} 
+                className="mt-3 bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-colors w-full"
+              >
+                Create CAT
+              </button>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
+            {STATS_DATA.map((stat, index) => (
+              <StatsCard key={index} stat={stat} />
+            ))}
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AssignmentsCard assignments={filteredAssignments} />
+            <CATsCard cats={filteredCATs} />
           </div>
 
-          {/* Performance Analytics - Full Width */}
-          <PerformanceAnalyticsCard />
-        </div>
-      </main>
+          {/* Simple Lists from the second code snippet */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+              <h2 className="text-lg font-bold mb-4">Current Assignments List</h2>
+              <ul className="space-y-2">
+                {assignmentsList.map((assignment, index) => (
+                  <li key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    {assignment}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+              <h2 className="text-lg font-bold mb-4">Current CATs List</h2>
+              <ul className="space-y-2">
+                {catsList.map((cat, index) => (
+                  <li key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    {cat}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default page;
