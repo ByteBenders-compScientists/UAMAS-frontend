@@ -1,0 +1,298 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { useLayout } from "@/components/LayoutController"
+import AdminSidebar from "@/components/AdminSidebar"
+import Header from "@/components/Header"
+import EmptyState from "@/components/EmptyState"
+import AddStudentModal from "@/components/admin/AddStudentModal"
+import { Users, Plus, Search, Filter, Edit, Trash2, Eye, Download, Upload, MoreVertical } from "lucide-react"
+
+// Mock data - replace with real API calls
+const mockStudents = [
+  {
+    id: "1",
+    reg_number: "C027-01-0910/2025",
+    firstname: "Alice",
+    surname: "Wambui",
+    othernames: "Njeri",
+    year_of_study: 4,
+    course: {
+      name: "BSc. Computer Science",
+      code: "CS",
+    },
+  },
+  {
+    id: "2",
+    reg_number: "C027-01-0911/2025",
+    firstname: "John",
+    surname: "Opondo",
+    othernames: "Kiprotich",
+    year_of_study: 3,
+    course: {
+      name: "BSc. Information Technology",
+      code: "IT",
+    },
+  },
+]
+
+type Student = {
+  id: string
+  reg_number: string
+  firstname: string
+  surname: string
+  othernames: string
+  year_of_study: number
+  course: {
+    name: string
+    code: string
+  }
+}
+
+const StudentCard = ({
+  student,
+  onEdit,
+  onDelete,
+  onView,
+}: {
+  student: Student
+  onEdit: (student: Student) => void
+  onDelete: (id: string) => void
+  onView: (student: Student) => void
+}) => (
+  <motion.div
+    whileHover={{ y: -2 }}
+    className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
+  >
+    <div className="flex items-start justify-between mb-4">
+      <div className="flex items-center space-x-3">
+        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+          <Users size={20} className="text-blue-600" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-800">
+            {student.firstname} {student.surname}
+          </h3>
+          <p className="text-sm text-gray-500">{student.reg_number}</p>
+        </div>
+      </div>
+
+      <div className="relative group">
+        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <MoreVertical size={16} className="text-gray-400" />
+        </button>
+        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+          <button
+            onClick={() => onView(student)}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+          >
+            <Eye size={16} />
+            <span>View Details</span>
+          </button>
+          <button
+            onClick={() => onEdit(student)}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+          >
+            <Edit size={16} />
+            <span>Edit</span>
+          </button>
+          <button
+            onClick={() => onDelete(student.id)}
+            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+          >
+            <Trash2 size={16} />
+            <span>Delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div className="space-y-2">
+      <div className="flex justify-between text-sm">
+        <span className="text-gray-500">Course:</span>
+        <span className="font-medium text-gray-800">{student.course.name}</span>
+      </div>
+      <div className="flex justify-between text-sm">
+        <span className="text-gray-500">Year:</span>
+        <span className="font-medium text-gray-800">Year {student.year_of_study}</span>
+      </div>
+      <div className="flex justify-between text-sm">
+        <span className="text-gray-500">Other Names:</span>
+        <span className="font-medium text-gray-800">{student.othernames}</span>
+      </div>
+    </div>
+  </motion.div>
+)
+
+export default function StudentsPage() {
+  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout()
+  const [isLoading, setIsLoading] = useState(true)
+  const [students, setStudents] = useState<Student[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setStudents(mockStudents)
+      setIsLoading(false)
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const filteredStudents = students.filter(
+    (student) =>
+      student.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.reg_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.course.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  const handleAddStudent = (studentData: any) => {
+    // API call to add student
+    console.log("Adding student:", studentData)
+    setShowAddModal(false)
+  }
+
+  const handleEditStudent = (student: Student) => {
+    setSelectedStudent(student)
+    setShowAddModal(true)
+  }
+
+  const handleDeleteStudent = (id: string) => {
+    // API call to delete student
+    console.log("Deleting student:", id)
+  }
+
+  const handleViewStudent = (student: Student) => {
+    // Navigate to student details page
+    console.log("Viewing student:", student)
+  }
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <AdminSidebar />
+
+      <motion.div
+        initial={{
+          marginLeft: !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
+        }}
+        animate={{
+          marginLeft: !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
+        }}
+        transition={{ duration: 0.3 }}
+        className="flex-1 overflow-auto"
+      >
+        <Header title="Students Management" />
+
+        <main className="p-4 md:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Header Actions */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800 mb-2">Students</h1>
+                <p className="text-gray-600">Manage student records and information</p>
+              </div>
+
+              <div className="flex items-center space-x-3 mt-4 md:mt-0">
+                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm flex items-center space-x-2">
+                  <Upload size={16} />
+                  <span>Import</span>
+                </button>
+                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm flex items-center space-x-2">
+                  <Download size={16} />
+                  <span>Export</span>
+                </button>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium text-sm flex items-center space-x-2"
+                >
+                  <Plus size={16} />
+                  <span>Add Student</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Search and Filters */}
+            <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4 mb-6">
+              <div className="relative flex-1 max-w-md">
+                <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search students..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+              </div>
+
+              <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm flex items-center space-x-2">
+                <Filter size={16} />
+                <span>Filter</span>
+              </button>
+            </div>
+
+            {/* Content */}
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-gray-200 rounded-xl h-48"></div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredStudents.length === 0 ? (
+              <EmptyState
+                icon={<Users size={48} className="text-gray-400" />}
+                title="No Students Found"
+                description={
+                  searchTerm
+                    ? "No students match your search criteria."
+                    : "Start by adding your first student to the system."
+                }
+                actionLabel="Add Student"
+                onAction={() => setShowAddModal(true)}
+              />
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {filteredStudents.map((student, index) => (
+                  <motion.div
+                    key={student.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 * index }}
+                  >
+                    <StudentCard
+                      student={student}
+                      onEdit={handleEditStudent}
+                      onDelete={handleDeleteStudent}
+                      onView={handleViewStudent}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+        </main>
+      </motion.div>
+
+      {/* Add/Edit Student Modal */}
+      {showAddModal && (
+        <AddStudentModal
+          student={selectedStudent}
+          onClose={() => {
+            setShowAddModal(false)
+            setSelectedStudent(null)
+          }}
+          onSubmit={handleAddStudent}
+        />
+      )}
+    </div>
+  )
+}
