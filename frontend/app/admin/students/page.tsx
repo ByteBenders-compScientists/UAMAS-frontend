@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { motion } from "framer-motion"
 import { useLayout } from "@/components/LayoutController"
 import AdminSidebar from "@/components/AdminSidebar"
@@ -8,34 +8,6 @@ import Header from "@/components/Header"
 import EmptyState from "@/components/EmptyState"
 import AddStudentModal from "@/components/admin/AddStudentModal"
 import { Users, Plus, Search, Filter, Edit, Trash2, Eye, Download, Upload, MoreVertical } from "lucide-react"
-
-// Mock data - replace with real API calls
-const mockStudents = [
-  {
-    id: "1",
-    reg_number: "C027-01-0910/2025",
-    firstname: "Alice",
-    surname: "Wambui",
-    othernames: "Njeri",
-    year_of_study: 4,
-    course: {
-      name: "BSc. Computer Science",
-      code: "CS",
-    },
-  },
-  {
-    id: "2",
-    reg_number: "C027-01-0911/2025",
-    firstname: "John",
-    surname: "Opondo",
-    othernames: "Kiprotich",
-    year_of_study: 3,
-    course: {
-      name: "BSc. Information Technology",
-      code: "IT",
-    },
-  },
-]
 
 type Student = {
   id: string
@@ -133,13 +105,34 @@ export default function StudentsPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
 
+  // Fetch students from API
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setStudents(mockStudents)
-      setIsLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
+    const fetchStudents = async () => {
+      setIsLoading(true)
+      try {
+        const res = await fetch("http://localhost:8080/api/v1/admin/students", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+        if (!res.ok) {
+          throw new Error("Failed to fetch students")
+        }
+        const data = await res.json()
+        setStudents(data)
+        setIsLoading(false)
+      } catch (error) {
+        setIsLoading(false)
+        setStudents([])
+        console.error("Failed to fetch students:", error)
+      }
+    }
+    fetchStudents()
   }, [])
+
+  // Filter students based on search term
 
   const filteredStudents = students.filter(
     (student) =>
@@ -154,6 +147,25 @@ export default function StudentsPage() {
     console.log("Adding student:", studentData)
     setShowAddModal(false)
   }
+
+    // Runtime Error
+
+
+// Error: Cannot read properties of undefined (reading 'filter')
+
+// app/admin/students/page.tsx (124:37) @ StudentsPage
+
+
+//   122 |   }, [])
+//   123 |
+// > 124 |   const filteredStudents = students.filter(
+//       |                                     ^
+//   125 |     (student) =>
+//   126 |       student.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//   127 |       student.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//   128 |       student.reg_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//   129 |       student.course.name.toLowerCase().includes(searchTerm.toLowerCase()),
+//   130 |   )
 
   const handleEditStudent = (student: Student) => {
     setSelectedStudent(student)
