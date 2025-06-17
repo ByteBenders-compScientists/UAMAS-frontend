@@ -16,7 +16,9 @@ type Student = {
   surname: string
   othernames: string
   year_of_study: number
+  email: string
   course: {
+    id: string
     name: string
     code: string
   }
@@ -142,39 +144,121 @@ export default function StudentsPage() {
       student.course.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleAddStudent = (studentData: any) => {
-    // API call to add student
-    console.log("Adding student:", studentData)
-    setShowAddModal(false)
+  const handleAddStudent = async (studentData: any) => {
+    try {
+      if (selectedStudent) {
+        // Update existing student
+        const response = await fetch(`http://localhost:8080/api/v1/admin/students/${selectedStudent.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(studentData),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to update student")
+        }
+      } else {
+        // Add new student
+        const response = await fetch("http://localhost:8080/api/v1/admin/students", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(studentData),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to add student")
+        }
+      }
+
+      // Reload the students list
+      const studentsResponse = await fetch("http://localhost:8080/api/v1/admin/students", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const studentsData = await studentsResponse.json()
+      setStudents(studentsData)
+
+      setShowAddModal(false)
+      setSelectedStudent(null)
+    } catch (error) {
+      console.error("Error saving student:", error)
+      // Reload the students list even if there was an error
+      const studentsResponse = await fetch("http://localhost:8080/api/v1/admin/students", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const studentsData = await studentsResponse.json()
+      setStudents(studentsData)
+    }
   }
-
-    // Runtime Error
-
-
-// Error: Cannot read properties of undefined (reading 'filter')
-
-// app/admin/students/page.tsx (124:37) @ StudentsPage
-
-
-//   122 |   }, [])
-//   123 |
-// > 124 |   const filteredStudents = students.filter(
-//       |                                     ^
-//   125 |     (student) =>
-//   126 |       student.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//   127 |       student.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//   128 |       student.reg_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//   129 |       student.course.name.toLowerCase().includes(searchTerm.toLowerCase()),
-//   130 |   )
 
   const handleEditStudent = (student: Student) => {
     setSelectedStudent(student)
     setShowAddModal(true)
   }
 
-  const handleDeleteStudent = (id: string) => {
-    // API call to delete student
-    console.log("Deleting student:", id)
+  const handleDeleteStudent = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this student? This will also remove their user account and unit assignments.")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/admin/students/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "Failed to delete student")
+      }
+
+      // Reload the students list
+      const studentsResponse = await fetch("http://localhost:8080/api/v1/admin/students", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const studentsData = await studentsResponse.json()
+      setStudents(studentsData)
+    } catch (error) {
+      console.error("Error deleting student:", error)
+      // Reload the students list even if there was an error
+      const studentsResponse = await fetch("http://localhost:8080/api/v1/admin/students", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const studentsData = await studentsResponse.json()
+      setStudents(studentsData)
+    }
   }
 
   const handleViewStudent = (student: Student) => {
@@ -263,7 +347,7 @@ export default function StudentsPage() {
                     ? "No students match your search criteria."
                     : "Start by adding your first student to the system."
                 }
-                actionLabel="Add Student"
+                actionText="Add Student"
                 onAction={() => setShowAddModal(true)}
               />
             ) : (
