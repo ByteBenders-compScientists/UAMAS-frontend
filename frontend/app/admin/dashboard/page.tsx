@@ -1,727 +1,412 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { useLayout } from '@/components/LayoutController';
-import AdminSidebar from '@/components/AdminSidebar';
-import { 
+import type React from "react"
+
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import Link from "next/link"
+import { useLayout } from "@/components/LayoutController"
+import AdminSidebar from "@/components/AdminSidebar"
+import Header from "@/components/Header"
+import {
   Users,
-  UserPlus,
-  FolderPlus,
-  Calendar,
-  User,
-  UserCheck,
-  Clock,
-  CheckCircle,
+  GraduationCap,
   BookOpen,
-  Edit,
-  ChevronRight,
-  ArrowUpRight,
-  BarChart2,
-  Server,
-  Cpu,
-  Box,
-  FileCheck,
-  FileText,
-  Zap
-} from 'lucide-react';
+  UserCheck,
+  TrendingUp,
+  Bell,
+  ArrowRight,
+  BarChart3,
+  Activity,
+} from "lucide-react"
+
+type Stats = {
+  totalStudents: number
+  totalLecturers: number
+  totalCourses: number
+  totalUnits: number
+  recentActivity: Array<{
+    type: string
+    action: string
+    name: string
+    time: string
+  }>
+}
+
+type StatCardProps = {
+  icon: React.ReactNode
+  title: string
+  value: string | number
+  change: string
+  color: string
+  trend: "up" | "down"
+}
+
+const StatCard = ({ icon, title, value, change, color, trend }: StatCardProps) => (
+  <motion.div
+    whileHover={{ y: -2 }}
+    className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
+  >
+    <div className="flex items-center justify-between mb-4">
+      <div className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center`}>{icon}</div>
+      <div className={`flex items-center text-sm font-medium ${trend === "up" ? "text-emerald-600" : "text-red-500"}`}>
+        <TrendingUp size={16} className={`mr-1 ${trend === "down" ? "rotate-180" : ""}`} />
+        {change}
+      </div>
+    </div>
+    <h3 className="text-2xl font-bold text-gray-800 mb-1">{value.toLocaleString()}</h3>
+    <p className="text-sm text-gray-500">{title}</p>
+  </motion.div>
+)
+
+type QuickActionProps = {
+  icon: React.ReactNode
+  title: string
+  description: string
+  color: string
+  href: string
+}
+
+const QuickAction = ({ icon, title, description, color, href }: QuickActionProps) => (
+  <Link href={href} className="block">
+    <motion.div
+      whileHover={{ scale: 1.02 }}
+      className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group h-full"
+    >
+      <div
+        className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}
+      >
+        {icon}
+      </div>
+      <h3 className="font-semibold text-gray-800 mb-2">{title}</h3>
+      <p className="text-sm text-gray-500 mb-4">{description}</p>
+      <div className="flex items-center text-sm font-medium text-emerald-600 group-hover:translate-x-1 transition-transform duration-300">
+        <span>Manage</span>
+        <ArrowRight size={14} className="ml-1" />
+      </div>
+    </motion.div>
+  </Link>
+)
+
+type Activity = {
+  type: "student" | "lecturer" | "course" | "unit"
+  action: string
+  name: string
+  time: string
+  icon: React.ReactNode
+}
 
 export default function AdminDashboard() {
-  const { 
-    sidebarCollapsed, 
-    isMobileView, 
-    isTabletView,
-    setMobileMenuOpen
-  } = useLayout();
+  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout()
+  const [isLoading, setIsLoading] = useState(true)
+  const [stats, setStats] = useState<Stats>({
+    totalStudents: 0,
+    totalLecturers: 0,
+    totalCourses: 0,
+    totalUnits: 0,
+    recentActivity: [],
+  })
 
-  // Simulate loading data
-  const [isLoading, setIsLoading] = useState(true);
-  
+  // Dummy recent activities
+  const recentActivities: Activity[] = [
+    {
+      type: "student",
+      action: "New student registered",
+      name: "John Doe",
+      time: "2 minutes ago",
+      icon: <Users size={16} className="text-blue-600" />,
+    },
+    {
+      type: "lecturer",
+      action: "Lecturer profile updated",
+      name: "Dr. Jane Smith",
+      time: "15 minutes ago",
+      icon: <UserCheck size={16} className="text-emerald-600" />,
+    },
+    {
+      type: "course",
+      action: "New course added",
+      name: "Computer Science",
+      time: "1 hour ago",
+      icon: <GraduationCap size={16} className="text-violet-600" />,
+    },
+    {
+      type: "unit",
+      action: "Unit modified",
+      name: "Data Structures",
+      time: "2 hours ago",
+      icon: <BookOpen size={16} className="text-amber-600" />,
+    },
+    {
+      type: "student",
+      action: "Student profile updated",
+      name: "Alice Johnson",
+      time: "3 hours ago",
+      icon: <Users size={16} className="text-blue-600" />,
+    },
+  ]
+
   useEffect(() => {
-    // Simulate data fetching
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchStats = async () => {
+      try {
+        // Fetch students
+        const studentsResponse = await fetch("http://localhost:8080/api/v1/admin/students", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+        const studentsData = await studentsResponse.json()
 
-  const Header = () => (
-    <header className="sticky top-0 z-20 bg-white px-4 py-2 shadow-sm border-b border-gray-200 flex justify-between items-center">
-      <div className="flex items-center">
-        {(isMobileView || isTabletView) && (
-          <button 
-            onClick={() => setMobileMenuOpen(true)}
-            className="mr-3 p-2 rounded-lg hover:bg-gray-100"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          </button>
-        )}
-        
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <svg className="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-            </svg>
-          </div>
-          <input 
-            type="search" 
-            placeholder="Search users, units, reports..." 
-            className="block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-full bg-gray-50 focus:ring-purple-500 focus:border-purple-500" 
-          />
-        </div>
-      </div>
-      
-      <div className="flex items-center gap-3">
-        <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          <span className="absolute top-1 right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">3</span>
-        </button>
-        
-        <div className="flex items-center">
-          <div className="mr-2 text-right hidden md:block">
-            <div className="text-sm font-medium text-gray-900">Alex Kimani</div>
-            <div className="text-xs text-gray-500">System Admin</div>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center text-purple-700 font-medium">
-            AK
-          </div>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 text-gray-500">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </div>
-      </div>
-    </header>
-  );
+        // Fetch lecturers
+        const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+        const lecturersData = await lecturersResponse.json()
+
+        // Fetch courses
+        const coursesResponse = await fetch("http://localhost:8080/api/v1/admin/courses", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+        const coursesData = await coursesResponse.json()
+
+        // Calculate total units from courses
+        const totalUnits = coursesData.reduce((acc: number, course: any) => acc + (course.units?.length || 0), 0)
+
+        setStats({
+          totalStudents: studentsData.length,
+          totalLecturers: lecturersData.length,
+          totalCourses: coursesData.length,
+          totalUnits,
+          recentActivity: [], // We can implement this later if needed
+        })
+      } catch (error) {
+        console.error("Error fetching stats:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
+
+  const statCards = [
+    {
+      icon: <Users size={24} className="text-white" />,
+      title: "Total Students",
+      value: stats.totalStudents,
+      change: "+12%",
+      color: "bg-blue-500",
+      trend: "up" as const,
+    },
+    {
+      icon: <UserCheck size={24} className="text-white" />,
+      title: "Total Lecturers",
+      value: stats.totalLecturers,
+      change: "+5%",
+      color: "bg-emerald-500",
+      trend: "up" as const,
+    },
+    {
+      icon: <GraduationCap size={24} className="text-white" />,
+      title: "Total Courses",
+      value: stats.totalCourses,
+      change: "+2%",
+      color: "bg-violet-500",
+      trend: "up" as const,
+    },
+    {
+      icon: <BookOpen size={24} className="text-white" />,
+      title: "Total Units",
+      value: stats.totalUnits,
+      change: "+8%",
+      color: "bg-amber-500",
+      trend: "up" as const,
+    },
+  ]
+
+  const quickActions = [
+    {
+      icon: <Users size={24} className="text-white" />,
+      title: "Manage Students",
+      description: "Add, edit, or remove student records",
+      color: "bg-blue-500",
+      href: "/admin/students",
+    },
+    {
+      icon: <UserCheck size={24} className="text-white" />,
+      title: "Manage Lecturers",
+      description: "Handle lecturer profiles and assignments",
+      color: "bg-emerald-500",
+      href: "/admin/lecturers",
+    },
+    {
+      icon: <GraduationCap size={24} className="text-white" />,
+      title: "Manage Courses",
+      description: "Create and modify course programs",
+      color: "bg-violet-500",
+      href: "/admin/courses",
+    },
+    {
+      icon: <BookOpen size={24} className="text-white" />,
+      title: "Manage Units",
+      description: "Organize course units and modules",
+      color: "bg-amber-500",
+      href: "/admin/units",
+    },
+  ]
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Regular Sidebar */}
       <AdminSidebar />
-      
-      {/* Main Content */}
-      <motion.div 
-        initial={{ 
-          marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+
+      <motion.div
+        initial={{
+          marginLeft: !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
         }}
-        animate={{ 
-          marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+        animate={{
+          marginLeft: !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
         }}
         transition={{ duration: 0.3 }}
         className="flex-1 overflow-auto"
       >
-        <Header />
-        
-        <main className="p-4 md:p-6">
-          {/* Welcome Banner */}
-          <div className="mb-6 bg-gradient-to-r from-purple-500 to-purple-700 rounded-xl p-6 md:p-8 text-white shadow-md relative overflow-hidden flex flex-col md:flex-row items-start md:items-center gap-6">
-            <div className="z-10 flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome back, Admin!</h1>
-              <p className="text-purple-100 mb-4 max-w-lg">Manage users, courses, and monitor AI-powered university operations. Your dashboard gives you total control.</p>
-              <div className="flex flex-wrap gap-3">
-                <button className="bg-white text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center">
-                  <UserPlus size={16} className="mr-2" />
-                  Add New User
-                </button>
-                <button className="bg-white text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center">
-                  <FolderPlus size={16} className="mr-2" />
-                  Add Unit
-                </button>
-              </div>
-            </div>
-            <div className="hidden lg:block w-64 h-44 relative">
-              <div className="absolute inset-0 bg-purple-600 rounded-lg opacity-20"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-full h-32 bg-purple-800/30 rounded-lg transform rotate-3 animate-pulse"></div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-full h-32 bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg transform -rotate-3 shadow-lg">
-                  <div className="p-4">
-                    <div className="h-3 bg-white/20 rounded mb-3 w-2/3"></div>
-                    <div className="h-3 bg-white/20 rounded mb-3 w-1/2"></div>
-                    <div className="h-3 bg-white/20 rounded mb-3 w-3/4"></div>
-                    <div className="flex mt-4">
-                      <div className="h-8 w-8 bg-white/20 rounded mr-2"></div>
-                      <div className="h-8 w-16 bg-white/20 rounded"></div>
-                    </div>
-                  </div>
+        <Header title="Admin Dashboard" />
+
+        <main className="p-4 md:p-6 lg:p-8">
+          {isLoading ? (
+            <div className="max-w-7xl mx-auto">
+              <div className="animate-pulse space-y-8">
+                <div className="h-32 bg-gray-200 rounded-xl"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-32 bg-gray-200 rounded-xl"></div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 h-64 bg-gray-200 rounded-xl"></div>
+                  <div className="h-64 bg-gray-200 rounded-xl"></div>
                 </div>
               </div>
             </div>
-          </div>
-          
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
-            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-100 flex items-start">
-              <div className="rounded-full bg-purple-100 p-3 mr-4">
-                <Users className="h-6 w-6 text-purple-600" />
+          ) : (
+            <div className="max-w-7xl mx-auto">
+              {/* Welcome Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-8 bg-gradient-to-br from-slate-600 to-gray-700 rounded-xl p-6 md:p-8 shadow-lg text-white relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
+                  <BarChart3 size={200} />
+                </div>
+
+                <div className="relative z-10">
+                  <h1 className="text-3xl md:text-4xl font-bold mb-2">Admin Dashboard</h1>
+                  <p className="text-gray-200 mb-4">Manage your university&apos;s academic system efficiently</p>
+
+                  <div className="flex items-center bg-white/20 backdrop-blur-sm rounded-lg p-4 max-w-md">
+                    <Bell size={18} className="text-white mr-3 flex-shrink-0" />
+                    <p className="text-sm text-white">System running smoothly. All services operational.</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {/* Statistics Cards */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="lg:col-span-2"
+                >
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4">System Overview</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {statCards.map((stat, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.1 * (index + 1) }}
+                      >
+                        <StatCard {...stat} />
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Recent Activity */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+                >
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
+                  <div className="space-y-4">
+                    {recentActivities.map((activity, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.1 * index }}
+                        className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            activity.type === "student"
+                              ? "bg-blue-100"
+                              : activity.type === "lecturer"
+                              ? "bg-emerald-100"
+                              : activity.type === "course"
+                              ? "bg-violet-100"
+                              : "bg-amber-100"
+                          }`}
+                        >
+                          {activity.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800">{activity.action}</p>
+                          <p className="text-sm text-gray-500">{activity.name}</p>
+                          <p className="text-xs text-gray-400">{activity.time}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">2,340</h3>
-                <p className="text-sm text-gray-500">Total Users</p>
-              </div>
+
+              {/* Quick Actions */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+              >
+                {quickActions.map((action, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 * (index + 1) }}
+                  >
+                    <QuickAction {...action} />
+                  </motion.div>
+                ))}
+              </motion.div>
             </div>
-            
-            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-100 flex items-start">
-              <div className="rounded-full bg-green-100 p-3 mr-4">
-                <UserCheck className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">1,800</h3>
-                <p className="text-sm text-gray-500">Students</p>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-100 flex items-start">
-              <div className="rounded-full bg-amber-100 p-3 mr-4">
-                <User className="h-6 w-6 text-amber-600" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">120</h3>
-                <p className="text-sm text-gray-500">Lecturers</p>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-100 flex items-start">
-              <div className="rounded-full bg-pink-100 p-3 mr-4">
-                <BookOpen className="h-6 w-6 text-pink-600" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">160</h3>
-                <p className="text-sm text-gray-500">Units</p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Analytics & Activity Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            {/* User Growth Analytics - Takes 2/3 width on large screens */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden lg:col-span-2">
-              <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                <div className="flex items-center">
-                  <Users size={18} className="text-purple-600 mr-2" />
-                  <h2 className="text-lg font-semibold text-gray-800">User Growth Analytics</h2>
-                </div>
-                <div className="flex space-x-2">
-                  <button className="bg-purple-100 text-purple-700 text-xs px-3 py-1 rounded-full">
-                    7 days
-                  </button>
-                  <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full transition-colors">
-                    30 days
-                  </button>
-                  <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full transition-colors">
-                    90 days
-                  </button>
-                </div>
-              </div>
-              
-              <div className="p-5">
-                <div className="mb-4">
-                  <div className="text-xs text-gray-500">TOTAL USERS</div>
-                  <div className="flex items-baseline">
-                    <span className="text-2xl font-bold text-gray-800 mr-2">1,750</span>
-                    <span className="text-sm text-green-600 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                        <polyline points="17 6 23 6 23 12"></polyline>
-                      </svg>
-                      +15.1% vs previous period
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Peak Users</div>
-                    <div className="text-lg font-bold text-gray-800">1,750</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Lowest Users</div>
-                    <div className="text-lg font-bold text-gray-800">1,150</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Growth Rate</div>
-                    <div className="text-lg font-bold text-green-600">+15.1%</div>
-                  </div>
-                </div>
-                
-                <div className="h-60 mt-6 relative">
-                  {/* This would be a chart in a real app - simulating for design */}
-                  <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-purple-500/5 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0">
-                    <svg viewBox="0 0 400 100" className="w-full h-40">
-                      <path 
-                        d="M0,90 C20,80 40,70 60,65 C80,60 100,60 120,65 C140,70 160,85 180,90 C200,95 220,90 240,80 C260,70 280,55 300,50 C320,45 340,45 360,50 C380,55 400,65 400,70" 
-                        fill="none" 
-                        stroke="#8b5cf6" 
-                        strokeWidth="3"
-                      />
-                      <path 
-                        d="M0,90 C20,80 40,70 60,65 C80,60 100,60 120,65 C140,70 160,85 180,90 C200,95 220,90 240,80 C260,70 280,55 300,50 C320,45 340,45 360,50 C380,55 400,65 400,70" 
-                        fill="url(#gradient)" 
-                        fillOpacity="0.2"
-                        strokeWidth="0"
-                      />
-                      <defs>
-                        <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.6" />
-                          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.0" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 px-4">
-                    <span>Jan 1</span>
-                    <span>Jan 4</span>
-                    <span>Jan 7</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Recent Activity - Takes 1/3 width on large screens */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-              <div className="p-5 border-b border-gray-100 flex items-center">
-                <Clock size={18} className="text-purple-600 mr-2" />
-                <h2 className="text-lg font-semibold text-gray-800">Recent Activity</h2>
-              </div>
-              
-              <div className="divide-y divide-gray-100">
-                <div className="p-4 flex items-start">
-                  <div className="rounded-full bg-gray-200 w-8 h-8 flex-shrink-0 mr-3"></div>
-                  <div>
-                    <div className="flex items-center">
-                      <p className="font-medium text-sm text-gray-800">Jane Wambui</p>
-                      <span className="ml-2 text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">added as lecturer</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">2 min ago</p>
-                  </div>
-                </div>
-                
-                <div className="p-4 flex items-start">
-                  <div className="rounded-full bg-green-100 w-8 h-8 flex items-center justify-center text-green-600 flex-shrink-0 mr-3">
-                    <CheckCircle size={16} />
-                  </div>
-                  <div>
-                    <div className="flex items-center">
-                      <p className="font-medium text-sm text-gray-800">Unit "AI Ethics"</p>
-                      <span className="ml-2 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">approved</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">15 min ago</p>
-                  </div>
-                </div>
-                
-                <div className="p-4 flex items-start">
-                  <div className="rounded-full bg-gray-200 w-8 h-8 flex-shrink-0 mr-3"></div>
-                  <div>
-                    <div className="flex items-center">
-                      <p className="font-medium text-sm text-gray-800">Student profile</p>
-                      <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">updated</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">34 min ago</p>
-                  </div>
-                </div>
-                
-                <div className="p-4 flex items-start">
-                  <div className="rounded-full bg-purple-100 w-8 h-8 flex items-center justify-center text-purple-600 flex-shrink-0 mr-3">
-                    <Zap size={16} />
-                  </div>
-                  <div>
-                    <div className="flex items-center">
-                      <p className="font-medium text-sm text-gray-800">AI Assignment</p>
-                      <span className="ml-2 text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">auto-marked</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">50 min ago</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Manage Users */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
-            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-800">Manage Users</h2>
-              <button className="bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-1.5 rounded-full transition-colors flex items-center">
-                <UserPlus size={16} className="mr-1.5" />
-                Add User
-              </button>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 mr-3"></div>
-                        <div className="text-sm font-medium text-gray-900">Mary Kuria</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">Lecturer</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">mary.kuria@uniai.edu</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        Active
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs px-3 py-1 rounded-full transition-colors">
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                  
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 mr-3"></div>
-                        <div className="text-sm font-medium text-gray-900">John Mwangi</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">Student</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">john.mwangi@uniai.edu</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
-                        Pending
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs px-3 py-1 rounded-full transition-colors">
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                  
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 mr-3"></div>
-                        <div className="text-sm font-medium text-gray-900">Kevin Otieno</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">Lecturer</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">kevin.otieno@uniai.edu</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                        Suspended
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs px-3 py-1 rounded-full transition-colors">
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                  
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 mr-3"></div>
-                        <div className="text-sm font-medium text-gray-900">Grace Njeri</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">Student</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">grace.njeri@uniai.edu</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        Active
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs px-3 py-1 rounded-full transition-colors">
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            
-            <div className="p-4 border-t border-gray-100 text-right">
-              <a href="#" className="text-purple-600 hover:text-purple-800 text-sm font-medium inline-flex items-center">
-                View All Users
-                <ChevronRight size={16} className="ml-1" />
-              </a>
-            </div>
-          </div>
-          
-          {/* Units Overview */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
-            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-800">Units Overview</h2>
-              <button className="bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-1.5 rounded-full transition-colors flex items-center">
-                <FolderPlus size={16} className="mr-1.5" />
-                Add Unit
-              </button>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Name</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lecturer</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">Artificial Intelligence</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">CS401</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 mr-2"></div>
-                        <div className="text-sm text-gray-900">Mary Kuria</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">320</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs px-3 py-1 rounded-full transition-colors">
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                  
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">AI Ethics</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">CS410</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 mr-2"></div>
-                        <div className="text-sm text-gray-900">Kevin Otieno</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">240</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs px-3 py-1 rounded-full transition-colors">
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                  
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">Machine Learning</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">CS420</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 mr-2"></div>
-                        <div className="text-sm text-gray-900">Grace Njeri</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">210</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs px-3 py-1 rounded-full transition-colors">
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                  
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">Natural Language Processing</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">CS432</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 mr-2"></div>
-                        <div className="text-sm text-gray-900">Mary Kuria</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">185</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs px-3 py-1 rounded-full transition-colors">
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            
-            <div className="p-4 border-t border-gray-100 text-right">
-              <a href="#" className="text-purple-600 hover:text-purple-800 text-sm font-medium inline-flex items-center">
-                View All Units
-                <ChevronRight size={16} className="ml-1" />
-              </a>
-            </div>
-          </div>
-          
-          {/* AI Tools & System Health */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* AI Tools Usage */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-              <div className="p-5 border-b border-gray-100 flex items-center">
-                <Cpu size={18} className="text-purple-600 mr-2" />
-                <h2 className="text-lg font-semibold text-gray-800">AI Tools Usage</h2>
-              </div>
-              
-              <div className="p-5 space-y-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-gray-800 mb-1">4,230</div>
-                  <div className="text-sm text-gray-500 flex items-center justify-center">
-                    <Box size={14} className="mr-1 text-purple-500" />
-                    <span>Assignments Generated</span>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-800 mb-1">2,780</div>
-                    <div className="text-sm text-gray-500 flex items-center justify-center">
-                      <FileCheck size={14} className="mr-1 text-green-500" />
-                      <span>Auto-Marked</span>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-800 mb-1">1,150</div>
-                    <div className="text-sm text-gray-500 flex items-center justify-center">
-                      <FileText size={14} className="mr-1 text-blue-500" />
-                      <span>Personalized Tasks</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-4">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-                    <div className="bg-purple-600 h-2.5 rounded-full" style={{width: '75%'}}></div>
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>Weekly usage: 75%</span>
-                    <span>Limit: 5,000</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* System Health */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-              <div className="p-5 border-b border-gray-100 flex items-center">
-                <Server size={18} className="text-purple-600 mr-2" />
-                <h2 className="text-lg font-semibold text-gray-800">System Health</h2>
-              </div>
-              
-              <div className="p-5">
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                    <span className="text-sm font-medium text-gray-700">Server Status</span>
-                  </div>
-                  <span className="text-sm text-green-600 font-medium">Online</span>
-                </div>
-                
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-purple-500 mr-2"></div>
-                    <span className="text-sm font-medium text-gray-700">AI Engine</span>
-                  </div>
-                  <span className="text-sm text-green-600 font-medium">Operational</span>
-                </div>
-                
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
-                    <span className="text-sm font-medium text-gray-700">Database</span>
-                  </div>
-                  <span className="text-sm text-green-600 font-medium">Connected</span>
-                </div>
-                
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-amber-500 mr-2"></div>
-                    <span className="text-sm font-medium text-gray-700">API Services</span>
-                  </div>
-                  <span className="text-sm text-amber-600 font-medium">93% Uptime</span>
-                </div>
-                
-                <div className="pt-4 mt-4 border-t border-gray-100">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="text-sm font-medium text-gray-700">System Load</div>
-                    <div className="text-sm text-gray-600">42%</div>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-green-500 h-2.5 rounded-full" style={{width: '42%'}}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Help Section */}
-          <div className="fixed bottom-4 right-4 z-10">
-            <div className="relative group">
-              <button className="bg-purple-600 hover:bg-purple-700 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-              </button>
-              <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                <div className="text-sm font-medium text-gray-800 p-2">Need help?</div>
-                <div className="text-xs text-gray-500 p-2">Support 24/7</div>
-              </div>
-            </div>
-          </div>
+          )}
         </main>
       </motion.div>
     </div>
-  );
+  )
 }

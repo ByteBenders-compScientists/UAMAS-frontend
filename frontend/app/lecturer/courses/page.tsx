@@ -1,6 +1,8 @@
 
 'use client'
 import React, { useState, useEffect } from 'react';
+import { useLayout } from '@/components/LayoutController';
+import Sidebar from '@/components/Sidebar';
 import { 
   BookMarked, BarChart3, Clock, Monitor, Loader, Plus, Star, User, 
   Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp, GraduationCap,
@@ -297,65 +299,11 @@ interface SidebarProps {
   onNavigationClick: (path: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
-  isOpen,
-  onClose,
-  navigationItems,
-  isCreateDropdownOpen,
-  onCreateDropdownToggle,
-  onDropdownItemClick,
-  onNavigationClick
-}) => {
-  const [dropdownOpenIndex, setDropdownOpenIndex] = useState<number | null>(null);
 
-  const handleDropdownToggle = (index: number) => {
-    setDropdownOpenIndex(dropdownOpenIndex === index ? null : index);
-  };
 
-  return (
-    <>
-      {/* Mobile Overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
-          onClick={onClose}
-        />
-      )}
-      
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-rose-600 to-rose-700 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        aria-label="Sidebar"
-      >
-        <div className="flex flex-col h-full">
-          <SidebarHeader onClose={onClose} />
-          <UserProfile />
-          
-          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-            {navigationItems.map((item, idx) => (
-              <NavigationItemComponent
-                key={item.label}
-                item={item}
-                isDropdownOpen={dropdownOpenIndex === idx || (item.label === 'Create' && isCreateDropdownOpen)}
-                onDropdownToggle={() => {
-                  if (item.label === 'Create') {
-                    onCreateDropdownToggle();
-                  } else {
-                    handleDropdownToggle(idx);
-                  }
-                }}
-                onDropdownItemClick={onDropdownItemClick}
-                onClick={() => item.path && onNavigationClick(item.path)}
-              />
-            ))}
-          </nav>
-        </div>
-      </aside>
-    </>
-  );
-};
+  
+
+
 
 interface CourseCardProps {
   course: Course;
@@ -589,7 +537,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ course, onSubmit, onCancel }) =
 };
 
 const page: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout(); 
   const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>(SAMPLE_COURSES);
   const [showForm, setShowForm] = useState(false);
@@ -610,16 +558,9 @@ const page: React.FC = () => {
         { label: 'New CAT', path: '/lecturer/cat/create', icon: BookMarked }
       ] 
     },
-    { icon: FileText, label: 'Assignment', count: 8, path: '/lecturer/assignment' },
-    { icon: BookMarked, label: 'CATs', path: '/lecturer/cats' },
-    { icon: MessageCircle, label: 'Forums', path: '/lecturer/forums' },
-    { icon: BarChart3, label: 'Grades', path: '/lecturer/grades' },
-    { icon: Book, label: 'Library', path: '/lecturer/library' },
-    { icon: User, label: 'Profile', path: '/lecturer/profile' },
-    { icon: Settings, label: 'Settings', path: '/lecturer/settings' }
   ];
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+ 
   const toggleCreateDropdown = () => setCreateDropdownOpen(!createDropdownOpen);
 
   const handleCreateCourse = () => {
@@ -678,7 +619,7 @@ const page: React.FC = () => {
 
   const handleNavigationClick = (path: string) => {
     console.log('Navigating to:', path);
-    setSidebarOpen(false); // Close mobile sidebar on navigation
+    // Close mobile sidebar on navigation
   };
 
   const filteredCourses = courses.filter(course => {
@@ -696,17 +637,11 @@ const page: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar 
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        navigationItems={navigationItems}
-        isCreateDropdownOpen={createDropdownOpen}
-        onCreateDropdownToggle={toggleCreateDropdown}
-        onDropdownItemClick={handleDropdownItemClick}
-        onNavigationClick={handleNavigationClick}
+     
       />
       
       <div className="flex-1 flex flex-col lg:ml-64">
-        <TopHeader onSidebarToggle={toggleSidebar} />
+        <TopHeader onSidebarToggle={toggleCreateDropdown} /> 
         
         <main className="flex-1 p-6 max-w-7xl mx-auto w-ful">
           <div className="mb-6">

@@ -1,5 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
+import {useLayout} from '@/components/LayoutController';
+import Sidebar from '@/components/lecturerSidebar';
 import { 
   BookMarked, BarChart3, Clock, Monitor, Loader, Plus, Star, User, 
   Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp, GraduationCap,
@@ -373,50 +375,9 @@ interface SidebarProps {
   onDropdownItemClick: (path: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
-  isOpen,
-  onClose,
-  navigationItems,
-  isCreateDropdownOpen,
-  onCreateDropdownToggle,
-  onDropdownItemClick
-}) => {
-  const [dropdownOpenIndex, setDropdownOpenIndex] = useState<number | null>(null);
 
-  const handleDropdownToggle = (index: number) => {
-    setDropdownOpenIndex(dropdownOpenIndex === index ? null : index);
-  };
 
-  return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-40 w-64 bg-rose-600 shadow-lg transform transition-transform duration-300 lg:translate-x-0 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:static lg:inset-auto lg:shadow-none`}
-      aria-label="Sidebar"
-    >
-      <SidebarHeader onClose={onClose} />
-      <UserProfile />
-      <nav className="flex-1 px-4 py-6 space-y-1">
-        {navigationItems.map((item, idx) => (
-          <div key={item.label}>
-            <NavigationItemComponent
-              item={item}
-              isDropdownOpen={dropdownOpenIndex === idx || (item.label === 'Create' && isCreateDropdownOpen)}
-              onDropdownToggle={() => {
-                if (item.label === 'Create') {
-                  onCreateDropdownToggle();
-                } else {
-                  handleDropdownToggle(idx);
-                }
-              }}
-              onDropdownItemClick={onDropdownItemClick}
-            />
-          </div>
-        ))}
-      </nav>
-    </aside>
-  );
-};
+  
 
 interface WeekAndCourseSelectorProps {
   selectedWeek: number;
@@ -662,7 +623,7 @@ const ForumStats: React.FC<ForumStatsProps> = ({ forums }) => {
 
 // ===== MAIN COMPONENT =====
 const page: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(2);
   const [selectedCourse, setSelectedCourse] = useState('');
@@ -671,29 +632,8 @@ const page: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const navigationItems: NavigationItem[] = [
-    { icon: Monitor, label: 'Dashboard', path: '/lecturer/dashboard' },
-    { icon: GraduationCap, label: 'Courses', path: '/lecturer/courses' },
-    { 
-      icon: Plus, 
-      label: 'Create', 
-      hasDropdown: true,
-      dropdownItems: [
-        { label: 'New Assignment', path: '/lecturer/assignment/create', icon: FileText },
-        { label: 'New Task', path: '/lecturer/task/create', icon: BookOpen },
-        { label: 'New CAT', path: '/lecturer/cat/create', icon: BookMarked }
-      ] 
-    },
-    { icon: FileText, label: 'Assignment', count: 8, path: '/lecturer/assignment' },
-    { icon: BookMarked, label: 'CATs', path: '/lecturer/cats' },
-    { icon: MessageCircle, label: 'Forums', active: true, path: '/lecturer/forums' },
-    { icon: BarChart3, label: 'Grades', path: '/lecturer/grades' },
-    { icon: Book, label: 'Library', path: '/lecturer/library' },
-    { icon: User, label: 'Profile', path: '/lecturer/profile' },
-    { icon: Settings, label: 'Settings', path: '/lecturer/settings' }
-  ];
-
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  
+  
   const toggleCreateDropdown = () => setCreateDropdownOpen(!createDropdownOpen);
 
   const handleDropdownItemClick = (path: string) => {
@@ -732,16 +672,12 @@ const page: React.FC = () => {
 
     <div className="flex h-screen bg-gray-100">
       <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
-        navigationItems={navigationItems}
-        isCreateDropdownOpen={createDropdownOpen}
-        onCreateDropdownToggle={toggleCreateDropdown}
-        onDropdownItemClick={handleDropdownItemClick}
+        
       />
       
-      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
-        <TopHeader onSidebarToggle={toggleSidebar} />
+      <div className="flex-1 flex flex-col lg:ml-64">
+         <TopHeader onSidebarToggle={toggleCreateDropdown} />
+        
         
         <div className="p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Forums</h1>

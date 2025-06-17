@@ -21,6 +21,7 @@ import {
   X,
   LucideIcon
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface SidebarProps {
   showMobileOnly?: boolean;
@@ -215,18 +216,14 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
               <div className="bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl p-4 text-center">
                 {/* We'll use an inline SVG instead of an Image component */}
                 <div className="mx-auto mb-2 -mt-6 h-24 w-full flex justify-center">
-                  <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 87.5C70.7107 87.5 87.5 70.7107 87.5 50C87.5 29.2893 70.7107 12.5 50 12.5C29.2893 12.5 12.5 29.2893 12.5 50C12.5 70.7107 29.2893 87.5 50 87.5Z" fill="#E6F7F1"/>
-                    <path d="M65 35H35C33.619 35 32.5 36.119 32.5 37.5V62.5C32.5 63.881 33.619 65 35 65H65C66.381 65 67.5 63.881 67.5 62.5V37.5C67.5 36.119 66.381 35 65 35Z" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M57.5 27.5V32.5" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M42.5 27.5V32.5" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M32.5 42.5H67.5" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M45 50H40V55H45V50Z" fill="#047857"/>
-                    <path d="M55 50H50V55H55V50Z" fill="#047857"/>
-                    <path d="M45 57.5H40V62.5H45V57.5Z" fill="#047857"/>
-                    <path d="M55 57.5H50V62.5H55V57.5Z" fill="#047857"/>
-                    <path d="M65 50H60V55H65V50Z" fill="#047857"/>
-                  </svg>
+                  <Image
+                  src='/assets/academic-excellence.svg'
+                  width={150}
+                  height={150}
+                  quality={100}
+                  className=''
+                  alt='svg'
+                  />
                 </div>
                 <p className="text-xs text-emerald-800 font-medium">Academic Excellence</p>
                 <p className="text-xs text-emerald-600 mt-1">Track your progress</p>
