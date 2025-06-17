@@ -18,6 +18,7 @@ import {
   Loader2,
   Eye,
   RefreshCw,
+  Calendar,
 } from "lucide-react";
 
 // ===== TYPES =====
@@ -36,6 +37,7 @@ interface Assessment {
   verified: boolean;
   created_at: string;
   creator_id: string;
+  week: number;
   status?: string;
 }
 
@@ -54,7 +56,14 @@ interface Course {
   id: string;
   name: string;
   code: string;
-  color: string;
+  color?: string;
+}
+
+interface Unit {
+  id: string;
+  name: string;
+  code: string;
+  course_id: string;
 }
 
 // ===== API CONFIGURATION =====
@@ -65,121 +74,141 @@ const getAuthToken = () => {
   return localStorage.getItem("access_token") || "";
 };
 
-const apiHeaders = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${getAuthToken()}`,
-};
+
 
 // ===== API FUNCTIONS =====
 const api = {
+  // Get all courses
+  getCourses: async (): Promise<Course[]> => {
+    const response = await fetch(`${API_BASE_URL}/bd/courses`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error("Failed to fetch courses");
+    return response.json();
+  },
+
+  // Get all units
+  getUnits: async (): Promise<Unit[]> => {
+    const response = await fetch(`${API_BASE_URL}/bd/units`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error("Failed to fetch units");
+    return response.json();
+  },
+
   // Get all assessments for lecturer
   getAssessments: async (): Promise<Assessment[]> => {
     const response = await fetch(`${API_BASE_URL}/bd/lecturer/assessments`, {
-      method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
     });
     if (!response.ok) throw new Error("Failed to fetch assessments");
     return response.json();
   },
 
   // Generate assessment with AI
-  generateAssessment: async (data: any): Promise<{ assessment_id: string; message: string; title: string }> => {
+  generateAssessment: async (
+    data: any
+  ): Promise<{ assessment_id: string; message: string; title: string }> => {
     const response = await fetch(`${API_BASE_URL}/bd/ai/generate-assessments`, {
       method: "POST",
       headers: {
-          'Content-Type': 'application/json',
-        },
-      credentials: 'include',
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
       body: JSON.stringify(data),
     });
+    
     if (!response.ok) throw new Error("Failed to generate assessment");
     return response.json();
   },
 
   // Create assessment manually
-  createAssessment: async (data: any): Promise<{ assessment_id: string; message: string; title: string }> => {
-    const response = await fetch(`${API_BASE_URL}/bd/lecturer/generate-assessments`, {
-      method: "POST",
-      headers: {
-          'Content-Type': 'application/json',
+  createAssessment: async (
+    data: any
+  ): Promise<{ assessment_id: string; message: string; title: string }> => {
+     const jsonData = JSON.stringify(data);
+     console.log("JSON payload:", jsonData);
+     console.log("JSON payload length:", jsonData.length);
+    const response = await fetch(
+      `${API_BASE_URL}/bd/lecturer/generate-assessments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      credentials: 'include',
-      body: JSON.stringify(data),
-    });
+        credentials: "include",
+        body: JSON.stringify(data),
+      }
+    );
+    console.log(data)
     if (!response.ok) throw new Error("Failed to create assessment");
     return response.json();
   },
 
   // Verify AI generated assessment
-  verifyAssessment: async (assessmentId: string): Promise<{ assessment_id: string; message: string; title: string }> => {
-    const response = await fetch(`${API_BASE_URL}/bd/lecturer/assessments/${assessmentId}/verify`, {
-      headers: {
-          'Content-Type': 'application/json',
+  verifyAssessment: async (
+    assessmentId: string
+  ): Promise<{ assessment_id: string; message: string; title: string }> => {
+    const response = await fetch(
+      `${API_BASE_URL}/bd/lecturer/assessments/${assessmentId}/verify`,
+      {
+        headers: {
+          "Content-Type": "application/json",
         },
-        credentials: 'include'
-    });
+        credentials: "include",
+      }
+    );
     if (!response.ok) throw new Error("Failed to verify assessment");
     return response.json();
   },
 
   // Add question to assessment
-  addQuestion: async (assessmentId: string, questionData: any): Promise<{ message: string; question_id: string }> => {
-    const response = await fetch(`${API_BASE_URL}/bd/lecturer/assessments/${assessmentId}/questions`, {
-      method: "POST",
-      headers: {
-          'Content-Type': 'application/json',
+  addQuestion: async (
+    assessmentId: string,
+    questionData: any
+  ): Promise<{ message: string; question_id: string }> => {
+    const response = await fetch(
+      `${API_BASE_URL}/bd/lecturer/assessments/${assessmentId}/questions`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      credentials: 'include',
-      body: JSON.stringify(questionData),
-    });
+        credentials: "include",
+        body: JSON.stringify(questionData),
+      }
+    );
     if (!response.ok) throw new Error("Failed to add question");
     return response.json();
   },
 
   // Get questions for assessment
   getQuestions: async (assessmentId: string): Promise<Question[]> => {
-    const response = await fetch(`${API_BASE_URL}/bd/assessments/${assessmentId}/questions`, {
-      headers: {
-          'Content-Type': 'application/json',
+    const response = await fetch(
+      `${API_BASE_URL}/bd/assessments/${assessmentId}/questions`,
+      {
+        headers: {
+          "Content-Type": "application/json",
         },
-      credentials: 'include'
-    });
+        credentials: "include",
+      }
+    );
     if (!response.ok) throw new Error("Failed to fetch questions");
     return response.json();
   },
 };
-
-// ===== SAMPLE DATA =====
-const SAMPLE_COURSES: Course[] = [
-  {
-    id: "f2c62aba-b9fd-466b-afe4-a360c4be4bb4",
-    name: "Computer Science 201",
-    code: "CS201",
-    color: "bg-rose-500",
-  },
-  {
-    id: "2",
-    name: "Computer Science 301",
-    code: "CS301",
-    color: "bg-blue-500",
-  },
-  {
-    id: "3",
-    name: "Database Management",
-    code: "CS202",
-    color: "bg-purple-500",
-  },
-  { id: "4", name: "Operating Systems", code: "CS203", color: "bg-green-500" },
-  {
-    id: "5",
-    name: "Software Engineering",
-    code: "CS302",
-    color: "bg-yellow-500",
-  },
-];
 
 // ===== UTILITY FUNCTIONS =====
 const formatDate = (dateString: string) => {
@@ -191,10 +220,32 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString(undefined, options);
 };
 
-const getCourseByCode = (courseId: string) => {
-  return (
-    SAMPLE_COURSES.find((course) => course.id === courseId) || SAMPLE_COURSES[0]
-  );
+// Course colors for visual distinction
+const COURSE_COLORS = [
+  "bg-rose-500",
+  "bg-blue-500",
+  "bg-purple-500",
+  "bg-green-500",
+  "bg-yellow-500",
+  "bg-indigo-500",
+  "bg-pink-500",
+  "bg-teal-500",
+  "bg-orange-500",
+  "bg-cyan-500",
+];
+
+const getCourseByCode = (courseId: string, courses: Course[]) => {
+  const course = courses.find((course) => course.id === courseId);
+  if (!course) return null;
+
+  // Add color if not present
+  if (!course.color) {
+    const colorIndex =
+      courses.findIndex((c) => c.id === courseId) % COURSE_COLORS.length;
+    course.color = COURSE_COLORS[colorIndex];
+  }
+
+  return course;
 };
 
 const getDifficultyColor = (difficulty: string) => {
@@ -216,22 +267,48 @@ const CreateAssessmentModal: React.FC<{
   onClose: () => void;
   onSubmit: (data: any, isAI: boolean) => void;
   loading: boolean;
-}> = ({ isOpen, onClose, onSubmit, loading }) => {
+  courses: Course[];
+  units: Unit[];
+}> = ({ isOpen, onClose, onSubmit, loading, courses, units }) => {
+  const { currentWeek } = useLayout();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     type: "CAT",
-    unit: "",
+    unit_id: "",
     course_id: "",
     questions_type: "close-ended",
     topic: "",
     total_marks: 20,
     difficulty: "intermediate",
     number_of_questions: 5,
+    week: currentWeek,
   });
+
+  // Update week when currentWeek changes and modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      setFormData((prev) => ({ ...prev, week: currentWeek }));
+    }
+  }, [isOpen, currentWeek]);
+
+  // Reset unit when course changes
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, unit_id: "" }));
+  }, [formData.course_id]);
+
+  // Filter units based on selected course
+  const availableUnits = units.filter(unit => unit.course_id === formData.course_id);
 
   const handleSubmit = (isAI: boolean) => {
     onSubmit(formData, isAI);
+  };
+
+  const handleWeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const week = parseInt(e.target.value);
+    if (week >= 1 && week <= 52) {
+      setFormData({ ...formData, week });
+    }
   };
 
   if (!isOpen) return null;
@@ -301,22 +378,7 @@ const CreateAssessmentModal: React.FC<{
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Unit Code
-              </label>
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                value={formData.unit}
-                onChange={(e) =>
-                  setFormData({ ...formData, unit: e.target.value })
-                }
-                placeholder="e.g., CSC2201"
-              />
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Course
@@ -329,12 +391,61 @@ const CreateAssessmentModal: React.FC<{
                 }
               >
                 <option value="">Select Course</option>
-                {SAMPLE_COURSES.map((course) => (
+                {courses.map((course) => (
                   <option key={course.id} value={course.id}>
                     {course.name} ({course.code})
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Unit
+              </label>
+              <select
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                value={formData.unit_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, unit_id: e.target.value })
+                }
+                disabled={!formData.course_id}
+              >
+                <option value="">
+                  {!formData.course_id ? "Select Course First" : "Select Unit"}
+                </option>
+                {availableUnits.map((unit) => (
+                  <option key={unit.id} value={unit.id}>
+                    {unit.name} ({unit.code})
+                  </option>
+                ))}
+              </select>
+              {!formData.course_id && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Please select a course first to see available units
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="flex items-center space-x-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>Week</span>
+                </div>
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="52"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                value={formData.week}
+                onChange={handleWeekChange}
+                placeholder={`Current: ${currentWeek}`}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Current week: {currentWeek}
+              </p>
             </div>
           </div>
 
@@ -632,7 +743,8 @@ const ViewQuestionsModal: React.FC<{
             {assessment.title} - Questions
           </h2>
           <p className="text-gray-600 mt-1">
-            {questions.length} question{questions.length !== 1 ? "s" : ""} • Total: {assessment.total_marks} marks
+            {questions.length} question{questions.length !== 1 ? "s" : ""} •
+            Total: {assessment.total_marks} marks • Week {assessment.week}
           </p>
         </div>
 
@@ -655,7 +767,10 @@ const ViewQuestionsModal: React.FC<{
           ) : (
             <div className="space-y-4">
               {questions.map((question, index) => (
-                <div key={question.id} className="border border-gray-200 rounded-lg p-4">
+                <div
+                  key={question.id}
+                  className="border border-gray-200 rounded-lg p-4"
+                >
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-medium text-gray-800">
                       Question {index + 1}
@@ -664,11 +779,13 @@ const ViewQuestionsModal: React.FC<{
                       <span className="text-sm text-gray-500">
                         {question.marks} mark{question.marks !== 1 ? "s" : ""}
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        question.type === "open-ended" 
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-green-100 text-green-700"
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          question.type === "open-ended"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
                         {question.type}
                       </span>
                     </div>
@@ -676,14 +793,20 @@ const ViewQuestionsModal: React.FC<{
                   <p className="text-gray-700 mb-3">{question.text}</p>
                   {question.rubric && (
                     <div className="mb-2">
-                      <p className="text-sm font-medium text-gray-600 mb-1">Rubric:</p>
+                      <p className="text-sm font-medium text-gray-600 mb-1">
+                        Rubric:
+                      </p>
                       <p className="text-sm text-gray-600">{question.rubric}</p>
                     </div>
                   )}
                   {question.correct_answer && (
                     <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">Expected Answer:</p>
-                      <p className="text-sm text-gray-600">{question.correct_answer}</p>
+                      <p className="text-sm font-medium text-gray-600 mb-1">
+                        Expected Answer:
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {question.correct_answer}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -770,7 +893,14 @@ const TypeAndCourseSelector: React.FC<{
   selectedCourse: string;
   onTypeChange: (type: string) => void;
   onCourseChange: (courseId: string) => void;
-}> = ({ selectedType, selectedCourse, onTypeChange, onCourseChange }) => (
+  courses: Course[];
+}> = ({
+  selectedType,
+  selectedCourse,
+  onTypeChange,
+  onCourseChange,
+  courses,
+}) => (
   <div className="flex flex-col md:flex-row md:space-x-4 mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
     <div className="flex-1 mb-3 md:mb-0">
       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -796,7 +926,7 @@ const TypeAndCourseSelector: React.FC<{
         onChange={(e) => onCourseChange(e.target.value)}
       >
         <option value="">All Courses</option>
-        {SAMPLE_COURSES.map((course) => (
+        {courses.map((course) => (
           <option key={course.id} value={course.id}>
             {course.name} ({course.code})
           </option>
@@ -814,6 +944,7 @@ const AssessmentCard: React.FC<{
   onAddQuestion: (assessment: Assessment) => void;
   onVerify: (id: string) => void;
   index: number;
+  courses: Course[];
 }> = ({
   assessment,
   onView,
@@ -822,8 +953,9 @@ const AssessmentCard: React.FC<{
   onAddQuestion,
   onVerify,
   index,
+  courses,
 }) => {
-  const course = getCourseByCode(assessment.course_id);
+  const course = getCourseByCode(assessment.course_id, courses);
 
   return (
     <motion.div
@@ -838,10 +970,21 @@ const AssessmentCard: React.FC<{
             {assessment.title}
           </h3>
           <div className="flex items-center space-x-2 mb-2">
-            <span
-              className={`inline-block w-3 h-3 rounded-full ${course.color}`}
-            ></span>
-            <span className="text-sm text-gray-600">{assessment.unit_id}</span>
+            {course && (
+              <>
+                <span
+                  className={`inline-block w-3 h-3 rounded-full ${course.color}`}
+                ></span>
+                <span className="text-sm text-gray-600">
+                  {assessment.unit_id}
+                </span>
+              </>
+            )}
+            <span className="text-xs text-gray-500">•</span>
+            <span className="text-xs text-gray-500 flex items-center">
+              <Calendar className="w-3 h-3 mr-1" />
+              Week {assessment.week}
+            </span>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -931,10 +1074,14 @@ const AssessmentsDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [hasContent, setHasContent] = useState(false);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
-  const [isViewQuestionsModalOpen, setIsViewQuestionsModalOpen] = useState(false);
-  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
+  const [isViewQuestionsModalOpen, setIsViewQuestionsModalOpen] =
+    useState(false);
+  const [selectedAssessment, setSelectedAssessment] =
+    useState<Assessment | null>(null);
   const [selectedType, setSelectedType] = useState<string>("");
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [createLoading, setCreateLoading] = useState(false);
@@ -950,14 +1097,38 @@ const AssessmentsDashboard: React.FC = () => {
       (selectedCourse === "" || assessment.course_id === selectedCourse)
   );
 
-  // Load assessments on component mount
+  // Load data on component mount
   useEffect(() => {
-    loadAssessments();
+    loadInitialData();
   }, []);
+
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load courses, units, and assessments in parallel
+      const [coursesData, unitsData, assessmentsData] = await Promise.all([
+        api.getCourses(),
+        api.getUnits(),
+        api.getAssessments(),
+      ]);
+
+      setCourses(coursesData);
+      setUnits(unitsData);
+      setAssessments(assessmentsData);
+      setHasContent(assessmentsData.length > 0);
+    } catch (error) {
+      console.error("Error loading data:", error);
+      setError("Failed to load data. Please try again.");
+      setHasContent(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadAssessments = async () => {
     try {
-      setLoading(true);
       setError(null);
       const data = await api.getAssessments();
       setAssessments(data);
@@ -965,9 +1136,6 @@ const AssessmentsDashboard: React.FC = () => {
     } catch (error) {
       console.error("Error loading assessments:", error);
       setError("Failed to load assessments. Please try again.");
-      setHasContent(false);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -986,8 +1154,12 @@ const AssessmentsDashboard: React.FC = () => {
       // Reload assessments to get the updated list
       await loadAssessments();
       setIsCreateModalOpen(false);
-      
-      alert(`Assessment "${response.title}" ${isAI ? 'generated' : 'created'} successfully!`);
+
+      alert(
+        `Assessment "${response.title}" ${
+          isAI ? "generated" : "created"
+        } successfully!`
+      );
     } catch (error) {
       console.error("Error creating assessment:", error);
       alert("Failed to create assessment. Please try again.");
@@ -1018,7 +1190,7 @@ const AssessmentsDashboard: React.FC = () => {
     try {
       setError(null);
       const response = await api.verifyAssessment(assessmentId);
-      
+
       // Update local state
       setAssessments((prev) =>
         prev.map((assessment) =>
@@ -1027,7 +1199,7 @@ const AssessmentsDashboard: React.FC = () => {
             : assessment
         )
       );
-      
+
       alert(`Assessment "${response.title}" verified successfully!`);
     } catch (error) {
       console.error("Error verifying assessment:", error);
@@ -1166,7 +1338,7 @@ const AssessmentsDashboard: React.FC = () => {
                   <span className="text-red-800">{error}</span>
                 </div>
                 <button
-                  onClick={loadAssessments}
+                  onClick={loadInitialData}
                   className="text-red-600 hover:text-red-800 flex items-center"
                 >
                   <RefreshCw className="w-4 h-4 mr-1" />
@@ -1183,6 +1355,7 @@ const AssessmentsDashboard: React.FC = () => {
                 description="Create your first assessment to get started. You can generate assessments with AI or create them manually with custom questions."
                 icon={<BookMarked size={48} />}
                 onAction={() => setIsCreateModalOpen(true)}
+                actionLabel="Create Assessment"
               />
             </div>
           ) : (
@@ -1201,6 +1374,7 @@ const AssessmentsDashboard: React.FC = () => {
                 selectedCourse={selectedCourse}
                 onTypeChange={setSelectedType}
                 onCourseChange={setSelectedCourse}
+                courses={courses}
               />
 
               <AssessmentStatsCards assessments={filteredAssessments} />
@@ -1213,7 +1387,11 @@ const AssessmentsDashboard: React.FC = () => {
                       {selectedType &&
                         ` - ${selectedType === "CAT" ? "CATs" : "Assignments"}`}
                       {selectedCourse &&
-                        ` (${getCourseByCode(selectedCourse).code})`}
+                        courses.length > 0 &&
+                        ` (${
+                          getCourseByCode(selectedCourse, courses)?.code ||
+                          "Unknown"
+                        })`}
                     </h2>
                     <p className="text-sm text-gray-600 mt-1">
                       {filteredAssessments.length} assessment
@@ -1274,6 +1452,7 @@ const AssessmentsDashboard: React.FC = () => {
                           setIsQuestionModalOpen(true);
                         }}
                         onVerify={handleVerifyAssessment}
+                        courses={courses}
                       />
                     ))}
                   </div>
@@ -1290,6 +1469,8 @@ const AssessmentsDashboard: React.FC = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateAssessment}
         loading={createLoading}
+        courses={courses}
+        units={units}
       />
 
       {/* Add Question Modal */}
