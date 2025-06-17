@@ -1,32 +1,43 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useLayout } from '@/components/LayoutController';
-import Sidebar from '@/components/lecturerSidebar';
-import Header from '@/components/Header';
-import EmptyState from '@/components/EmptyState';
-import { 
-  BookMarked, Plus, CheckCircle, Wand2, User, Eye, Trash2,
-  ClipboardList, FileCheck, AlertCircle, Loader2, CalendarDays, Timer
-} from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useLayout } from "@/components/LayoutController";
+import Sidebar from "@/components/lecturerSidebar";
+import Header from "@/components/Header";
+import EmptyState from "@/components/EmptyState";
+import {
+  BookMarked,
+  Plus,
+  CheckCircle,
+  Wand2,
+  User,
+  ClipboardList,
+  FileCheck,
+  AlertCircle,
+  Loader2,
+  Eye,
+  RefreshCw,
+  Calendar,
+} from "lucide-react";
 
 // ===== TYPES =====
 interface Assessment {
   id: string;
   title: string;
   description: string;
-  type: 'CAT' | 'assignment';
-  unit: string;
+  type: "CAT" | "assignment";
+  unit_id: string;
   course_id: string;
-  questions_type: 'open-ended' | 'close-ended';
+  questions_type: "open-ended" | "close-ended";
   topic: string;
   total_marks: number;
-  difficulty: 'easy' | 'intermediate' | 'hard';
+  difficulty: "easy" | "intermediate" | "hard";
   number_of_questions: number;
   verified: boolean;
   created_at: string;
   creator_id: string;
+  week: number;
   status?: string;
 }
 
@@ -34,7 +45,7 @@ interface Question {
   id: string;
   text: string;
   marks: number;
-  type: 'open-ended' | 'close-ended';
+  type: "open-ended" | "close-ended";
   rubric: string;
   correct_answer: string;
   assessment_id: string;
@@ -45,69 +56,208 @@ interface Course {
   id: string;
   name: string;
   code: string;
-  color: string;
+  color?: string;
 }
 
-// ===== SAMPLE DATA =====
-const SAMPLE_COURSES: Course[] = [
-  { id: 'f2c62aba-b9fd-466b-afe4-a360c4be4bb4', name: 'Computer Science 201', code: 'CS201', color: 'bg-rose-500' },
-  { id: '2', name: 'Computer Science 301', code: 'CS301', color: 'bg-blue-500' },
-  { id: '3', name: 'Database Management', code: 'CS202', color: 'bg-purple-500' },
-  { id: '4', name: 'Operating Systems', code: 'CS203', color: 'bg-green-500' },
-  { id: '5', name: 'Software Engineering', code: 'CS302', color: 'bg-yellow-500' }
-];
+interface Unit {
+  id: string;
+  name: string;
+  code: string;
+  course_id: string;
+}
 
-const INITIAL_ASSESSMENTS: Assessment[] = [
-  {
-    id: 'fa253cf4-77fa-46e7-9634-ce922cbe47b4',
-    title: 'Data Structures',
-    description: 'This assessment covers stacks, queues, and trees.',
-    type: 'assignment',
-    unit: 'CSC2201',
-    course_id: 'f2c62aba-b9fd-466b-afe4-a360c4be4bb4',
-    questions_type: 'open-ended',
-    topic: 'Trees and Graphs',
-    total_marks: 30,
-    difficulty: 'intermediate',
-    number_of_questions: 15,
-    verified: true,
-    created_at: '2025-05-26T16:24:08.075025',
-    creator_id: 'eb93908e-8a2f-4c3a-9eb2-4cd429d90c6b'
+// ===== API CONFIGURATION =====
+const API_BASE_URL = "http://localhost:8080/api/v1";
+
+// Get auth token from localStorage or context
+const getAuthToken = () => {
+  return localStorage.getItem("access_token") || "";
+};
+
+
+
+// ===== API FUNCTIONS =====
+const api = {
+  // Get all courses
+  getCourses: async (): Promise<Course[]> => {
+    const response = await fetch(`${API_BASE_URL}/bd/courses`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error("Failed to fetch courses");
+    return response.json();
   },
-  {
-    id: 'f2335e03-ec05-4742-b98b-ecc5d562b2c9',
-    title: 'Introduction to AI Quiz',
-    description: 'Quiz on basic AI concepts',
-    type: 'CAT',
-    unit: 'AI101',
-    course_id: 'f2c62aba-b9fd-466b-afe4-a360c4be4bb4',
-    questions_type: 'close-ended',
-    topic: 'History and Applications of AI',
-    total_marks: 20,
-    difficulty: 'easy',
-    number_of_questions: 5,
-    verified: true,
-    created_at: '2025-05-25T10:30:00.000000',
-    creator_id: 'eb93908e-8a2f-4c3a-9eb2-4cd429d90c6b'
-  }
-];
+
+  // Get all units
+  getUnits: async (): Promise<Unit[]> => {
+    const response = await fetch(`${API_BASE_URL}/bd/units`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error("Failed to fetch units");
+    return response.json();
+  },
+
+  // Get all assessments for lecturer
+  getAssessments: async (): Promise<Assessment[]> => {
+    const response = await fetch(`${API_BASE_URL}/bd/lecturer/assessments`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error("Failed to fetch assessments");
+    return response.json();
+  },
+
+  // Generate assessment with AI
+  generateAssessment: async (
+    data: any
+  ): Promise<{ assessment_id: string; message: string; title: string }> => {
+    const response = await fetch(`${API_BASE_URL}/bd/ai/generate-assessments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) throw new Error("Failed to generate assessment");
+    return response.json();
+  },
+
+  // Create assessment manually
+  createAssessment: async (
+    data: any
+  ): Promise<{ assessment_id: string; message: string; title: string }> => {
+     const jsonData = JSON.stringify(data);
+     console.log("JSON payload:", jsonData);
+     console.log("JSON payload length:", jsonData.length);
+    const response = await fetch(
+      `${API_BASE_URL}/bd/lecturer/generate-assessments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(data),
+      }
+    );
+    console.log(data)
+    if (!response.ok) throw new Error("Failed to create assessment");
+    return response.json();
+  },
+
+  // Verify AI generated assessment
+  verifyAssessment: async (
+    assessmentId: string
+  ): Promise<{ assessment_id: string; message: string; title: string }> => {
+    const response = await fetch(
+      `${API_BASE_URL}/bd/lecturer/assessments/${assessmentId}/verify`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      }
+    );
+    if (!response.ok) throw new Error("Failed to verify assessment");
+    return response.json();
+  },
+
+  // Add question to assessment
+  addQuestion: async (
+    assessmentId: string,
+    questionData: any
+  ): Promise<{ message: string; question_id: string }> => {
+    const response = await fetch(
+      `${API_BASE_URL}/bd/lecturer/assessments/${assessmentId}/questions`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(questionData),
+      }
+    );
+    if (!response.ok) throw new Error("Failed to add question");
+    return response.json();
+  },
+
+  // Get questions for assessment
+  getQuestions: async (assessmentId: string): Promise<Question[]> => {
+    const response = await fetch(
+      `${API_BASE_URL}/bd/assessments/${assessmentId}/questions`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      }
+    );
+    if (!response.ok) throw new Error("Failed to fetch questions");
+    return response.json();
+  },
+};
 
 // ===== UTILITY FUNCTIONS =====
 const formatDate = (dateString: string) => {
-  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  };
   return new Date(dateString).toLocaleDateString(undefined, options);
 };
 
-const getCourseByCode = (courseId: string) => {
-  return SAMPLE_COURSES.find(course => course.id === courseId) || SAMPLE_COURSES[0];
+// Course colors for visual distinction
+const COURSE_COLORS = [
+  "bg-rose-500",
+  "bg-blue-500",
+  "bg-purple-500",
+  "bg-green-500",
+  "bg-yellow-500",
+  "bg-indigo-500",
+  "bg-pink-500",
+  "bg-teal-500",
+  "bg-orange-500",
+  "bg-cyan-500",
+];
+
+const getCourseByCode = (courseId: string, courses: Course[]) => {
+  const course = courses.find((course) => course.id === courseId);
+  if (!course) return null;
+
+  // Add color if not present
+  if (!course.color) {
+    const colorIndex =
+      courses.findIndex((c) => c.id === courseId) % COURSE_COLORS.length;
+    course.color = COURSE_COLORS[colorIndex];
+  }
+
+  return course;
 };
 
 const getDifficultyColor = (difficulty: string) => {
   switch (difficulty) {
-    case 'easy': return 'bg-green-100 text-green-700';
-    case 'intermediate': return 'bg-yellow-100 text-yellow-700';
-    case 'hard': return 'bg-red-100 text-red-700';
-    default: return 'bg-gray-100 text-gray-700';
+    case "easy":
+      return "bg-green-100 text-green-700";
+    case "intermediate":
+      return "bg-yellow-100 text-yellow-700";
+    case "hard":
+      return "bg-red-100 text-red-700";
+    default:
+      return "bg-gray-100 text-gray-700";
   }
 };
 
@@ -117,22 +267,48 @@ const CreateAssessmentModal: React.FC<{
   onClose: () => void;
   onSubmit: (data: any, isAI: boolean) => void;
   loading: boolean;
-}> = ({ isOpen, onClose, onSubmit, loading }) => {
+  courses: Course[];
+  units: Unit[];
+}> = ({ isOpen, onClose, onSubmit, loading, courses, units }) => {
+  const { currentWeek } = useLayout();
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    type: 'CAT',
-    unit: '',
-    course_id: '',
-    questions_type: 'close-ended',
-    topic: '',
+    title: "",
+    description: "",
+    type: "CAT",
+    unit_id: "",
+    course_id: "",
+    questions_type: "close-ended",
+    topic: "",
     total_marks: 20,
-    difficulty: 'intermediate',
-    number_of_questions: 5
+    difficulty: "intermediate",
+    number_of_questions: 5,
+    week: currentWeek,
   });
+
+  // Update week when currentWeek changes and modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      setFormData((prev) => ({ ...prev, week: currentWeek }));
+    }
+  }, [isOpen, currentWeek]);
+
+  // Reset unit when course changes
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, unit_id: "" }));
+  }, [formData.course_id]);
+
+  // Filter units based on selected course
+  const availableUnits = units.filter(unit => unit.course_id === formData.course_id);
 
   const handleSubmit = (isAI: boolean) => {
     onSubmit(formData, isAI);
+  };
+
+  const handleWeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const week = parseInt(e.target.value);
+    if (week >= 1 && week <= 52) {
+      setFormData({ ...formData, week });
+    }
   };
 
   if (!isOpen) return null;
@@ -145,29 +321,41 @@ const CreateAssessmentModal: React.FC<{
         className="bg-white rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto"
       >
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">Create New Assessment</h2>
-          <p className="text-gray-600 mt-1">Generate with AI or create manually</p>
+          <h2 className="text-xl font-semibold text-gray-800">
+            Create New Assessment
+          </h2>
+          <p className="text-gray-600 mt-1">
+            Generate with AI or create manually
+          </p>
         </div>
 
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Title
+              </label>
               <input
                 type="text"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 placeholder="Assessment title"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Type
+              </label>
               <select
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={formData.type}
-                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, type: e.target.value })
+                }
               >
                 <option value="CAT">CAT</option>
                 <option value="assignment">Assignment</option>
@@ -176,50 +364,102 @@ const CreateAssessmentModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description
+            </label>
             <textarea
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
               rows={3}
               value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               placeholder="Assessment description"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Unit Code</label>
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                value={formData.unit}
-                onChange={(e) => setFormData({...formData, unit: e.target.value})}
-                placeholder="e.g., CSC2201"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Course</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Course
+              </label>
               <select
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={formData.course_id}
-                onChange={(e) => setFormData({...formData, course_id: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, course_id: e.target.value })
+                }
               >
                 <option value="">Select Course</option>
-                {SAMPLE_COURSES.map(course => (
-                  <option key={course.id} value={course.id}>{course.name} ({course.code})</option>
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.name} ({course.code})
+                  </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Unit
+              </label>
+              <select
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                value={formData.unit_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, unit_id: e.target.value })
+                }
+                disabled={!formData.course_id}
+              >
+                <option value="">
+                  {!formData.course_id ? "Select Course First" : "Select Unit"}
+                </option>
+                {availableUnits.map((unit) => (
+                  <option key={unit.id} value={unit.id}>
+                    {unit.name} ({unit.code})
+                  </option>
+                ))}
+              </select>
+              {!formData.course_id && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Please select a course first to see available units
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="flex items-center space-x-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>Week</span>
+                </div>
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="52"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                value={formData.week}
+                onChange={handleWeekChange}
+                placeholder={`Current: ${currentWeek}`}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Current week: {currentWeek}
+              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Question Type
+              </label>
               <select
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={formData.questions_type}
-                onChange={(e) => setFormData({...formData, questions_type: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, questions_type: e.target.value })
+                }
               >
                 <option value="close-ended">Close-ended</option>
                 <option value="open-ended">Open-ended</option>
@@ -227,11 +467,15 @@ const CreateAssessmentModal: React.FC<{
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Difficulty
+              </label>
               <select
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={formData.difficulty}
-                onChange={(e) => setFormData({...formData, difficulty: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, difficulty: e.target.value })
+                }
               >
                 <option value="easy">Easy</option>
                 <option value="intermediate">Intermediate</option>
@@ -241,35 +485,53 @@ const CreateAssessmentModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Topic</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Topic
+            </label>
             <input
               type="text"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
               value={formData.topic}
-              onChange={(e) => setFormData({...formData, topic: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, topic: e.target.value })
+              }
               placeholder="Main topic or subject area"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Total Marks</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Total Marks
+              </label>
               <input
                 type="number"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={formData.total_marks}
-                onChange={(e) => setFormData({...formData, total_marks: parseInt(e.target.value)})}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    total_marks: parseInt(e.target.value),
+                  })
+                }
                 min="1"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Number of Questions</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Number of Questions
+              </label>
               <input
                 type="number"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={formData.number_of_questions}
-                onChange={(e) => setFormData({...formData, number_of_questions: parseInt(e.target.value)})}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    number_of_questions: parseInt(e.target.value),
+                  })
+                }
                 min="1"
               />
             </div>
@@ -290,7 +552,11 @@ const CreateAssessmentModal: React.FC<{
               disabled={loading}
               className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
             >
-              {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <User className="w-4 h-4 mr-2" />}
+              {loading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <User className="w-4 h-4 mr-2" />
+              )}
               Create Manually
             </button>
             <button
@@ -298,7 +564,11 @@ const CreateAssessmentModal: React.FC<{
               disabled={loading}
               className="flex items-center px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50"
             >
-              {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Wand2 className="w-4 h-4 mr-2" />}
+              {loading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Wand2 className="w-4 h-4 mr-2" />
+              )}
               Generate with AI
             </button>
           </div>
@@ -316,11 +586,11 @@ const AddQuestionModal: React.FC<{
   loading: boolean;
 }> = ({ isOpen, onClose, onSubmit, assessmentId, loading }) => {
   const [questionData, setQuestionData] = useState({
-    text: '',
+    text: "",
     marks: 4,
-    type: 'close-ended',
-    rubric: '',
-    correct_answer: ''
+    type: "close-ended",
+    rubric: "",
+    correct_answer: "",
   });
 
   const handleSubmit = () => {
@@ -342,34 +612,49 @@ const AddQuestionModal: React.FC<{
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Question Text
+            </label>
             <textarea
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
               rows={3}
               value={questionData.text}
-              onChange={(e) => setQuestionData({...questionData, text: e.target.value})}
+              onChange={(e) =>
+                setQuestionData({ ...questionData, text: e.target.value })
+              }
               placeholder="Enter your question"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Marks</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Marks
+              </label>
               <input
                 type="number"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={questionData.marks}
-                onChange={(e) => setQuestionData({...questionData, marks: parseInt(e.target.value)})}
+                onChange={(e) =>
+                  setQuestionData({
+                    ...questionData,
+                    marks: parseInt(e.target.value),
+                  })
+                }
                 min="1"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Type
+              </label>
               <select
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={questionData.type}
-                onChange={(e) => setQuestionData({...questionData, type: e.target.value})}
+                onChange={(e) =>
+                  setQuestionData({ ...questionData, type: e.target.value })
+                }
               >
                 <option value="close-ended">Close-ended</option>
                 <option value="open-ended">Open-ended</option>
@@ -378,23 +663,34 @@ const AddQuestionModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Rubric</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Rubric
+            </label>
             <textarea
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
               rows={2}
               value={questionData.rubric}
-              onChange={(e) => setQuestionData({...questionData, rubric: e.target.value})}
+              onChange={(e) =>
+                setQuestionData({ ...questionData, rubric: e.target.value })
+              }
               placeholder="Marking criteria and rubric"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Correct Answer
+            </label>
             <textarea
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
               rows={2}
               value={questionData.correct_answer}
-              onChange={(e) => setQuestionData({...questionData, correct_answer: e.target.value})}
+              onChange={(e) =>
+                setQuestionData({
+                  ...questionData,
+                  correct_answer: e.target.value,
+                })
+              }
               placeholder="Expected answer or answer key"
             />
           </div>
@@ -413,7 +709,11 @@ const AddQuestionModal: React.FC<{
             disabled={loading}
             className="flex items-center px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 disabled:opacity-50"
           >
-            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+            {loading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4 mr-2" />
+            )}
             Add Question
           </button>
         </div>
@@ -422,23 +722,153 @@ const AddQuestionModal: React.FC<{
   );
 };
 
-const AssessmentStatsCards: React.FC<{ assessments: Assessment[] }> = ({ assessments }) => {
+const ViewQuestionsModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  assessment: Assessment | null;
+  questions: Question[];
+  loading: boolean;
+}> = ({ isOpen, onClose, assessment, questions, loading }) => {
+  if (!isOpen || !assessment) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-xl max-w-4xl w-full max-h-screen overflow-y-auto"
+      >
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-800">
+            {assessment.title} - Questions
+          </h2>
+          <p className="text-gray-600 mt-1">
+            {questions.length} question{questions.length !== 1 ? "s" : ""} •
+            Total: {assessment.total_marks} marks • Week {assessment.week}
+          </p>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="text-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
+              <p className="text-gray-600">Loading questions...</p>
+            </div>
+          ) : questions.length === 0 ? (
+            <div className="text-center py-8">
+              <ClipboardList className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-600 mb-2">
+                No questions yet
+              </h3>
+              <p className="text-gray-500">
+                This assessment doesn't have any questions yet.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {questions.map((question, index) => (
+                <div
+                  key={question.id}
+                  className="border border-gray-200 rounded-lg p-4"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-medium text-gray-800">
+                      Question {index + 1}
+                    </h4>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-500">
+                        {question.marks} mark{question.marks !== 1 ? "s" : ""}
+                      </span>
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          question.type === "open-ended"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
+                        {question.type}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 mb-3">{question.text}</p>
+                  {question.rubric && (
+                    <div className="mb-2">
+                      <p className="text-sm font-medium text-gray-600 mb-1">
+                        Rubric:
+                      </p>
+                      <p className="text-sm text-gray-600">{question.rubric}</p>
+                    </div>
+                  )}
+                  {question.correct_answer && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 mb-1">
+                        Expected Answer:
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {question.correct_answer}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-gray-200 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-medium"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const AssessmentStatsCards: React.FC<{ assessments: Assessment[] }> = ({
+  assessments,
+}) => {
   const totalAssessments = assessments.length;
-  const catAssessments = assessments.filter(a => a.type === 'CAT').length;
-  const assignmentAssessments = assessments.filter(a => a.type === 'assignment').length;
-  const verifiedAssessments = assessments.filter(a => a.verified).length;
+  const catAssessments = assessments.filter((a) => a.type === "CAT").length;
+  const assignmentAssessments = assessments.filter(
+    (a) => a.type === "assignment"
+  ).length;
+  const verifiedAssessments = assessments.filter((a) => a.verified).length;
 
   const statsData = [
-    { icon: BookMarked, label: 'Total Assessments', value: totalAssessments.toString(), color: 'bg-blue-100 text-blue-600' },
-    { icon: ClipboardList, label: 'CATs', value: catAssessments.toString(), color: 'bg-green-100 text-green-600' },
-    { icon: FileCheck, label: 'Assignments', value: assignmentAssessments.toString(), color: 'bg-purple-100 text-purple-600' },
-    { icon: CheckCircle, label: 'Verified', value: verifiedAssessments.toString(), color: 'bg-yellow-100 text-yellow-600' }
+    {
+      icon: BookMarked,
+      label: "Total Assessments",
+      value: totalAssessments.toString(),
+      color: "bg-blue-100 text-blue-600",
+    },
+    {
+      icon: ClipboardList,
+      label: "CATs",
+      value: catAssessments.toString(),
+      color: "bg-green-100 text-green-600",
+    },
+    {
+      icon: FileCheck,
+      label: "Assignments",
+      value: assignmentAssessments.toString(),
+      color: "bg-purple-100 text-purple-600",
+    },
+    {
+      icon: CheckCircle,
+      label: "Verified",
+      value: verifiedAssessments.toString(),
+      color: "bg-yellow-100 text-yellow-600",
+    },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
       {statsData.map((stat, index) => (
-        <motion.div 
+        <motion.div
           key={index}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -463,14 +893,23 @@ const TypeAndCourseSelector: React.FC<{
   selectedCourse: string;
   onTypeChange: (type: string) => void;
   onCourseChange: (courseId: string) => void;
-}> = ({ selectedType, selectedCourse, onTypeChange, onCourseChange }) => (
+  courses: Course[];
+}> = ({
+  selectedType,
+  selectedCourse,
+  onTypeChange,
+  onCourseChange,
+  courses,
+}) => (
   <div className="flex flex-col md:flex-row md:space-x-4 mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
     <div className="flex-1 mb-3 md:mb-0">
-      <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Type</label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Filter by Type
+      </label>
       <select
         className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent bg-white"
         value={selectedType}
-        onChange={e => onTypeChange(e.target.value)}
+        onChange={(e) => onTypeChange(e.target.value)}
       >
         <option value="">All Types</option>
         <option value="CAT">CATs</option>
@@ -478,15 +917,19 @@ const TypeAndCourseSelector: React.FC<{
       </select>
     </div>
     <div className="flex-1">
-      <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Course</label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Filter by Course
+      </label>
       <select
         className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent bg-white"
         value={selectedCourse}
-        onChange={e => onCourseChange(e.target.value)}
+        onChange={(e) => onCourseChange(e.target.value)}
       >
         <option value="">All Courses</option>
-        {SAMPLE_COURSES.map(course => (
-          <option key={course.id} value={course.id}>{course.name} ({course.code})</option>
+        {courses.map((course) => (
+          <option key={course.id} value={course.id}>
+            {course.name} ({course.code})
+          </option>
         ))}
       </select>
     </div>
@@ -501,8 +944,18 @@ const AssessmentCard: React.FC<{
   onAddQuestion: (assessment: Assessment) => void;
   onVerify: (id: string) => void;
   index: number;
-}> = ({ assessment, onView, onEdit, onDelete, onAddQuestion, onVerify, index }) => {
-  const course = getCourseByCode(assessment.course_id);
+  courses: Course[];
+}> = ({
+  assessment,
+  onView,
+  onEdit,
+  onDelete,
+  onAddQuestion,
+  onVerify,
+  index,
+  courses,
+}) => {
+  const course = getCourseByCode(assessment.course_id, courses);
 
   return (
     <motion.div
@@ -513,14 +966,33 @@ const AssessmentCard: React.FC<{
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-800 mb-1">{assessment.title}</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-1">
+            {assessment.title}
+          </h3>
           <div className="flex items-center space-x-2 mb-2">
-            <span className={`inline-block w-3 h-3 rounded-full ${course.color}`}></span>
-            <span className="text-sm text-gray-600">{assessment.unit}</span>
+            {course && (
+              <>
+                <span
+                  className={`inline-block w-3 h-3 rounded-full ${course.color}`}
+                ></span>
+                <span className="text-sm text-gray-600">
+                  {assessment.unit_id}
+                </span>
+              </>
+            )}
+            <span className="text-xs text-gray-500">•</span>
+            <span className="text-xs text-gray-500 flex items-center">
+              <Calendar className="w-3 h-3 mr-1" />
+              Week {assessment.week}
+            </span>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(assessment.difficulty)}`}>
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(
+              assessment.difficulty
+            )}`}
+          >
             {assessment.difficulty}
           </span>
           {assessment.verified ? (
@@ -531,12 +1003,16 @@ const AssessmentCard: React.FC<{
         </div>
       </div>
 
-      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{assessment.description}</p>
+      <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+        {assessment.description}
+      </p>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="text-sm">
           <span className="text-gray-500">Questions:</span>
-          <span className="ml-2 font-medium">{assessment.number_of_questions}</span>
+          <span className="ml-2 font-medium">
+            {assessment.number_of_questions}
+          </span>
         </div>
         <div className="text-sm">
           <span className="text-gray-500">Marks:</span>
@@ -544,7 +1020,9 @@ const AssessmentCard: React.FC<{
         </div>
         <div className="text-sm">
           <span className="text-gray-500">Type:</span>
-          <span className="ml-2 font-medium capitalize">{assessment.questions_type}</span>
+          <span className="ml-2 font-medium capitalize">
+            {assessment.questions_type}
+          </span>
         </div>
         <div className="text-sm">
           <span className="text-gray-500">Topic:</span>
@@ -559,8 +1037,9 @@ const AssessmentCard: React.FC<{
         <div className="flex space-x-2">
           <button
             onClick={() => onView(assessment)}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded border border-blue-200 hover:bg-blue-50 transition-colors"
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded border border-blue-200 hover:bg-blue-50 transition-colors flex items-center"
           >
+            <Eye className="w-3 h-3 mr-1" />
             View
           </button>
           <button
@@ -590,81 +1069,170 @@ const AssessmentCard: React.FC<{
 };
 
 // ===== MAIN COMPONENT =====
-const AssessmentsDashboard: React.FC = () => { 
+const AssessmentsDashboard: React.FC = () => {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const [loading, setLoading] = useState(true);
   const [hasContent, setHasContent] = useState(false);
-  const [assessments, setAssessments] = useState<Assessment[]>(INITIAL_ASSESSMENTS);
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
-  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
-  const [selectedType, setSelectedType] = useState<string>('');
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
+  const [isViewQuestionsModalOpen, setIsViewQuestionsModalOpen] =
+    useState(false);
+  const [selectedAssessment, setSelectedAssessment] =
+    useState<Assessment | null>(null);
+  const [selectedType, setSelectedType] = useState<string>("");
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [createLoading, setCreateLoading] = useState(false);
   const [questionLoading, setQuestionLoading] = useState(false);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   // Filter assessments by type and course
-  const filteredAssessments = assessments.filter(assessment => 
-    (selectedType === '' || assessment.type === selectedType) &&
-    (selectedCourse === '' || assessment.course_id === selectedCourse)
+  const filteredAssessments = assessments.filter(
+    (assessment) =>
+      (selectedType === "" || assessment.type === selectedType) &&
+      (selectedCourse === "" || assessment.course_id === selectedCourse)
   );
 
+  // Load data on component mount
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-      setHasContent(INITIAL_ASSESSMENTS.length > 0);
-    }, 1500);
-    return () => clearTimeout(timer);
+    loadInitialData();
   }, []);
 
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load courses, units, and assessments in parallel
+      const [coursesData, unitsData, assessmentsData] = await Promise.all([
+        api.getCourses(),
+        api.getUnits(),
+        api.getAssessments(),
+      ]);
+
+      setCourses(coursesData);
+      setUnits(unitsData);
+      setAssessments(assessmentsData);
+      setHasContent(assessmentsData.length > 0);
+    } catch (error) {
+      console.error("Error loading data:", error);
+      setError("Failed to load data. Please try again.");
+      setHasContent(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAssessments = async () => {
+    try {
+      setError(null);
+      const data = await api.getAssessments();
+      setAssessments(data);
+      setHasContent(data.length > 0);
+    } catch (error) {
+      console.error("Error loading assessments:", error);
+      setError("Failed to load assessments. Please try again.");
+    }
+  };
+
   const handleCreateAssessment = async (formData: any, isAI: boolean) => {
-    setCreateLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const newAssessment: Assessment = {
-        ...formData,
-        id: Math.random().toString(36).substr(2, 9),
-        verified: !isAI, // Manual assessments are verified by default
-        created_at: new Date().toISOString(),
-        creator_id: 'current-lecturer-id'
-      };
-      
-      setAssessments(prev => [...prev, newAssessment]);
-      setIsCreateModalOpen(false);
-      setCreateLoading(false);
-      
+    try {
+      setCreateLoading(true);
+      setError(null);
+
+      let response;
       if (isAI) {
-        alert(`Assessment "${formData.title}" generated successfully with AI!`);
+        response = await api.generateAssessment(formData);
       } else {
-        alert(`Assessment "${formData.title}" created successfully!`);
+        response = await api.createAssessment(formData);
       }
-    }, 2000);
+
+      // Reload assessments to get the updated list
+      await loadAssessments();
+      setIsCreateModalOpen(false);
+
+      alert(
+        `Assessment "${response.title}" ${
+          isAI ? "generated" : "created"
+        } successfully!`
+      );
+    } catch (error) {
+      console.error("Error creating assessment:", error);
+      alert("Failed to create assessment. Please try again.");
+    } finally {
+      setCreateLoading(false);
+    }
   };
 
   const handleAddQuestion = async (questionData: any) => {
-    setQuestionLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+    if (!selectedAssessment) return;
+
+    try {
+      setQuestionLoading(true);
+      setError(null);
+
+      await api.addQuestion(selectedAssessment.id, questionData);
       setIsQuestionModalOpen(false);
+      alert("Question added successfully!");
+    } catch (error) {
+      console.error("Error adding question:", error);
+      alert("Failed to add question. Please try again.");
+    } finally {
       setQuestionLoading(false);
-      alert('Question added successfully!');
-    }, 1000);
+    }
   };
 
   const handleVerifyAssessment = async (assessmentId: string) => {
-    setAssessments(prev => prev.map(assessment => 
-      assessment.id === assessmentId 
-        ? { ...assessment, verified: true }
-        : assessment
-    ));
-    alert('Assessment verified successfully!');
+    try {
+      setError(null);
+      const response = await api.verifyAssessment(assessmentId);
+
+      // Update local state
+      setAssessments((prev) =>
+        prev.map((assessment) =>
+          assessment.id === assessmentId
+            ? { ...assessment, verified: true }
+            : assessment
+        )
+      );
+
+      alert(`Assessment "${response.title}" verified successfully!`);
+    } catch (error) {
+      console.error("Error verifying assessment:", error);
+      alert("Failed to verify assessment. Please try again.");
+    }
   };
 
   const handleDeleteAssessment = (assessmentId: string) => {
-    if (confirm('Are you sure you want to delete this assessment?')) {
-      setAssessments(prev => prev.filter(assessment => assessment.id !== assessmentId));
+    if (confirm("Are you sure you want to delete this assessment?")) {
+      // Note: The API doesn't have a delete endpoint for assessments
+      // You might need to implement this on the backend
+      setAssessments((prev) =>
+        prev.filter((assessment) => assessment.id !== assessmentId)
+      );
+      alert("Assessment deleted successfully!");
+    }
+  };
+
+  const handleViewQuestions = async (assessment: Assessment) => {
+    try {
+      setSelectedAssessment(assessment);
+      setIsViewQuestionsModalOpen(true);
+      setQuestionsLoading(true);
+      setError(null);
+
+      const questionsData = await api.getQuestions(assessment.id);
+      setQuestions(questionsData);
+    } catch (error) {
+      console.error("Error loading questions:", error);
+      setQuestions([]);
+      alert("Failed to load questions. Please try again.");
+    } finally {
+      setQuestionsLoading(false);
     }
   };
 
@@ -672,25 +1240,38 @@ const AssessmentsDashboard: React.FC = () => {
     return (
       <div className="flex h-screen bg-gray-50">
         <Sidebar />
-        
-        <motion.div 
-          initial={{ 
-            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+
+        <motion.div
+          initial={{
+            marginLeft:
+              !isMobileView && !isTabletView
+                ? sidebarCollapsed
+                  ? 80
+                  : 240
+                : 0,
           }}
-          animate={{ 
-            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+          animate={{
+            marginLeft:
+              !isMobileView && !isTabletView
+                ? sidebarCollapsed
+                  ? 80
+                  : 240
+                : 0,
           }}
           transition={{ duration: 0.3 }}
           className="flex-1 overflow-auto"
         >
           <Header title="Assessments" showWeekSelector={false} />
-          
+
           <main className="p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
               {/* Skeleton Loading */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 animate-pulse">
+                  <div
+                    key={i}
+                    className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 animate-pulse"
+                  >
                     <div className="flex items-center justify-between">
                       <div className="w-2/3">
                         <div className="h-4 bg-gray-200 rounded mb-2"></div>
@@ -701,10 +1282,13 @@ const AssessmentsDashboard: React.FC = () => {
                   </div>
                 ))}
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 animate-pulse">
+                  <div
+                    key={i}
+                    className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 animate-pulse"
+                  >
                     <div className="flex items-start justify-between mb-4">
                       <div className="w-2/3">
                         <div className="h-5 bg-gray-300 rounded mb-2"></div>
@@ -730,20 +1314,40 @@ const AssessmentsDashboard: React.FC = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      
-      <motion.div 
-        initial={{ 
-          marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+
+      <motion.div
+        initial={{
+          marginLeft:
+            !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
         }}
-        animate={{ 
-          marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+        animate={{
+          marginLeft:
+            !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
         }}
         transition={{ duration: 0.3 }}
         className="flex-1 overflow-auto"
       >
         <Header title="Assessments" showWeekSelector={hasContent} />
-        
+
         <main className="p-4 md:p-6">
+          {error && (
+            <div className="max-w-7xl mx-auto mb-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+                <div className="flex items-center">
+                  <AlertCircle className="w-5 h-5 text-red-600 mr-3" />
+                  <span className="text-red-800">{error}</span>
+                </div>
+                <button
+                  onClick={loadInitialData}
+                  className="text-red-600 hover:text-red-800 flex items-center"
+                >
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
+
           {!hasContent ? (
             <div className="max-w-4xl mx-auto">
               <EmptyState
@@ -751,20 +1355,26 @@ const AssessmentsDashboard: React.FC = () => {
                 description="Create your first assessment to get started. You can generate assessments with AI or create them manually with custom questions."
                 icon={<BookMarked size={48} />}
                 onAction={() => setIsCreateModalOpen(true)}
+                actionLabel="Create Assessment"
               />
             </div>
           ) : (
             <div className="max-w-7xl mx-auto">
               <div className="mb-6">
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">Assessment Management</h1>
-                <p className="text-gray-600 mt-2">Create, manage, and organize your assessments</p>
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">
+                  Assessment Management
+                </h1>
+                <p className="text-gray-600 mt-2">
+                  Create, manage, and organize your assessments
+                </p>
               </div>
 
-              <TypeAndCourseSelector 
+              <TypeAndCourseSelector
                 selectedType={selectedType}
                 selectedCourse={selectedCourse}
                 onTypeChange={setSelectedType}
                 onCourseChange={setSelectedCourse}
+                courses={courses}
               />
 
               <AssessmentStatsCards assessments={filteredAssessments} />
@@ -774,20 +1384,36 @@ const AssessmentsDashboard: React.FC = () => {
                   <div>
                     <h2 className="text-xl font-semibold text-gray-800">
                       Assessments
-                      {selectedType && ` - ${selectedType === 'CAT' ? 'CATs' : 'Assignments'}`}
-                      {selectedCourse && ` (${getCourseByCode(selectedCourse).code})`}
+                      {selectedType &&
+                        ` - ${selectedType === "CAT" ? "CATs" : "Assignments"}`}
+                      {selectedCourse &&
+                        courses.length > 0 &&
+                        ` (${
+                          getCourseByCode(selectedCourse, courses)?.code ||
+                          "Unknown"
+                        })`}
                     </h2>
                     <p className="text-sm text-gray-600 mt-1">
-                      {filteredAssessments.length} assessment{filteredAssessments.length !== 1 ? 's' : ''} found
+                      {filteredAssessments.length} assessment
+                      {filteredAssessments.length !== 1 ? "s" : ""} found
                     </p>
                   </div>
-                  <button 
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors flex items-center"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Assessment
-                  </button>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={loadAssessments}
+                      className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Refresh
+                    </button>
+                    <button
+                      onClick={() => setIsCreateModalOpen(true)}
+                      className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors flex items-center"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      New Assessment
+                    </button>
+                  </div>
                 </div>
 
                 {filteredAssessments.length === 0 ? (
@@ -797,12 +1423,11 @@ const AssessmentsDashboard: React.FC = () => {
                       No assessments found
                     </h3>
                     <p className="text-gray-500 mb-4">
-                      {selectedType || selectedCourse 
-                        ? `No assessments match your current filters` 
-                        : `Create your first assessment to get started`
-                      }
+                      {selectedType || selectedCourse
+                        ? `No assessments match your current filters`
+                        : `Create your first assessment to get started`}
                     </p>
-                    <button 
+                    <button
                       onClick={() => setIsCreateModalOpen(true)}
                       className="bg-rose-500 text-white px-6 py-3 rounded-lg hover:bg-rose-600 transition-colors inline-flex items-center"
                     >
@@ -817,14 +1442,17 @@ const AssessmentsDashboard: React.FC = () => {
                         key={assessment.id}
                         assessment={assessment}
                         index={index}
-                        onView={(assessment) => console.log('View:', assessment)}
-                        onEdit={(assessment) => console.log('Edit:', assessment)}
+                        onView={handleViewQuestions}
+                        onEdit={(assessment) =>
+                          console.log("Edit:", assessment)
+                        }
                         onDelete={handleDeleteAssessment}
                         onAddQuestion={(assessment) => {
                           setSelectedAssessment(assessment);
                           setIsQuestionModalOpen(true);
                         }}
                         onVerify={handleVerifyAssessment}
+                        courses={courses}
                       />
                     ))}
                   </div>
@@ -841,6 +1469,8 @@ const AssessmentsDashboard: React.FC = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateAssessment}
         loading={createLoading}
+        courses={courses}
+        units={units}
       />
 
       {/* Add Question Modal */}
@@ -848,8 +1478,17 @@ const AssessmentsDashboard: React.FC = () => {
         isOpen={isQuestionModalOpen}
         onClose={() => setIsQuestionModalOpen(false)}
         onSubmit={handleAddQuestion}
-        assessmentId={selectedAssessment?.id || ''}
+        assessmentId={selectedAssessment?.id || ""}
         loading={questionLoading}
+      />
+
+      {/* View Questions Modal */}
+      <ViewQuestionsModal
+        isOpen={isViewQuestionsModalOpen}
+        onClose={() => setIsViewQuestionsModalOpen(false)}
+        assessment={selectedAssessment}
+        questions={questions}
+        loading={questionsLoading}
       />
     </div>
   );
