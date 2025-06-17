@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
+import Link from "next/link"
 import { useLayout } from "@/components/LayoutController"
 import AdminSidebar from "@/components/AdminSidebar"
 import Header from "@/components/Header"
@@ -19,17 +20,17 @@ import {
   Activity,
 } from "lucide-react"
 
-// Mock data - replace with real API calls
-const mockStats = {
-  totalStudents: 1247,
-  totalLecturers: 89,
-  totalCourses: 23,
-  totalUnits: 156,
-  recentActivity: [
-    { type: "student", action: "New student registered", name: "Alice Wambui", time: "2 hours ago" },
-    { type: "lecturer", action: "Lecturer added", name: "Dr. John Doe", time: "4 hours ago" },
-    { type: "course", action: "Course updated", name: "Computer Science", time: "1 day ago" },
-  ],
+type Stats = {
+  totalStudents: number
+  totalLecturers: number
+  totalCourses: number
+  totalUnits: number
+  recentActivity: Array<{
+    type: string
+    action: string
+    name: string
+    time: string
+  }>
 }
 
 type StatCardProps = {
@@ -67,34 +68,135 @@ type QuickActionProps = {
 }
 
 const QuickAction = ({ icon, title, description, color, href }: QuickActionProps) => (
-  <motion.div
-    whileHover={{ scale: 1.02 }}
-    className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group"
-  >
-    <div
-      className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}
+  <Link href={href} className="block">
+    <motion.div
+      whileHover={{ scale: 1.02 }}
+      className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group h-full"
     >
-      {icon}
-    </div>
-    <h3 className="font-semibold text-gray-800 mb-2">{title}</h3>
-    <p className="text-sm text-gray-500 mb-4">{description}</p>
-    <div className="flex items-center text-sm font-medium text-emerald-600 group-hover:translate-x-1 transition-transform duration-300">
-      <span>Manage</span>
-      <ArrowRight size={14} className="ml-1" />
-    </div>
-  </motion.div>
+      <div
+        className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}
+      >
+        {icon}
+      </div>
+      <h3 className="font-semibold text-gray-800 mb-2">{title}</h3>
+      <p className="text-sm text-gray-500 mb-4">{description}</p>
+      <div className="flex items-center text-sm font-medium text-emerald-600 group-hover:translate-x-1 transition-transform duration-300">
+        <span>Manage</span>
+        <ArrowRight size={14} className="ml-1" />
+      </div>
+    </motion.div>
+  </Link>
 )
+
+type Activity = {
+  type: "student" | "lecturer" | "course" | "unit"
+  action: string
+  name: string
+  time: string
+  icon: React.ReactNode
+}
 
 export default function AdminDashboard() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout()
   const [isLoading, setIsLoading] = useState(true)
-  const [stats, setStats] = useState(mockStats)
+  const [stats, setStats] = useState<Stats>({
+    totalStudents: 0,
+    totalLecturers: 0,
+    totalCourses: 0,
+    totalUnits: 0,
+    recentActivity: [],
+  })
+
+  // Dummy recent activities
+  const recentActivities: Activity[] = [
+    {
+      type: "student",
+      action: "New student registered",
+      name: "John Doe",
+      time: "2 minutes ago",
+      icon: <Users size={16} className="text-blue-600" />,
+    },
+    {
+      type: "lecturer",
+      action: "Lecturer profile updated",
+      name: "Dr. Jane Smith",
+      time: "15 minutes ago",
+      icon: <UserCheck size={16} className="text-emerald-600" />,
+    },
+    {
+      type: "course",
+      action: "New course added",
+      name: "Computer Science",
+      time: "1 hour ago",
+      icon: <GraduationCap size={16} className="text-violet-600" />,
+    },
+    {
+      type: "unit",
+      action: "Unit modified",
+      name: "Data Structures",
+      time: "2 hours ago",
+      icon: <BookOpen size={16} className="text-amber-600" />,
+    },
+    {
+      type: "student",
+      action: "Student profile updated",
+      name: "Alice Johnson",
+      time: "3 hours ago",
+      icon: <Users size={16} className="text-blue-600" />,
+    },
+  ]
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
+    const fetchStats = async () => {
+      try {
+        // Fetch students
+        const studentsResponse = await fetch("http://localhost:8080/api/v1/admin/students", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+        const studentsData = await studentsResponse.json()
+
+        // Fetch lecturers
+        const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+        const lecturersData = await lecturersResponse.json()
+
+        // Fetch courses
+        const coursesResponse = await fetch("http://localhost:8080/api/v1/admin/courses", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+        const coursesData = await coursesResponse.json()
+
+        // Calculate total units from courses
+        const totalUnits = coursesData.reduce((acc: number, course: any) => acc + (course.units?.length || 0), 0)
+
+        setStats({
+          totalStudents: studentsData.length,
+          totalLecturers: lecturersData.length,
+          totalCourses: coursesData.length,
+          totalUnits,
+          recentActivity: [], // We can implement this later if needed
+        })
+      } catch (error) {
+        console.error("Error fetching stats:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchStats()
   }, [])
 
   const statCards = [
@@ -219,46 +321,24 @@ export default function AdminDashboard() {
                 </div>
               </motion.div>
 
-              {/* Statistics Cards */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="mb-8"
-              >
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">System Overview</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {statCards.map((stat, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.1 * (index + 1) }}
-                    >
-                      <StatCard {...stat} />
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                {/* Quick Actions */}
+                {/* Statistics Cards */}
                 <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
                   className="lg:col-span-2"
                 >
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4">System Overview</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {quickActions.map((action, index) => (
+                    {statCards.map((stat, index) => (
                       <motion.div
                         key={index}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.1 * (index + 1) }}
                       >
-                        <QuickAction {...action} />
+                        <StatCard {...stat} />
                       </motion.div>
                     ))}
                   </div>
@@ -268,73 +348,60 @@ export default function AdminDashboard() {
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.6 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
                   className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
                 >
                   <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
                   <div className="space-y-4">
-                    {stats.recentActivity.map((activity, index) => (
-                      <div
+                    {recentActivities.map((activity, index) => (
+                      <motion.div
                         key={index}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.1 * index }}
                         className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center ${
                             activity.type === "student"
-                              ? "bg-blue-100 text-blue-600"
+                              ? "bg-blue-100"
                               : activity.type === "lecturer"
-                                ? "bg-emerald-100 text-emerald-600"
-                                : "bg-violet-100 text-violet-600"
+                              ? "bg-emerald-100"
+                              : activity.type === "course"
+                              ? "bg-violet-100"
+                              : "bg-amber-100"
                           }`}
                         >
-                          <Activity size={16} />
+                          {activity.icon}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-800">{activity.action}</p>
                           <p className="text-sm text-gray-500">{activity.name}</p>
                           <p className="text-xs text-gray-400">{activity.time}</p>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
-
-                  <button className="w-full mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm">
-                    View All Activity
-                  </button>
                 </motion.div>
               </div>
 
-              {/* System Status */}
+              {/* Quick Actions */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
               >
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">System Status</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-emerald-800">Database</p>
-                      <p className="text-xs text-emerald-600">Operational</p>
-                    </div>
-                    <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-emerald-800">API Services</p>
-                      <p className="text-xs text-emerald-600">Operational</p>
-                    </div>
-                    <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-emerald-800">File Storage</p>
-                      <p className="text-xs text-emerald-600">Operational</p>
-                    </div>
-                    <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                  </div>
-                </div>
+                {quickActions.map((action, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 * (index + 1) }}
+                  >
+                    <QuickAction {...action} />
+                  </motion.div>
+                ))}
               </motion.div>
             </div>
           )}
