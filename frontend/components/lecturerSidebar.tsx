@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion} from 'framer-motion';
 import { useLayout } from './LayoutController';
 import {
   LayoutDashboard,
@@ -18,8 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  X,
-  LucideIcon
+  X
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -33,7 +32,7 @@ type NavItemType = {
   badge?: number | string;
 };
 
-const lecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
+const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const pathname = usePathname();
   const { 
     sidebarCollapsed, 
@@ -60,8 +59,7 @@ const lecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
 
   const navItems: NavItemType[] = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/lecturer/dashboard' },
-    { name: 'My CATs', icon: <BookOpen size={20} />, path: '/lecturer/cats' },
-    { name: 'Assignments', icon: <ClipboardList size={20} />, path: '/lecturer/assignment', badge: 3 },
+    { name: 'Assessments', icon: <ClipboardList size={20} />, path: '/lecturer/assessments', badge: 3 },
     { name: 'Grades', icon: <GraduationCap size={20} />, path: '/lecturer/grades' },
     { name: 'My Courses', icon: <Calendar size={20} />, path: '/lecturer/courses' },
     { name: 'Library', icon: <Library size={20} />, path: '/lecturer/library' },
@@ -239,4 +237,4 @@ const lecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   );
 };
 
-export default lecturerSidebar;
+export default LecturerSidebar;
