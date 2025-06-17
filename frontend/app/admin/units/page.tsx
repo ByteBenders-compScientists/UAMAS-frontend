@@ -16,6 +16,7 @@ type Unit = {
   level: number
   semester: number
   course: {
+    id: string
     name: string
     code: string
   }
@@ -138,9 +139,70 @@ export default function UnitsPage() {
       unit.course.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleAddUnit = (unitData: any) => {
-    console.log("Adding unit:", unitData)
-    setShowAddModal(false)
+  const handleAddUnit = async (unitData: any) => {
+    try {
+      if (selectedUnit) {
+        // Update existing unit
+        const response = await fetch(`http://localhost:8080/api/v1/admin/units/${selectedUnit.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(unitData),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to update unit")
+        }
+      } else {
+        // Add new unit
+        const response = await fetch("http://localhost:8080/api/v1/admin/units", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(unitData),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to add unit")
+        }
+      }
+
+      // Reload the units list
+      const unitsResponse = await fetch("http://localhost:8080/api/v1/admin/units", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const unitsData = await unitsResponse.json()
+      setUnits(unitsData)
+
+      setShowAddModal(false)
+      setSelectedUnit(null)
+    } catch (error) {
+      console.error("Error saving unit:", error)
+      // Reload the units list even if there was an error
+      const unitsResponse = await fetch("http://localhost:8080/api/v1/admin/units", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const unitsData = await unitsResponse.json()
+      setUnits(unitsData)
+    }
   }
 
   const handleEditUnit = (unit: Unit) => {
@@ -148,8 +210,50 @@ export default function UnitsPage() {
     setShowAddModal(true)
   }
 
-  const handleDeleteUnit = (id: string) => {
-    console.log("Deleting unit:", id)
+  const handleDeleteUnit = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this unit?")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/admin/units/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "Failed to delete unit")
+      }
+
+      // Reload the units list
+      const unitsResponse = await fetch("http://localhost:8080/api/v1/admin/units", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const unitsData = await unitsResponse.json()
+      setUnits(unitsData)
+    } catch (error) {
+      console.error("Error deleting unit:", error)
+      // Reload the units list even if there was an error
+      const unitsResponse = await fetch("http://localhost:8080/api/v1/admin/units", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const unitsData = await unitsResponse.json()
+      setUnits(unitsData)
+    }
   }
 
   const handleViewUnit = (unit: Unit) => {
@@ -227,7 +331,7 @@ export default function UnitsPage() {
                 description={
                   searchTerm ? "No units match your search criteria." : "Start by adding your first unit to the system."
                 }
-                actionLabel="Add Unit"
+                actionText="Add Unit"
                 onAction={() => setShowAddModal(true)}
               />
             ) : (
