@@ -7,6 +7,7 @@ import AdminSidebar from "@/components/AdminSidebar"
 import Header from "@/components/Header"
 import EmptyState from "@/components/EmptyState"
 import AddLecturerModal from "@/components/admin/AddLecturerModal"
+import AssignUnitsModal from "@/components/admin/AssignUnitsModal"
 import { UserCheck, Plus, Search, Filter, Edit, Trash2, Eye, Mail, BookOpen, MoreVertical } from "lucide-react"
 
 type Lecturer = {
@@ -125,6 +126,8 @@ export default function LecturersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedLecturer, setSelectedLecturer] = useState<Lecturer | null>(null)
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [selectedLecturerForUnits, setSelectedLecturerForUnits] = useState<Lecturer | null>(null)
 
   useEffect(() => {
     const fetchLecturers = async () => {
@@ -150,18 +153,121 @@ export default function LecturersPage() {
       lecturer.email.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleAddLecturer = (lecturerData: any) => {
-    console.log("Adding lecturer:", lecturerData)
-    setShowAddModal(false)
+  const handleAddLecturer = async (lecturerData: any) => {
+    try {
+      if (selectedLecturer) {
+        // Update existing lecturer
+        const response = await fetch(`http://localhost:8080/api/v1/admin/lecturers/${selectedLecturer.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(lecturerData),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to update lecturer")
+        }
+      } else {
+        // Add new lecturer
+        const response = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(lecturerData),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to add lecturer")
+        }
+      }
+
+      // Reload the lecturers list
+      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const lecturersData = await lecturersResponse.json()
+      setLecturers(lecturersData)
+
+      setShowAddModal(false)
+      setSelectedLecturer(null)
+    } catch (error) {
+      console.error("Error saving lecturer:", error)
+      // Reload the lecturers list even if there was an error
+      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const lecturersData = await lecturersResponse.json()
+      setLecturers(lecturersData)
+    }
   }
 
-  const handleEditLecturer = (lecturer: Lecturer) => {
+  const handleEditLecturer = async (lecturer: Lecturer) => {
     setSelectedLecturer(lecturer)
     setShowAddModal(true)
   }
 
-  const handleDeleteLecturer = (id: string) => {
-    console.log("Deleting lecturer:", id)
+  const handleDeleteLecturer = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this lecturer? This will also remove all unit assignments.")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/admin/lecturers/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "Failed to delete lecturer")
+      }
+
+      // Reload the lecturers list
+      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const lecturersData = await lecturersResponse.json()
+      setLecturers(lecturersData)
+    } catch (error) {
+      console.error("Error deleting lecturer:", error)
+      // Reload the lecturers list even if there was an error
+      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const lecturersData = await lecturersResponse.json()
+      setLecturers(lecturersData)
+    }
   }
 
   const handleViewLecturer = (lecturer: Lecturer) => {
@@ -169,7 +275,22 @@ export default function LecturersPage() {
   }
 
   const handleAssignUnits = (lecturer: Lecturer) => {
-    console.log("Assigning units to lecturer:", lecturer)
+    setSelectedLecturerForUnits(lecturer)
+    setShowAssignModal(true)
+  }
+
+  const handleUnitsAssigned = async (unitIds: string[]) => {
+    // Reload the lecturers list to show updated unit assignments
+    const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    })
+
+    const lecturersData = await lecturersResponse.json()
+    setLecturers(lecturersData)
   }
 
   return (
@@ -245,7 +366,7 @@ export default function LecturersPage() {
                     ? "No lecturers match your search criteria."
                     : "Start by adding your first lecturer to the system."
                 }
-                actionLabel="Add Lecturer"
+                actionText="Add Lecturer"
                 onAction={() => setShowAddModal(true)}
               />
             ) : (
@@ -286,6 +407,18 @@ export default function LecturersPage() {
             setSelectedLecturer(null)
           }}
           onSubmit={handleAddLecturer}
+        />
+      )}
+
+      {/* Assign Units Modal */}
+      {showAssignModal && selectedLecturerForUnits && (
+        <AssignUnitsModal
+          lecturerId={selectedLecturerForUnits.id}
+          onClose={() => {
+            setShowAssignModal(false)
+            setSelectedLecturerForUnits(null)
+          }}
+          onAssign={handleUnitsAssigned}
         />
       )}
     </div>
