@@ -1,14 +1,12 @@
 
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import { useLayout } from '@/components/LayoutController';
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/components/lecturerSidebar';
 import { 
-  BookMarked, BarChart3, Clock, Monitor, Loader, Plus, Star, User, 
+  BookMarked, Monitor, Plus, User, 
   Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp, GraduationCap,
-  FileText, MessageSquare, Library, Settings, Upload, Image, Calendar,
-  File, CheckCircle, AlertCircle, BookOpen, ChevronRight, Download,
-  MessageCircle, Book, Edit, Trash2, Eye, UserPlus, Settings2, Search
+  FileText, BookOpen, Edit, Trash2, Eye
 } from 'lucide-react';
 
 // ===== TYPES =====

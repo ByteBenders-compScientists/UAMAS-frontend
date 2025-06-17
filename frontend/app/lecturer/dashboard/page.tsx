@@ -1,32 +1,13 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import Sidebar from '@/components/lecturerSidebar';
 import {useLayout} from '@/components/LayoutController';
 import { 
-  BookMarked, BarChart3, Clock, Monitor, Loader, Plus, Star, User, 
-  Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp, GraduationCap,
-  FileText, MessageSquare, Library, Settings, Upload, Image, Calendar,
-  File, CheckCircle, AlertCircle, BookOpen, ChevronRight, Download,
-  MessageCircle, Book
+  BookMarked, Clock,  User, 
+  Users, Bell, Menu,
+  FileText, Image,
+  File
 } from 'lucide-react';
-import Link from 'next/link';
-
-// ===== TYPES =====
-interface NavigationItem {
-  icon: React.ElementType;
-  label: string;
-  active?: boolean;
-  count?: number;
-  hasDropdown?: boolean;
-  dropdownItems?: DropdownItem[];
-  path?: string;
-}
-
-interface DropdownItem {
-  label: string;
-  path: string;
-  icon?: React.ElementType;
-}
 
 interface StatData {
   icon: React.ElementType;
@@ -175,22 +156,6 @@ const formatFileSize = (bytes: number) => {
 };
 
 // ===== COMPONENTS =====
-const SidebarHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-  <div className="flex items-center justify-between p-6 border-b border-rose-200">
-    <div className="flex items-center space-x-2 text-xl font-bold">
-      <LetterText className="w-6 h-6 text-rose-600" />
-      <span className="text-white">EduPortal</span>
-    </div>
-    <button 
-      className="lg:hidden text-white hover:text-rose-100 transition-colors"
-      onClick={onClose}
-      aria-label="Close sidebar"
-    >
-      <X className="w-6 h-6" />
-    </button>
-  </div>
-);
-
 // ===== TOP HEADER COMPONENT =====
 const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle }) => (
   <header className="flex items-center justify-between px-4 py-4 lg:py-6 bg-white border-b border-gray-200 shadow-sm lg:shadow-none">
@@ -219,102 +184,8 @@ const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle 
   </header>
 );
 
-const UserProfile: React.FC = () => (
-  <div className="flex p-6 items-center space-x-3 text-sm border-b border-emerald-300 font-medium">
-    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
-      <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
-        <User className="w-4 h-4 text-rose-600" />
-      </div>
-    </div>
-    <div className="text-white">
-      <div className="font-semibold">Dr. Alex Kimani</div>
-      <div className="text-xs opacity-80">Senior Lecturer</div>
-    </div>
-  </div>
-);
 
-const NavigationDropdown: React.FC<{
-  items: DropdownItem[];
-  isOpen: boolean;
-  onItemClick: (path: string) => void;
-}> = ({ items, isOpen, onItemClick }) => {
-  if (!isOpen) return null;
 
-  return (
-    <div className="ml-8 mt-2 space-y-1">
-      {items.map((item, index) => (
-        <Link
-          key={index}
-          href={item.path}
-          className="w-full text-left block p-2 text-sm font-medium rounded-lg hover:bg-rose-300 hover:bg-opacity-50 transition-all duration-200 text-white flex items-center"
-        >
-          {item.icon && <item.icon className="w-4 h-4 mr-2" />}
-          {item.label}
-        </Link>
-      ))}
-    </div>
-  );
-};
-
-const NavigationItemComponent: React.FC<{
-  item: NavigationItem;
-  isDropdownOpen: boolean;
-  onDropdownToggle: () => void;
-  onDropdownItemClick: (path: string) => void;
-}> = ({ item, isDropdownOpen, onDropdownToggle, onDropdownItemClick }) => {
-  if (item.hasDropdown) {
-    return (
-      <div>
-        <button
-          onClick={onDropdownToggle}
-          className={`w-full flex items-center justify-between space-x-3 p-3 rounded-lg transition-all duration-200 ${
-            item.active 
-              ? 'bg-white text-rose-500 shadow-sm' 
-              : 'hover:bg-rose-300 hover:bg-opacity-50 text-white'
-          }`}
-          aria-expanded={isDropdownOpen}
-        >
-          <div className="flex items-center space-x-3">
-            <item.icon className="w-5 h-5" />
-            <span className="text-sm font-medium">{item.label}</span>
-          </div>
-          {isDropdownOpen ? (
-            <ChevronUp className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4" />
-          )}
-        </button>
-        
-        <NavigationDropdown 
-          items={item.dropdownItems || []} 
-          isOpen={isDropdownOpen}
-          onItemClick={onDropdownItemClick}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <Link 
-      href={item.path || "#"} 
-      className={`flex items-center justify-between space-x-3 p-3 rounded-lg transition-all duration-200 ${
-        item.active 
-          ? 'bg-white text-rose-500 shadow-sm' 
-          : 'hover:bg-rose-300 hover:bg-opacity-50 text-white'
-      }`}
-    >
-      <div className="flex items-center space-x-3">
-        <item.icon className="w-5 h-5" />
-        <span className="text-sm font-medium">{item.label}</span>
-      </div>
-      {item.count && (
-        <span className="bg-white text-rose-500 text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-          {item.count}
-        </span>
-      )}
-    </Link>
-  );
-};
 
 // ... (keep all other components the same as before)
 
@@ -465,14 +336,6 @@ const WeekAndCourseSelector: React.FC<WeekAndCourseSelectorProps> = ({
   </div>
 );
 
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  navigationItems: NavigationItem[];
-  isCreateDropdownOpen: boolean;
-  onCreateDropdownToggle: () => void;
-  onDropdownItemClick: (path: string) => void;
-}
 
 // Add CreateFormButtons component
 interface CreateFormButtonsProps {
@@ -503,8 +366,8 @@ const CreateFormButtons: React.FC<CreateFormButtonsProps> = ({ onFormSelect }) =
   </div>
 );
 
-const page: React.FC = () => {
-  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+const Page: React.FC = () => {
+  useLayout();
   const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(2);
   const [selectedCourse, setSelectedCourse] = useState('');
@@ -587,11 +450,6 @@ const page: React.FC = () => {
     }
   };
 
-  const handleDropdownItemClick = (path: string) => {
-    // Handle navigation to the selected path
-    console.log('Navigating to:', path);
-    setCreateDropdownOpen(false);
-  };
 
   // Filter assignments and CATs for the selected week
   const filteredAssignments = SAMPLE_ASSIGNMENTS.filter(a => a.week === selectedWeek);
@@ -610,7 +468,7 @@ const page: React.FC = () => {
         <main className="flex-1 p-4 lg:p-6 max-w-7xl mx-auto w-full">
           <div className="mb-6">
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">Welcome back, Dr. Alex Kimani</h1>
-            <p className="text-gray-600 mt-2">Spring 2025 Semester - Here's your course overview today.</p>
+            <p className="text-gray-600 mt-2">Spring 2025 Semester - Here&#39;s your course overview today.</p>
           </div>
 
           <WeekAndCourseSelector 
@@ -800,4 +658,4 @@ const page: React.FC = () => {
   );
 };
 
-export default page;
+export default Page;
