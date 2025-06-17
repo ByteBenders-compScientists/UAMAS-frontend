@@ -1,5 +1,9 @@
 'use client';
 import React, { useState, useRef } from 'react';
+import Sidebar from '@/components/lecturerSidebar';
+import Header from '@/components/Header';
+import EmptyState from '@/components/EmptyState';
+import { useLayout } from '@/components/LayoutController';
 import { 
   User, 
   Mail, 
@@ -246,41 +250,12 @@ const NavigationItemComponent = ({
   );
 };
 
-// Sidebar Component
-const Sidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const [dropdownOpenIndex, setDropdownOpenIndex] = useState<number | null>(null);
 
-  const handleDropdownToggle = (index: number) => {
-    setDropdownOpenIndex(dropdownOpenIndex === index ? null : index);
-  };
 
-  return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-40 w-64 bg-rose-600 shadow-lg transform transition-transform duration-300 lg:translate-x-0 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:static lg:inset-auto lg:shadow-none`}
-      aria-label="Sidebar"
-    >
-      <SidebarHeader onClose={onClose} />
-      <UserProfile />
-      <nav className="flex-1 px-4 py-6 space-y-1">
-        {navigationItems.map((item, idx) => (
-          <div key={item.label}>
-            <NavigationItemComponent
-              item={item}
-              isDropdownOpen={dropdownOpenIndex === idx}
-              onDropdownToggle={() => handleDropdownToggle(idx)}
-            />
-          </div>
-        ))}
-      </nav>
-    </aside>
-  );
-};
-
+ 
 // Main Profile Page Component
 export default function page() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarCollapsed, isMobileView, isTabletView }  = useLayout();
   const [profile, setProfile] = useState(mockProfile);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -289,7 +264,7 @@ export default function page() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
 
   const handleProfileUpdate = () => {
     setIsLoading(true);
@@ -339,12 +314,11 @@ export default function page() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar 
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+     
       />
       
       <div className="flex-1 flex flex-col lg:ml-64">
-        <TopHeader onSidebarToggle={toggleSidebar} />
+        <TopHeader onSidebarToggle={() => {}} />
         
         <main className="flex-1 p-4 lg:p-6 max-w-7xl mx-auto w-full">
           <div className="max-w-4xl mx-auto">

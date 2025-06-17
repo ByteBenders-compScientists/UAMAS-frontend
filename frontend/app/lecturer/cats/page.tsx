@@ -1,5 +1,11 @@
-'use client'
+'use client';
+
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLayout } from '@/components/LayoutController';
+import Sidebar from '@/components/lecturerSidebar';
+import Header from '@/components/Header';
+import EmptyState from '@/components/EmptyState';
 import { 
   BookMarked, BarChart3, Clock, Monitor, Plus, User, 
   Users, Bell, Menu, X, Type, ChevronDown, ChevronUp, GraduationCap,
@@ -23,22 +29,6 @@ interface CAT {
   files?: File[];
   description?: string;
   createdAt: string;
-}
-
-interface DropdownItem {
-  label: string;
-  path: string;
-  icon: React.ComponentType<any>;
-}
-
-interface NavigationItem {
-  icon: React.ComponentType<any>;
-  label: string;
-  active?: boolean;
-  count?: number;
-  hasDropdown?: boolean;
-  dropdownItems?: DropdownItem[];
-  path?: string;
 }
 
 interface Course {
@@ -176,194 +166,6 @@ const getCourseByCode = (courseCode: string) => {
 };
 
 // ===== COMPONENTS =====
-const SidebarHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-  <div className="flex items-center justify-between p-6 border-b border-rose-200">
-    <div className="flex items-center space-x-2 text-xl font-bold">
-      <Type className="w-6 h-6 text-rose-600" />
-      <span className="text-white">EduPortal</span>
-    </div>
-    <button 
-      className="lg:hidden text-white hover:text-rose-100 transition-colors"
-      onClick={onClose}
-      aria-label="Close sidebar"
-    >
-      <X className="w-6 h-6" />
-    </button>
-  </div>
-);
-
-const TopHeader: React.FC<{ 
-  onSidebarToggle: () => void;
-  isMobile: boolean;
-}> = ({ onSidebarToggle, isMobile }) => (
-  <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 shadow-sm">
-    <div className="flex items-center space-x-3">
-      {isMobile && (
-        <button
-          className="lg:hidden text-rose-600 hover:text-rose-800 transition-colors"
-          onClick={onSidebarToggle}
-          aria-label="Open sidebar"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
-      )}
-      <h1 className="text-xl lg:text-2xl font-bold text-gray-800">CATs</h1>
-    </div>
-    <div className="flex items-center space-x-4">
-      <button className="relative text-gray-500 hover:text-rose-600 transition-colors">
-        <Bell className="w-6 h-6" />
-        <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full px-1.5 py-0.5">3</span>
-      </button>
-      <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-rose-200 rounded-full flex items-center justify-center">
-          <User className="w-4 h-4 text-rose-600" />
-        </div>
-        <span className="text-sm font-semibold text-gray-700 hidden md:inline">Dr. Alex Kimani</span>
-      </div>
-    </div>
-  </header>
-);
-
-const UserProfile: React.FC = () => (
-  <div className="flex p-6 items-center space-x-3 text-sm border-b border-rose-300 font-medium">
-    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
-      <div className="w-8 h-8 bg-rose-200 rounded-full flex items-center justify-center">
-        <User className="w-4 h-4 text-rose-600" />
-      </div>
-    </div>
-    <div className="text-white">
-      <div className="font-semibold">Dr. Alex Kimani</div>
-      <div className="text-xs opacity-80">Senior Lecturer</div>
-    </div>
-  </div>
-);
-
-// Navigation Dropdown Component
-const NavigationDropdown: React.FC<{
-  items: DropdownItem[];
-  isOpen: boolean;
-}> = ({ items, isOpen }) => {
-  if (!isOpen) return null;
-
-  return (  
-    <div className="ml-8 mt-2 space-y-1">
-      {items.map((item, index) => (
-        <a
-          key={index}
-          href={item.path}
-          className="w-full text-left block p-2 text-sm font-medium rounded-lg hover:bg-rose-300 hover:bg-opacity-50 transition-all duration-200 text-white flex items-center"
-        >
-          {item.icon && <item.icon className="w-4 h-4 mr-2" />}
-          {item.label}
-        </a>
-      ))}
-    </div>
-  );
-};
-
-const NavigationItemComponent: React.FC<{
-  item: NavigationItem;
-  isDropdownOpen: boolean;
-  onDropdownToggle: () => void;
-}> = ({ item, isDropdownOpen, onDropdownToggle }) => {
-  if (item.hasDropdown) {
-    return (
-      <div>
-        <button
-          onClick={onDropdownToggle}
-          className={`w-full flex items-center justify-between space-x-3 p-3 rounded-lg transition-all duration-200 ${
-            item.active 
-              ? 'bg-white text-rose-500 shadow-sm' 
-              : 'hover:bg-rose-300 hover:bg-opacity-50 text-white'
-          }`}
-          aria-expanded={isDropdownOpen}
-        >
-          <div className="flex items-center space-x-3">
-            <item.icon className="w-5 h-5" />
-            <span className="text-sm font-medium">{item.label}</span>
-          </div>
-          {isDropdownOpen ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}
-        </button>
-        
-        <NavigationDropdown 
-          items={item.dropdownItems || []} 
-          isOpen={isDropdownOpen}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <a 
-      href={item.path || "#"} 
-      className={`flex items-center justify-between space-x-3 p-3 rounded-lg transition-all duration-200 ${
-        item.active 
-          ? 'bg-white text-rose-500 shadow-sm' 
-          : 'hover:bg-rose-300 hover:bg-opacity-50 text-white'
-      }`}
-    >
-      <div className="flex items-center space-x-3">
-        <item.icon className="w-5 h-5" />
-        <span className="text-sm font-medium">{item.label}</span>
-      </div>
-      {item.count && (
-        <span className="bg-white text-rose-500 text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-          {item.count}
-        </span>
-      )}
-    </a>
-  );
-};
-
-const Sidebar: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  navigationItems: NavigationItem[];
-  isMobile: boolean;
-}> = ({ isOpen, onClose, navigationItems, isMobile }) => {
-  const [expandedDropdown, setExpandedDropdown] = useState<string | null>(null);
-
-  const handleDropdownToggle = (label: string) => {
-    setExpandedDropdown(expandedDropdown === label ? null : label);
-  };
-
-  return (
-    <>
-      {/* Overlay for mobile */}
-      {isMobile && isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={onClose}
-        />
-      )}
-      
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-rose-600 shadow-lg transform transition-transform duration-300 ${
-          isOpen || !isMobile ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        aria-label="Sidebar"
-      >
-        <SidebarHeader onClose={onClose} />
-        <UserProfile />
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          {navigationItems.map((item, index) => (
-            <NavigationItemComponent
-              key={index}
-              item={item}
-              isDropdownOpen={expandedDropdown === item.label}
-              onDropdownToggle={() => handleDropdownToggle(item.label)}
-            />
-          ))}
-        </nav>
-      </aside>
-    </>
-  );
-};
-
 const WeekAndCourseSelector: React.FC<{
   selectedWeek: number;
   selectedCourse: string;
@@ -417,7 +219,13 @@ const CATStatsCards: React.FC<{ cats: CAT[] }> = ({ cats }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
       {statsData.map((stat, index) => (
-        <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center space-x-4">
+        <motion.div 
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center space-x-4"
+        >
           <div className={`p-2 rounded-full ${stat.color}`}>
             <stat.icon className="w-6 h-6" />
           </div>
@@ -425,7 +233,7 @@ const CATStatsCards: React.FC<{ cats: CAT[] }> = ({ cats }) => {
             <div className="text-lg font-bold">{stat.value}</div>
             <div className="text-sm text-gray-500">{stat.label}</div>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
@@ -436,13 +244,19 @@ const CATCard: React.FC<{
   onEdit: (cat: CAT) => void; 
   onDelete: (catId: string) => void;
   onView: (cat: CAT) => void;
-}> = ({ cat, onEdit, onDelete, onView }) => {
+  index: number;
+}> = ({ cat, onEdit, onDelete, onView, index }) => {
   const course = getCourseByCode(cat.course);
   const StatusIcon = getStatusIcon(cat.status);
   const completionPercentage = cat.totalStudents > 0 ? (cat.completedStudents / cat.totalStudents) * 100 : 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
+    >
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-800 mb-1">{cat.title}</h3>
@@ -525,39 +339,18 @@ const CATCard: React.FC<{
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
 // ===== MAIN COMPONENT =====
 const page: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const [loading, setLoading] = useState(true);
+  const [hasContent, setHasContent] = useState(false);
   const [cats, setCats] = useState<CAT[]>(INITIAL_CATS);
-  const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const [selectedWeek, setSelectedWeek] = useState<number>(2);
   const [selectedCourse, setSelectedCourse] = useState<string>('');
-
-  const navigationItems: NavigationItem[] = [
-    { icon: Monitor, label: 'Dashboard', path: '/lecturer/dashboard' },
-    { icon: GraduationCap, label: 'Courses', path: '/lecturer/courses' },
-    { 
-      icon: Plus, 
-      label: 'Create', 
-      hasDropdown: true,
-      dropdownItems: [
-        { label: 'New Assignment', path: '/lecturer/assignment/create', icon: FileText },
-        { label: 'New Task', path: '/lecturer/task/create', icon: BookOpen },
-        { label: 'New CAT', path: '/lecturer/cat/create', icon: BookMarked }
-      ] 
-    },
-    { icon: FileText, label: 'Assignment', count: 8, path: '/lecturer/assignment' },
-    { icon: BookMarked, label: 'CATs', active: true, count: cats.length, path: '/lecturer/cats' },
-    { icon: MessageCircle, label: 'Forums', path: '/lecturer/forums' },
-    { icon: BarChart3, label: 'Grades', path: '/lecturer/grades' },
-    { icon: Book, label: 'Library', path: '/lecturer/library' },
-    { icon: User, label: 'Profile', path: '/lecturer/profile' },
-    { icon: Settings, label: 'Settings', path: '/lecturer/settings' }
-  ];
 
   // Filter CATs based on selected week and course
   const filteredCATs = cats.filter(
@@ -566,16 +359,14 @@ const page: React.FC = () => {
       (selectedCourse === '' || cat.course === selectedCourse)
   );
 
-  // Check if mobile on component mount
+  // Simulate loading
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
+    const timer = setTimeout(() => {
+      setLoading(false);
+      setHasContent(INITIAL_CATS.length > 0);
+    }, 1500);
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleEdit = (cat: CAT) => {
@@ -594,90 +385,164 @@ const page: React.FC = () => {
     // Implement view functionality
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar 
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        navigationItems={navigationItems}
-        isMobile={isMobile}
-      />
-      
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${!isMobile ? 'ml-64' : ''}`}>
-        <TopHeader 
-          onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
-          isMobile={isMobile}
-        />
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar />
         
-        <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
-          <div className="mb-6">
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">CATs Dashboard</h1>
-            <p className="text-gray-600 mt-2">Manage your Continuous Assessment Tests for Spring 2025 semester</p>
-          </div>
-
-          <WeekAndCourseSelector 
-            selectedWeek={selectedWeek}
-            selectedCourse={selectedCourse}
-            onWeekChange={setSelectedWeek}
-            onCourseChange={setSelectedCourse}
-          />
-
-          <CATStatsCards cats={filteredCATs} />
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800">
-                  CATs - Week {selectedWeek}
-                  {selectedCourse && ` (${getCourseByCode(selectedCourse).code})`}
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  {filteredCATs.length} CAT{filteredCATs.length !== 1 ? 's' : ''} found
-                </p>
-              </div>
-              <button 
-                className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors flex items-center"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New CAT
-              </button>
-            </div>
-
-            {filteredCATs.length === 0 ? (
-              <div className="text-center py-12">
-                <BookMarked className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-600 mb-2">
-                  No CATs found
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {selectedCourse 
-                    ? `No CATs for ${getCourseByCode(selectedCourse).name} in Week ${selectedWeek}` 
-                    : `No CATs scheduled for Week ${selectedWeek}`
-                  }
-                </p>
-                <button 
-                  className="bg-rose-500 text-white px-6 py-3 rounded-lg hover:bg-rose-600 transition-colors inline-flex items-center"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create CAT
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCATs.map(cat => (
-                  <CATCard
-                    key={cat.id}
-                    cat={cat}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onView={handleView}
-                  />
+        <motion.div 
+          initial={{ 
+            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+          }}
+          animate={{ 
+            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+          }}
+          transition={{ duration: 0.3 }}
+          className="flex-1 overflow-auto"
+        >
+          <Header title="CATs" showWeekSelector={false} />
+          
+          <main className="p-4 md:p-6">
+            <div className="max-w-7xl mx-auto">
+              {/* Skeleton Loading */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 animate-pulse">
+                    <div className="flex items-center justify-between">
+                      <div className="w-2/3">
+                        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-6 bg-gray-300 rounded"></div>
+                      </div>
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
-          </div>
-        </main>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 animate-pulse">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="w-2/3">
+                        <div className="h-5 bg-gray-300 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded mb-3"></div>
+                      </div>
+                      <div className="w-16 h-6 bg-gray-200 rounded-full"></div>
+                    </div>
+                    <div className="space-y-2 mb-4">
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                      <div className="h-3 bg-gray-200 rounded w-4/5"></div>
+                    </div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </main>
+        </motion.div>
       </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
+      
+      <motion.div 
+        initial={{ 
+          marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+        }}
+        animate={{ 
+          marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+        }}
+        transition={{ duration: 0.3 }}
+        className="flex-1 overflow-auto"
+      >
+        <Header title="CATs" showWeekSelector={hasContent} />
+        
+        <main className="p-4 md:p-6">
+          {!hasContent ? (
+            <div className="max-w-4xl mx-auto">
+              <EmptyState
+                title="No CATs Created"
+                description="Create your first CAT to get started. You can schedule assessments, track progress, and manage submissions all in one place."
+                icon={<BookMarked size={48} />}
+                onAction={() => console.log("Create CAT")}
+              />
+            </div>
+          ) : (
+            <div className="max-w-7xl mx-auto">
+              <div className="mb-6">
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">CATs Dashboard</h1>
+                <p className="text-gray-600 mt-2">Manage your Continuous Assessment Tests for Spring 2025 semester</p>
+              </div>
+
+              <WeekAndCourseSelector 
+                selectedWeek={selectedWeek}
+                selectedCourse={selectedCourse}
+                onWeekChange={setSelectedWeek}
+                onCourseChange={setSelectedCourse}
+              />
+
+              <CATStatsCards cats={filteredCATs} />
+
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800">
+                      CATs - Week {selectedWeek}
+                      {selectedCourse && ` (${getCourseByCode(selectedCourse).code})`}
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {filteredCATs.length} CAT{filteredCATs.length !== 1 ? 's' : ''} found
+                    </p>
+                  </div>
+                  <button 
+                    className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors flex items-center"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    New CAT
+                  </button>
+                </div>
+
+                {filteredCATs.length === 0 ? (
+                  <div className="text-center py-12">
+                    <BookMarked className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-600 mb-2">
+                      No CATs found
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      {selectedCourse 
+                        ? `No CATs for ${getCourseByCode(selectedCourse).name} in Week ${selectedWeek}` 
+                        : `No CATs scheduled for Week ${selectedWeek}`
+                      }
+                    </p>
+                    <button 
+                      className="bg-rose-500 text-white px-6 py-3 rounded-lg hover:bg-rose-600 transition-colors inline-flex items-center"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create CAT
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredCATs.map((cat, index) => (
+                      <CATCard
+                        key={cat.id}
+                        cat={cat}
+                        index={index}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onView={handleView}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </main>
+      </motion.div>
     </div>
   );
 };
