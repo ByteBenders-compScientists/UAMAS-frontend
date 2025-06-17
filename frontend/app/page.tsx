@@ -1,12 +1,12 @@
-'use client'
-import React, { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { 
-  BrainCircuit, 
-  Users, 
-  BookOpen, 
-  BarChart3, 
-  Award, 
+"use client";
+import React, { useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  BrainCircuit,
+  Users,
+  BookOpen,
+  BarChart3,
+  Award,
   CheckCircle,
   ArrowRight,
   Menu,
@@ -21,20 +21,16 @@ import {
   Globe,
   Server,
   Zap,
-  LightbulbIcon,
-  School,
-  Laptop,
   Monitor,
   Video,
   Slack,
   Cloud,
   HardDrive,
   FolderOpen,
-  Github
-} from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+  Github,
+} from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function EduAISuite() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -45,35 +41,35 @@ export default function EduAISuite() {
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 }
+    transition: { duration: 0.6 },
   };
 
   const staggerContainer = {
     animate: {
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
-  const handleNavigation = (path) => {
+  const handleNavigation = (path: string) => {
     router.push(path);
   };
 
   const getIcon = (tool) => {
     const icons = {
-      'Canvas': BookOpen,
-      'Moodle': GraduationCap,
-      'Blackboard': Monitor,
-      'Google Classroom': Users,
-      'Microsoft Teams': MessageSquare,
-      'Zoom': Video,
-      'Slack': Slack,
-      'Notion': FileText,
-      'Dropbox': Cloud,
-      'OneDrive': HardDrive,
-      'Google Drive': FolderOpen,
-      'GitHub': Github
+      Canvas: BookOpen,
+      Moodle: GraduationCap,
+      Blackboard: Monitor,
+      "Google Classroom": Users,
+      "Microsoft Teams": MessageSquare,
+      Zoom: Video,
+      Slack: Slack,
+      Notion: FileText,
+      Dropbox: Cloud,
+      OneDrive: HardDrive,
+      "Google Drive": FolderOpen,
+      GitHub: Github,
     };
     return icons[tool] || Globe;
   };
@@ -83,34 +79,47 @@ export default function EduAISuite() {
       name: "Dr Benson Mwangi",
       role: "Computer Science Professor",
       image: "/assets/ben.jpg",
-      quote: "EduAI Suite has completely transformed how I manage assessments. The AI-powered grading has saved me countless hours, and the analytics provide incredible insights into student learning patterns."
+      quote:
+        "EduAI Suite has completely transformed how I manage assessments. The AI-powered grading has saved me countless hours, and the analytics provide incredible insights into student learning patterns.",
     },
     {
       name: "Joseph Kiprotich",
       role: "Engineering Student",
       image: "/assets/stud.jpg",
-      quote: "As a student with a busy schedule, the personalized learning paths and instant feedback have helped me stay on track. I've seen my grades improve significantly since using this platform."
+      quote:
+        "As a student with a busy schedule, the personalized learning paths and instant feedback have helped me stay on track. I've seen my grades improve significantly since using this platform.",
     },
     {
       name: "Lecturer David Maina",
       role: "Department Head, Mathematics",
       image: "/assets/lec2.jpg",
-      quote: "The implementation across our department has been seamless. We've seen increased student engagement and improved performance metrics. The customizable assessments are particularly valuable."
-    }
+      quote:
+        "The implementation across our department has been seamless. We've seen increased student engagement and improved performance metrics. The customizable assessments are particularly valuable.",
+    },
   ];
 
   return (
     <div className="min-h-screen relative overflow-hidden">
       <div className="fixed inset-0 w-full h-full z-0">
-        <motion.div 
+        <motion.div
           style={{ y: parallaxY }}
           className="absolute inset-0 w-full h-[120%] bg-gradient-to-b from-emerald-50 via-white to-teal-50"
         >
           <div className="absolute inset-0 opacity-10">
             <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
               <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#10b981" strokeWidth="0.5" />
+                <pattern
+                  id="grid"
+                  width="40"
+                  height="40"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <path
+                    d="M 40 0 L 0 0 0 40"
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="0.5"
+                  />
                 </pattern>
               </defs>
               <rect width="100%" height="100%" fill="url(#grid)" />
@@ -120,7 +129,7 @@ export default function EduAISuite() {
       </div>
 
       <div className="relative z-10">
-        <motion.nav 
+        <motion.nav
           initial={{ y: -100 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.6 }}
@@ -128,7 +137,7 @@ export default function EduAISuite() {
         >
           <div className="container mx-auto px-6">
             <div className="flex justify-between items-center h-16">
-              <motion.div 
+              <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="flex items-center space-x-2"
               >
@@ -142,31 +151,41 @@ export default function EduAISuite() {
 
               {/* Desktop Navigation */}
               <div className="hidden md:flex items-center space-x-8">
-                {['Features', 'How it Works', 'For Lecturers', 'For Students', 'Testimonials', 'FAQ'].map((item, index) => (
+                {[
+                  "Features",
+                  "How it Works",
+                  "For Lecturers",
+                  "For Students",
+                  "Testimonials",
+                  "FAQ",
+                ].map((item, index) => (
                   <motion.a
                     key={item}
-                    href={`#${item.toLowerCase().replace(' ', '-')}`}
+                    href={`#${item.toLowerCase().replace(" ", "-")}`}
                     whileHover={{ y: -2 }}
                     className="text-gray-700 hover:text-emerald-600 font-medium transition-colors duration-200"
                   >
                     {item}
                   </motion.a>
                 ))}
-                
+
                 <div className="flex items-center space-x-3">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg font-medium transition-colors"
-                    onClick={() => handleNavigation('/auth')}
+                    onClick={() => handleNavigation("/auth")}
                   >
                     Login
                   </motion.button>
                   <motion.button
-                    whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(16, 185, 129, 0.2)" }}
+                    whileHover={{
+                      scale: 1.05,
+                      boxShadow: "0 10px 25px rgba(16, 185, 129, 0.2)",
+                    }}
                     whileTap={{ scale: 0.95 }}
                     className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-medium shadow-md"
-                    onClick={() => handleNavigation('/auth')}
+                    onClick={() => handleNavigation("/auth")}
                   >
                     Get Started
                   </motion.button>
@@ -186,14 +205,22 @@ export default function EduAISuite() {
             {isMenuOpen && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="md:hidden py-4 space-y-4"
               >
-                {['Features', 'How it Works', 'For Lecturers', 'For Students', 'Testimonials', 'Pricing', 'FAQ'].map((item) => (
+                {[
+                  "Features",
+                  "How it Works",
+                  "For Lecturers",
+                  "For Students",
+                  "Testimonials",
+                  "Pricing",
+                  "FAQ",
+                ].map((item) => (
                   <a
                     key={item}
-                    href={`#${item.toLowerCase().replace(' ', '-')}`}
+                    href={`#${item.toLowerCase().replace(" ", "-")}`}
                     className="block text-gray-700 hover:text-emerald-600 font-medium"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -201,15 +228,15 @@ export default function EduAISuite() {
                   </a>
                 ))}
                 <div className="pt-4 border-t border-gray-100">
-                  <button 
+                  <button
                     className="block w-full text-left py-2 text-emerald-600 font-medium"
-                    onClick={() => handleNavigation('/auth')}
+                    onClick={() => handleNavigation("/auth")}
                   >
                     Login
                   </button>
-                  <button 
+                  <button
                     className="block w-full text-left py-2 text-emerald-600 font-medium"
-                    onClick={() => handleNavigation('/auth')}
+                    onClick={() => handleNavigation("/auth")}
                   >
                     Get Started
                   </button>
@@ -234,18 +261,20 @@ export default function EduAISuite() {
                   variants={fadeInUp}
                   className="text-5xl lg:text-6xl font-bold leading-tight"
                 >
-                  Transform How You{' '}
+                  Transform How You{" "}
                   <span className="bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
                     Teach, Learn,
-                  </span>{' '}
+                  </span>{" "}
                   and Motivate
                 </motion.h1>
-                
+
                 <motion.p
                   variants={fadeInUp}
                   className="text-xl text-gray-600 leading-relaxed"
                 >
-                  An AI-powered platform for lecturers and students in universities and colleges to enhance CTL and student engagement with automated assessment and performance tracking.
+                  An AI-powered platform for lecturers and students in
+                  universities and colleges to enhance CTL and student
+                  engagement with automated assessment and performance tracking.
                 </motion.p>
 
                 <motion.div
@@ -253,15 +282,18 @@ export default function EduAISuite() {
                   className="flex flex-col sm:flex-row gap-4"
                 >
                   <motion.button
-                    whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(16, 185, 129, 0.2)" }}
+                    whileHover={{
+                      scale: 1.05,
+                      boxShadow: "0 20px 40px rgba(16, 185, 129, 0.2)",
+                    }}
                     whileTap={{ scale: 0.95 }}
                     className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold text-lg shadow-lg flex items-center justify-center space-x-2"
-                    onClick={() => handleNavigation('/auth')}
+                    onClick={() => handleNavigation("/auth")}
                   >
                     <span>Get Started</span>
                     <ArrowRight className="w-5 h-5" />
                   </motion.button>
-                  
+
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -304,8 +336,12 @@ export default function EduAISuite() {
                         <GraduationCap className="w-6 h-6 text-emerald-600" />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-800">Active Learning Session</p>
-                        <p className="text-sm text-gray-600">Real-time engagement tracking</p>
+                        <p className="font-semibold text-gray-800">
+                          Active Learning Session
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Real-time engagement tracking
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -325,10 +361,16 @@ export default function EduAISuite() {
                 <div className="absolute -top-10 -right-5 bg-white p-3 rounded-lg shadow-lg transform rotate-6">
                   <div className="flex items-center space-x-2">
                     {[1, 2, 3, 4, 5].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 text-yellow-400" fill="#facc15" />
+                      <Star
+                        key={i}
+                        className="w-4 h-4 text-yellow-400"
+                        fill="#facc15"
+                      />
                     ))}
                   </div>
-                  <p className="text-xs font-medium mt-1">Rated 4.9/5 by educators</p>
+                  <p className="text-xs font-medium mt-1">
+                    Rated 4.9/5 by educators
+                  </p>
                 </div>
               </motion.div>
             </div>
@@ -339,10 +381,19 @@ export default function EduAISuite() {
         <section className="py-12 bg-white/50 backdrop-blur-sm">
           <div className="container mx-auto px-6">
             <div className="text-center mb-8">
-              <h3 className="text-gray-500 font-medium">TRUSTED BY LEADING INSTITUTIONS</h3>
+              <h3 className="text-gray-500 font-medium">
+                TRUSTED BY LEADING INSTITUTIONS
+              </h3>
             </div>
             <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
-              {['University of Nairobi', 'JKUAT University', 'KCA', 'Dedan Kimathi University', 'Kenyatta University', 'Kabarak'].map((uni, index) => (
+              {[
+                "University of Nairobi",
+                "JKUAT University",
+                "KCA",
+                "Dedan Kimathi University",
+                "Kenyatta University",
+                "Kabarak",
+              ].map((uni, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0 }}
@@ -367,8 +418,13 @@ export default function EduAISuite() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2 className="text-4xl font-bold text-gray-800 mb-4">Why EduAI Suite?</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">Comprehensive tools designed specifically for modern education, empowering both educators and students</p>
+              <h2 className="text-4xl font-bold text-gray-800 mb-4">
+                Why EduAI Suite?
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Comprehensive tools designed specifically for modern education,
+                empowering both educators and students
+              </p>
             </motion.div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -376,33 +432,39 @@ export default function EduAISuite() {
                 {
                   icon: <Users className="w-8 h-8" />,
                   title: "Automated Assessment Creation",
-                  description: "Generate comprehensive quizzes and assignments with AI-powered content creation tailored to your curriculum."
+                  description:
+                    "Generate comprehensive quizzes and assignments with AI-powered content creation tailored to your curriculum.",
                 },
                 {
                   icon: <BarChart3 className="w-8 h-8" />,
                   title: "Smart Analytics & Insights",
-                  description: "Track student progress with detailed analytics, identify learning gaps, and optimize teaching strategies."
+                  description:
+                    "Track student progress with detailed analytics, identify learning gaps, and optimize teaching strategies.",
                 },
                 {
                   icon: <Award className="w-8 h-8" />,
                   title: "Performance Management",
-                  description: "Monitor individual and class performance with intelligent reporting and progress tracking systems."
+                  description:
+                    "Monitor individual and class performance with intelligent reporting and progress tracking systems.",
                 },
                 {
                   icon: <TrendingUp className="w-8 h-8" />,
                   title: "Student Performance Analytics",
-                  description: "Comprehensive dashboards showing learning patterns, strengths, and areas for improvement."
+                  description:
+                    "Comprehensive dashboards showing learning patterns, strengths, and areas for improvement.",
                 },
                 {
                   icon: <BookOpen className="w-8 h-8" />,
                   title: "Engaging Student Tools",
-                  description: "Interactive learning modules, gamified assessments, and personalized study recommendations."
+                  description:
+                    "Interactive learning modules, gamified assessments, and personalized study recommendations.",
                 },
                 {
                   icon: <Shield className="w-8 h-8" />,
                   title: "Personalized Motivation",
-                  description: "AI-driven motivation systems that adapt to individual learning styles and preferences."
-                }
+                  description:
+                    "AI-driven motivation systems that adapt to individual learning styles and preferences.",
+                },
               ].map((feature, index) => (
                 <motion.div
                   key={index}
@@ -410,14 +472,21 @@ export default function EduAISuite() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+                  whileHover={{
+                    y: -5,
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                  }}
                   className="bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-lg border border-white/20"
                 >
                   <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-3 rounded-lg w-fit mb-4">
                     {feature.icon}
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    {feature.description}
+                  </p>
                 </motion.div>
               ))}
             </div>
@@ -433,8 +502,13 @@ export default function EduAISuite() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2 className="text-4xl font-bold text-gray-800 mb-4">Advanced AI Features</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">Cutting-edge artificial intelligence designed specifically for educational environments</p>
+              <h2 className="text-4xl font-bold text-gray-800 mb-4">
+                Advanced AI Features
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Cutting-edge artificial intelligence designed specifically for
+                educational environments
+              </p>
             </motion.div>
 
             <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -458,23 +532,29 @@ export default function EduAISuite() {
                   {
                     icon: <Zap className="w-6 h-6 text-emerald-500" />,
                     title: "AI-Powered Grading",
-                    description: "Intelligent assessment of student submissions with detailed feedback, consistent grading, and time-saving automation."
+                    description:
+                      "Intelligent assessment of student submissions with detailed feedback, consistent grading, and time-saving automation.",
                   },
                   {
                     icon: <FileText className="w-6 h-6 text-emerald-500" />,
                     title: "Question Generation Engine",
-                    description: "Create unique, curriculum-aligned questions and assessments with our advanced NLP system."
+                    description:
+                      "Create unique, curriculum-aligned questions and assessments with our advanced NLP system.",
                   },
                   {
                     icon: <Server className="w-6 h-6 text-emerald-500" />,
                     title: "Predictive Learning Paths",
-                    description: "Machine learning algorithms that adapt to student progress and create personalized learning journeys."
+                    description:
+                      "Machine learning algorithms that adapt to student progress and create personalized learning journeys.",
                   },
                   {
-                    icon: <MessageSquare className="w-6 h-6 text-emerald-500" />,
+                    icon: (
+                      <MessageSquare className="w-6 h-6 text-emerald-500" />
+                    ),
                     title: "Intelligent Tutoring Assistant",
-                    description: "24/7 AI tutor that provides contextual help, answers questions, and guides students through difficult concepts."
-                  }
+                    description:
+                      "24/7 AI tutor that provides contextual help, answers questions, and guides students through difficult concepts.",
+                  },
                 ].map((feature, index) => (
                   <motion.div
                     key={index}
@@ -488,7 +568,9 @@ export default function EduAISuite() {
                       {feature.icon}
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-1">{feature.title}</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                        {feature.title}
+                      </h3>
                       <p className="text-gray-600">{feature.description}</p>
                     </div>
                   </motion.div>
@@ -499,7 +581,10 @@ export default function EduAISuite() {
         </section>
 
         {/* How It Works */}
-        <section id="how-it-works" className="py-20 bg-white/30 backdrop-blur-sm">
+        <section
+          id="how-it-works"
+          className="py-20 bg-white/30 backdrop-blur-sm"
+        >
           <div className="container mx-auto px-6">
             <motion.div
               initial={{ opacity: 0, y: 50 }}
@@ -507,8 +592,12 @@ export default function EduAISuite() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2 className="text-4xl font-bold text-gray-800 mb-4">How It Works</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">Simple steps to transform your teaching and learning experience</p>
+              <h2 className="text-4xl font-bold text-gray-800 mb-4">
+                How It Works
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Simple steps to transform your teaching and learning experience
+              </p>
             </motion.div>
 
             <div className="grid md:grid-cols-4 gap-8">
@@ -517,26 +606,30 @@ export default function EduAISuite() {
                   icon: <Users className="w-8 h-8" />,
                   title: "Upload & Align",
                   subtitle: "Assignment with AI",
-                  description: "Upload your curriculum and let AI align assignments with learning objectives."
+                  description:
+                    "Upload your curriculum and let AI align assignments with learning objectives.",
                 },
                 {
                   icon: <BookOpen className="w-8 h-8" />,
                   title: "Student Completes",
                   subtitle: "Assignment",
-                  description: "Students engage with interactive, personalized assignments tailored to their learning pace."
+                  description:
+                    "Students engage with interactive, personalized assignments tailored to their learning pace.",
                 },
                 {
                   icon: <Clock className="w-8 h-8" />,
                   title: "Instant Feedback",
                   subtitle: "& Assessment",
-                  description: "AI provides immediate, detailed feedback and generates comprehensive assessment reports."
+                  description:
+                    "AI provides immediate, detailed feedback and generates comprehensive assessment reports.",
                 },
                 {
                   icon: <BarChart3 className="w-8 h-8" />,
                   title: "Lecturer Receives",
                   subtitle: "Detailed Analytics",
-                  description: "Access comprehensive analytics, progress tracking, and actionable insights for each student."
-                }
+                  description:
+                    "Access comprehensive analytics, progress tracking, and actionable insights for each student.",
+                },
               ].map((step, index) => (
                 <motion.div
                   key={index}
@@ -549,15 +642,21 @@ export default function EduAISuite() {
                   <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                     {step.icon}
                   </div>
-                  
+
                   {/* Connector Line */}
                   {index < 3 && (
                     <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-[2px] bg-gradient-to-r from-emerald-500 to-teal-600"></div>
                   )}
-                  
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">{step.title}</h3>
-                  <p className="text-emerald-600 font-medium mb-3">{step.subtitle}</p>
-                  <p className="text-gray-600 text-sm leading-relaxed">{step.description}</p>
+
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-emerald-600 font-medium mb-3">
+                    {step.subtitle}
+                  </p>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {step.description}
+                  </p>
                 </motion.div>
               ))}
             </div>
@@ -573,36 +672,59 @@ export default function EduAISuite() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2 className="text-4xl font-bold text-gray-800 mb-4">Integration Ecosystem</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">Seamlessly connects with your existing tools and platforms</p>
+              <h2 className="text-4xl font-bold text-gray-800 mb-4">
+                Integration Ecosystem
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Seamlessly connects with your existing tools and platforms
+              </p>
             </motion.div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
-  {['Canvas', 'Moodle', 'Blackboard', 'Google Classroom', 'Microsoft Teams', 'Zoom', 'Slack', 'Notion', 'Dropbox', 'OneDrive', 'Google Drive', 'GitHub'].map((tool, index) => {
-    const IconComponent = getIcon(tool);
-    return (
-      <motion.div
-        key={index}
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: index * 0.05 }}
-        whileHover={{ y: -5, boxShadow: "0 10px 30px rgba(0,0,0,0.1)" }}
-        className="bg-white rounded-xl p-6 shadow-md flex flex-col items-center justify-center text-center"
-      >
-        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-          <IconComponent className="w-6 h-6 text-gray-600" />
-        </div>
-        <p className="font-medium text-gray-700">{tool}</p>
-      </motion.div>
-    );
-  })}
-</div>
+              {[
+                "Canvas",
+                "Moodle",
+                "Blackboard",
+                "Google Classroom",
+                "Microsoft Teams",
+                "Zoom",
+                "Slack",
+                "Notion",
+                "Dropbox",
+                "OneDrive",
+                "Google Drive",
+                "GitHub",
+              ].map((tool, index) => {
+                const IconComponent = getIcon(tool);
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{
+                      y: -5,
+                      boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+                    }}
+                    className="bg-white rounded-xl p-6 shadow-md flex flex-col items-center justify-center text-center"
+                  >
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                      <IconComponent className="w-6 h-6 text-gray-600" />
+                    </div>
+                    <p className="font-medium text-gray-700">{tool}</p>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
         {/* For Lecturers - Transparent Section */}
-        <section id="for-lecturers" className="py-20 bg-white/30 backdrop-blur-sm">
+        <section
+          id="for-lecturers"
+          className="py-20 bg-white/30 backdrop-blur-sm"
+        >
           <div className="container mx-auto px-6">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <motion.div
@@ -611,9 +733,13 @@ export default function EduAISuite() {
                 viewport={{ once: true }}
                 className="space-y-6"
               >
-                <h2 className="text-4xl font-bold text-gray-800">For Lecturers</h2>
+                <h2 className="text-4xl font-bold text-gray-800">
+                  For Lecturers
+                </h2>
                 <p className="text-xl text-gray-600 leading-relaxed">
-                  Streamline your teaching workflow, reduce administrative burden, and gain valuable insights into student performance with our comprehensive educator tools.
+                  Streamline your teaching workflow, reduce administrative
+                  burden, and gain valuable insights into student performance
+                  with our comprehensive educator tools.
                 </p>
                 <div className="space-y-4 mt-8">
                   {[
@@ -622,7 +748,7 @@ export default function EduAISuite() {
                     "Manage groups and students, tracking individual and collective progress",
                     "View personalized analytics and identify areas requiring additional attention",
                     "Automatic plagiarism detection and academic integrity verification",
-                    "Customizable assessment templates aligned with learning objectives"
+                    "Customizable assessment templates aligned with learning objectives",
                   ].map((feature, index) => (
                     <motion.div
                       key={index}
@@ -641,12 +767,12 @@ export default function EduAISuite() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-semibold shadow-lg mt-4"
-                  onClick={() => handleNavigation('/auth')}
+                  onClick={() => handleNavigation("/auth")}
                 >
                   Get Lecturer Demo
                 </motion.button>
               </motion.div>
-              
+
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -662,7 +788,7 @@ export default function EduAISuite() {
                     height={400}
                     quality={100}
                   />
-                  
+
                   {/* Floating Stats Card */}
                   <div className="absolute -bottom-10 -right-10 bg-white p-4 rounded-lg shadow-lg">
                     <div className="flex items-center space-x-3 mb-2">
@@ -671,11 +797,15 @@ export default function EduAISuite() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="text-center">
-                        <p className="text-3xl font-bold text-emerald-600">68%</p>
+                        <p className="text-3xl font-bold text-emerald-600">
+                          68%
+                        </p>
                         <p className="text-xs text-gray-500">Grading Time</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-3xl font-bold text-emerald-600">52%</p>
+                        <p className="text-3xl font-bold text-emerald-600">
+                          52%
+                        </p>
                         <p className="text-xs text-gray-500">Prep Time</p>
                       </div>
                     </div>
@@ -705,15 +835,17 @@ export default function EduAISuite() {
                     height={400}
                     quality={100}
                   />
-                  
+
                   {/* Floating Badge */}
                   <div className="absolute -top-10 -left-10 bg-white p-3 rounded-full shadow-lg flex items-center justify-center w-24 h-24">
                     <div className="text-center">
                       <p className="text-3xl font-bold text-emerald-600">93%</p>
-                      <p className="text-xs text-gray-500">Student Satisfaction</p>
+                      <p className="text-xs text-gray-500">
+                        Student Satisfaction
+                      </p>
                     </div>
                   </div>
-                  
+
                   {/* Floating Card */}
                   <div className="absolute -bottom-8 -right-8 bg-white p-4 rounded-lg shadow-lg max-w-[200px]">
                     <div className="flex items-center space-x-2 mb-2">
@@ -721,7 +853,8 @@ export default function EduAISuite() {
                       <p className="font-medium text-sm">Achievement</p>
                     </div>
                     <p className="text-xs text-gray-600">
-                      "Completed 5 consecutive assignments with above 90% scores!"
+                      "Completed 5 consecutive assignments with above 90%
+                      scores!"
                     </p>
                   </div>
                 </div>
@@ -733,9 +866,13 @@ export default function EduAISuite() {
                 viewport={{ once: true }}
                 className="space-y-6 order-1 lg:order-2"
               >
-                <h2 className="text-4xl font-bold text-gray-800">For Students</h2>
+                <h2 className="text-4xl font-bold text-gray-800">
+                  For Students
+                </h2>
                 <p className="text-xl text-gray-600 leading-relaxed">
-                  Enhance your learning journey with personalized feedback, engaging assignments, and motivational tools designed to help you excel in your studies.
+                  Enhance your learning journey with personalized feedback,
+                  engaging assignments, and motivational tools designed to help
+                  you excel in your studies.
                 </p>
                 <div className="space-y-4 mt-8">
                   {[
@@ -744,7 +881,7 @@ export default function EduAISuite() {
                     "Receive motivational encouragement when you need it most",
                     "Track your progress with interactive visual analytics and performance insights",
                     "Access personalized study recommendations based on your learning patterns",
-                    "Earn badges, certificates, and recognition for your academic achievements"
+                    "Earn badges, certificates, and recognition for your academic achievements",
                   ].map((feature, index) => (
                     <motion.div
                       key={index}
@@ -763,7 +900,7 @@ export default function EduAISuite() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-semibold shadow-lg mt-4"
-                  onClick={() => handleNavigation('/auth')}
+                  onClick={() => handleNavigation("/auth")}
                 >
                   Get Student Demo
                 </motion.button>
@@ -773,7 +910,10 @@ export default function EduAISuite() {
         </section>
 
         {/* Testimonials */}
-        <section id="testimonials" className="py-20 bg-white/30 backdrop-blur-sm">
+        <section
+          id="testimonials"
+          className="py-20 bg-white/30 backdrop-blur-sm"
+        >
           <div className="container mx-auto px-6">
             <motion.div
               initial={{ opacity: 0, y: 50 }}
@@ -781,9 +921,12 @@ export default function EduAISuite() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2 className="text-4xl font-bold text-gray-800 mb-4">What People Are Saying</h2>
+              <h2 className="text-4xl font-bold text-gray-800 mb-4">
+                What People Are Saying
+              </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Hear from educators and students who have transformed their teaching and learning experience
+                Hear from educators and students who have transformed their
+                teaching and learning experience
               </p>
             </motion.div>
 
@@ -795,13 +938,16 @@ export default function EduAISuite() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  whileHover={{ y: -10, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+                  whileHover={{
+                    y: -10,
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                  }}
                   className="bg-white rounded-xl p-8 shadow-xl relative"
                 >
                   <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 text-emerald-500 text-8xl opacity-10">
                     &quot;
                   </div>
-                  
+
                   <div className="flex items-center space-x-4 mb-6">
                     <div className="w-16 h-16  rounded-full flex items-center justify-center">
                       {/* <Users className="w-8 h-8 text-emerald-600" /> */}
@@ -814,17 +960,25 @@ export default function EduAISuite() {
                         quality={100}
                       />
                     </div>
-                    <div className='mt-1 sm:mt-4 md:mt-1'>
-  <h4 className="font-semibold text-lg">{testimonial.name}</h4>
-  <p className="text-emerald-600">{testimonial.role}</p>
-</div>
+                    <div className="mt-1 sm:mt-4 md:mt-1">
+                      <h4 className="font-semibold text-lg">
+                        {testimonial.name}
+                      </h4>
+                      <p className="text-emerald-600">{testimonial.role}</p>
+                    </div>
                   </div>
-                  
-                  <p className="text-gray-600 italic leading-relaxed mb-6">"{testimonial.quote}"</p>
-                  
+
+                  <p className="text-gray-600 italic leading-relaxed mb-6">
+                    "{testimonial.quote}"
+                  </p>
+
                   <div className="flex items-center">
                     {[1, 2, 3, 4, 5].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400" fill="#facc15" />
+                      <Star
+                        key={i}
+                        className="w-5 h-5 text-yellow-400"
+                        fill="#facc15"
+                      />
                     ))}
                   </div>
                 </motion.div>
@@ -842,11 +996,14 @@ export default function EduAISuite() {
               viewport={{ once: true }}
               className="space-y-8"
             >
-              <h2 className="text-4xl font-bold text-gray-800">Track Performance. See Growth.</h2>
+              <h2 className="text-4xl font-bold text-gray-800">
+                Track Performance. See Growth.
+              </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Comprehensive analytics that provide actionable insights for both educators and students
+                Comprehensive analytics that provide actionable insights for
+                both educators and students
               </p>
-              
+
               <div className="max-w-5xl mx-auto bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 mt-8">
                 <Image
                   src="/assets/dash.png"
@@ -856,21 +1013,24 @@ export default function EduAISuite() {
                   height={600}
                   quality={100}
                 />
-                
+
                 <div className="grid md:grid-cols-3 gap-6 text-left">
                   {[
                     {
                       icon: <TrendingUp className="w-6 h-6 text-emerald-500" />,
-                      title: "Visualize learning progress with interactive charts and detailed metrics"
+                      title:
+                        "Visualize learning progress with interactive charts and detailed metrics",
                     },
                     {
                       icon: <Award className="w-6 h-6 text-emerald-500" />,
-                      title: "Identify topics you excel at based on comprehensive test analysis"
+                      title:
+                        "Identify topics you excel at based on comprehensive test analysis",
                     },
                     {
                       icon: <BarChart3 className="w-6 h-6 text-emerald-500" />,
-                      title: "Stay motivated with personalized badges and targeted reinforcement"
-                    }
+                      title:
+                        "Stay motivated with personalized badges and targeted reinforcement",
+                    },
                   ].map((item, index) => (
                     <motion.div
                       key={index}
@@ -901,32 +1061,47 @@ export default function EduAISuite() {
             >
               {/* Background pattern */}
               <div className="absolute inset-0 opacity-10">
-                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="100%"
+                  height="100%"
+                >
                   <defs>
-                    <pattern id="dots" width="30" height="30" patternUnits="userSpaceOnUse">
+                    <pattern
+                      id="dots"
+                      width="30"
+                      height="30"
+                      patternUnits="userSpaceOnUse"
+                    >
                       <circle cx="10" cy="10" r="2" fill="white" />
                     </pattern>
                   </defs>
                   <rect width="100%" height="100%" fill="url(#dots)" />
                 </svg>
               </div>
-              
+
               <div className="relative z-10">
-                <h2 className="text-4xl font-bold mb-4">Ready to Revolutionize Your Learning Experience?</h2>
+                <h2 className="text-4xl font-bold mb-4">
+                  Ready to Revolutionize Your Learning Experience?
+                </h2>
                 <p className="text-xl mb-8 opacity-90 max-w-3xl mx-auto">
-                  Join thousands of educators and students already transforming their educational journey with EduAI Suite.
+                  Join thousands of educators and students already transforming
+                  their educational journey with EduAI Suite.
                 </p>
-                
+
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <motion.button
-                    whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(255,255,255,0.2)" }}
+                    whileHover={{
+                      scale: 1.05,
+                      boxShadow: "0 20px 40px rgba(255,255,255,0.2)",
+                    }}
                     whileTap={{ scale: 0.95 }}
                     className="px-10 py-4 bg-white text-emerald-600 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
-                    onClick={() => handleNavigation('/auth')}
+                    onClick={() => handleNavigation("/auth")}
                   >
                     Get Started Free
                   </motion.button>
-                  
+
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -935,8 +1110,10 @@ export default function EduAISuite() {
                     Schedule Demo
                   </motion.button>
                 </div>
-                
-                <p className="text-sm mt-6 opacity-80">No credit card required. Free 30-day trial.</p>
+
+                <p className="text-sm mt-6 opacity-80">
+                  No credit card required. Free 30-day trial.
+                </p>
               </div>
             </motion.div>
           </div>
@@ -951,7 +1128,9 @@ export default function EduAISuite() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2 className="text-4xl font-bold text-gray-800 mb-4">Frequently Asked Questions</h2>
+              <h2 className="text-4xl font-bold text-gray-800 mb-4">
+                Frequently Asked Questions
+              </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 Everything you need to know about EduAI Suite
               </p>
@@ -961,28 +1140,34 @@ export default function EduAISuite() {
               {[
                 {
                   question: "Is the platform suitable for any institution?",
-                  answer: "Yes, EduAI Suite is designed for universities, colleges, and schools of all sizes. Our flexible architecture allows the platform to scale with institutions of any size, from small departments to large multi-campus universities."
+                  answer:
+                    "Yes, EduAI Suite is designed for universities, colleges, and schools of all sizes. Our flexible architecture allows the platform to scale with institutions of any size, from small departments to large multi-campus universities.",
                 },
                 {
                   question: "Are the AI-generated questions reliable?",
-                  answer: "Absolutely. Our AI creates questions aligned with learning objectives and vetted by educational standards. Each question undergoes quality checks to ensure relevance, accuracy, and appropriate difficulty levels. Lecturers also have full editorial control before publishing."
+                  answer:
+                    "Absolutely. Our AI creates questions aligned with learning objectives and vetted by educational standards. Each question undergoes quality checks to ensure relevance, accuracy, and appropriate difficulty levels. Lecturers also have full editorial control before publishing.",
                 },
                 {
                   question: "Can students see detailed performance analytics?",
-                  answer: "Yes! Students receive comprehensive insights on their performance with progress tracking, personalized feedback, and motivational tools. They can view their strengths, areas for improvement, and track progress over time with intuitive visualizations."
+                  answer:
+                    "Yes! Students receive comprehensive insights on their performance with progress tracking, personalized feedback, and motivational tools. They can view their strengths, areas for improvement, and track progress over time with intuitive visualizations.",
                 },
                 {
                   question: "Is my data safe and secure?",
-                  answer: "Security is our top priority. All data is encrypted both in transit and at rest using industry-standard protocols. We employ enterprise-grade security measures, regular security audits, and comply with major educational data protection regulations including FERPA and GDPR."
+                  answer:
+                    "Security is our top priority. All data is encrypted both in transit and at rest using industry-standard protocols. We employ enterprise-grade security measures, regular security audits, and comply with major educational data protection regulations including FERPA and GDPR.",
                 },
                 {
                   question: "How long does implementation take?",
-                  answer: "Implementation typically takes 2-4 weeks, depending on your institution's size and specific requirements. Our dedicated onboarding team will guide you through every step of the process, including data migration, integration with existing systems, and staff training."
+                  answer:
+                    "Implementation typically takes 2-4 weeks, depending on your institution's size and specific requirements. Our dedicated onboarding team will guide you through every step of the process, including data migration, integration with existing systems, and staff training.",
                 },
                 {
                   question: "Do you offer training and support?",
-                  answer: "Yes, we provide comprehensive training sessions for all users, detailed documentation, video tutorials, and a knowledge base. Our support team is available via email, chat, and phone. Enterprise plans include dedicated account managers and 24/7 priority support."
-                }
+                  answer:
+                    "Yes, we provide comprehensive training sessions for all users, detailed documentation, video tutorials, and a knowledge base. Our support team is available via email, chat, and phone. Enterprise plans include dedicated account managers and 24/7 priority support.",
+                },
               ].map((item, index) => (
                 <motion.div
                   key={index}
@@ -992,7 +1177,9 @@ export default function EduAISuite() {
                   transition={{ delay: index * 0.1 }}
                   className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20"
                 >
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3">{item.question}</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                    {item.question}
+                  </h3>
                   <p className="text-gray-600 leading-relaxed">{item.answer}</p>
                 </motion.div>
               ))}
@@ -1011,52 +1198,107 @@ export default function EduAISuite() {
                   </div>
                   <span className="text-xl font-bold">EduAI Suite</span>
                 </div>
-                <p className="text-gray-400">Transforming education through intelligent automation and personalized learning experiences. Making education more accessible, engaging, and effective for all.</p>
+                <p className="text-gray-400">
+                  Transforming education through intelligent automation and
+                  personalized learning experiences. Making education more
+                  accessible, engaging, and effective for all.
+                </p>
                 <div className="pt-4">
-                  <p className="text-gray-400">Contact us: <span className="text-emerald-400">info@eduaisuite.com</span></p>
-                  <p className="text-gray-400">Support: <span className="text-emerald-400">support@eduaisuite.com</span></p>
+                  <p className="text-gray-400">
+                    Contact us:{" "}
+                    <span className="text-emerald-400">
+                      info@eduaisuite.com
+                    </span>
+                  </p>
+                  <p className="text-gray-400">
+                    Support:{" "}
+                    <span className="text-emerald-400">
+                      support@eduaisuite.com
+                    </span>
+                  </p>
                 </div>
               </div>
-              
+
               <div>
-                <h4 className="font-semibold mb-4 text-emerald-400">Features</h4>
+                <h4 className="font-semibold mb-4 text-emerald-400">
+                  Features
+                </h4>
                 <ul className="space-y-2 text-gray-400">
-                  <li className="hover:text-white transition-colors">Automated Assessment</li>
-                  <li className="hover:text-white transition-colors">Performance Analytics</li>
-                  <li className="hover:text-white transition-colors">Student Engagement</li>
-                  <li className="hover:text-white transition-colors">AI-Powered Insights</li>
-                  <li className="hover:text-white transition-colors">Curriculum Alignment</li>
-                  <li className="hover:text-white transition-colors">Personalized Learning</li>
+                  <li className="hover:text-white transition-colors">
+                    Automated Assessment
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Performance Analytics
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Student Engagement
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    AI-Powered Insights
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Curriculum Alignment
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Personalized Learning
+                  </li>
                 </ul>
               </div>
-              
+
               <div>
-                <h4 className="font-semibold mb-4 text-emerald-400">For Educators</h4>
+                <h4 className="font-semibold mb-4 text-emerald-400">
+                  For Educators
+                </h4>
                 <ul className="space-y-2 text-gray-400">
-                  <li className="hover:text-white transition-colors">Lecturer Dashboard</li>
-                  <li className="hover:text-white transition-colors">Content Creation</li>
-                  <li className="hover:text-white transition-colors">Progress Tracking</li>
-                  <li className="hover:text-white transition-colors">Grade Management</li>
-                  <li className="hover:text-white transition-colors">Department Analytics</li>
+                  <li className="hover:text-white transition-colors">
+                    Lecturer Dashboard
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Content Creation
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Progress Tracking
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Grade Management
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Department Analytics
+                  </li>
                 </ul>
               </div>
-              
+
               <div>
                 <h4 className="font-semibold mb-4 text-emerald-400">Company</h4>
                 <ul className="space-y-2 text-gray-400">
-                  <li className="hover:text-white transition-colors">About Us</li>
-                  <li className="hover:text-white transition-colors">Careers</li>
+                  <li className="hover:text-white transition-colors">
+                    About Us
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Careers
+                  </li>
                   <li className="hover:text-white transition-colors">Blog</li>
-                  <li className="hover:text-white transition-colors">Help Center</li>
-                  <li className="hover:text-white transition-colors">Contact Us</li>
-                  <li className="hover:text-white transition-colors">Privacy Policy</li>
-                  <li className="hover:text-white transition-colors">Terms of Service</li>
+                  <li className="hover:text-white transition-colors">
+                    Help Center
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Contact Us
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Privacy Policy
+                  </li>
+                  <li className="hover:text-white transition-colors">
+                    Terms of Service
+                  </li>
                 </ul>
               </div>
             </div>
-            
+
             <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-              <p>&copy; 2025 EduAI Suite. All rights reserved. Empowering education through innovation.</p>
+              <p>
+                &copy; 2025 EduAI Suite. All rights reserved. Empowering
+                education through innovation.
+              </p>
             </div>
           </div>
         </footer>
