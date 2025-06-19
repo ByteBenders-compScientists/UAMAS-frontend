@@ -128,6 +128,7 @@ export default function LecturersPage() {
   const [selectedLecturer, setSelectedLecturer] = useState<Lecturer | null>(null)
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [selectedLecturerForUnits, setSelectedLecturerForUnits] = useState<Lecturer | null>(null)
+  const [selectedLecturerUnitIds, setSelectedLecturerUnitIds] = useState<string[]>([])
 
   useEffect(() => {
     const fetchLecturers = async () => {
@@ -276,6 +277,7 @@ export default function LecturersPage() {
 
   const handleAssignUnits = (lecturer: Lecturer) => {
     setSelectedLecturerForUnits(lecturer)
+    setSelectedLecturerUnitIds(lecturer.units.map(u => u.unit_code))
     setShowAssignModal(true)
   }
 
@@ -370,29 +372,58 @@ export default function LecturersPage() {
                 onAction={() => setShowAddModal(true)}
               />
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {filteredLecturers.map((lecturer, index) => (
-                  <motion.div
-                    key={lecturer.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.1 * index }}
-                  >
-                    <LecturerCard
-                      lecturer={lecturer}
-                      onEdit={handleEditLecturer}
-                      onDelete={handleDeleteLecturer}
-                      onView={handleViewLecturer}
-                      onAssignUnits={handleAssignUnits}
-                    />
-                  </motion.div>
-                ))}
-              </motion.div>
+              <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lecturer</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assigned Units</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {filteredLecturers.map((lecturer) => (
+                      <tr key={lecturer.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-gray-800">{lecturer.firstname} {lecturer.surname}</div>
+                          <div className="text-xs text-gray-500">{lecturer.othernames}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="font-medium text-gray-800">{lecturer.units.length} units</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {lecturer.units.map((unit) => (
+                              <span key={unit.unit_code} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-medium">
+                                {unit.unit_code}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {lecturer.units.length > 0 ? (
+                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-semibold">Active</span>
+                          ) : (
+                            <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-xs font-semibold">Unassigned</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex space-x-2">
+                            <button onClick={() => handleAssignUnits(lecturer)} className="hover:bg-gray-100 p-1 rounded" title="Assign Units">
+                              <BookOpen size={16} className="text-green-600" />
+                            </button>
+                            <button onClick={() => handleEditLecturer(lecturer)} className="hover:bg-gray-100 p-1 rounded" title="Edit">
+                              <Edit size={16} className="text-blue-600" />
+                            </button>
+                            <button onClick={() => handleDeleteLecturer(lecturer.id)} className="hover:bg-gray-100 p-1 rounded" title="Delete">
+                              <Trash2 size={16} className="text-red-600" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </main>
@@ -414,9 +445,11 @@ export default function LecturersPage() {
       {showAssignModal && selectedLecturerForUnits && (
         <AssignUnitsModal
           lecturerId={selectedLecturerForUnits.id}
+          assignedUnitIds={selectedLecturerUnitIds}
           onClose={() => {
             setShowAssignModal(false)
             setSelectedLecturerForUnits(null)
+            setSelectedLecturerUnitIds([])
           }}
           onAssign={handleUnitsAssigned}
         />
