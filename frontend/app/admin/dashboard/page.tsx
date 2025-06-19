@@ -406,6 +406,44 @@ export default function AdminDashboard() {
             </div>
           )}
         </main>
+        {/* System Overview Section (Bottom) */}
+        <div className="max-w-7xl mx-auto mt-10">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
+            <h2 className="text-lg font-bold text-gray-900 mb-6">System Overview</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+              {/* Current Semester */}
+              <div>
+                <div className="flex justify-center mb-3">
+                  <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  </div>
+                </div>
+                <div className="font-semibold text-gray-900 text-lg mb-1">Current Semester</div>
+                <div className="text-gray-500 text-sm">Semester 2, 2024/2025</div>
+              </div>
+              {/* Active Users */}
+              <div>
+                <div className="flex justify-center mb-3">
+                  <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-4a4 4 0 11-8 0 4 4 0 018 0zm6 4v2a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2a2 2 0 012-2h4a2 2 0 012 2z" /></svg>
+                  </div>
+                </div>
+                <div className="font-semibold text-gray-900 text-lg mb-1">Active Users</div>
+                <div className="text-gray-500 text-sm">1,336 total users</div>
+              </div>
+              {/* System Health */}
+              <div>
+                <div className="flex justify-center mb-3">
+                  <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 018 0v2m-4-4V7m0 0V3m0 4a4 4 0 00-4 4v4a4 4 0 004 4" /></svg>
+                  </div>
+                </div>
+                <div className="font-semibold text-gray-900 text-lg mb-1">System Health</div>
+                <div className="text-green-600 text-sm">All systems operational</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </motion.div>
     </div>
   )
