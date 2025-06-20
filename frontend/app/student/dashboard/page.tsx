@@ -63,6 +63,7 @@ export default function Dashboard() {
 
   const [hasContent, setHasContent] = useState(mockData.hasContent);
   const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<{ name: string; surname: string; reg_number: string } | null>(null);
 
   useEffect(() => {
     // Simulate loading data
@@ -71,6 +72,19 @@ export default function Dashboard() {
     }, 800);
     
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/v1/auth/me', {
+      credentials: 'include',
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.name && data.surname && data.reg_number) {
+          setProfile({ name: data.name, surname: data.surname, reg_number: data.reg_number });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const quickLinks = [
@@ -149,7 +163,7 @@ export default function Dashboard() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between relative z-10">
                   <div>
                     <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                      Welcome back, {mockData.student.name}!
+                      Welcome back, {profile ? `${profile.name} ${profile.surname}` : 'John Opondo'}!
                     </h2>
                     <p className="text-emerald-50">
                       {mockData.student.program} • {mockData.student.semester} • Week {mockData.currentWeek}
