@@ -106,6 +106,9 @@ export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  const [courses, setCourses] = useState<{ id: string; code: string; name: string }[]>([])
+  const [selectedCourse, setSelectedCourse] = useState("")
+  const [selectedYear, setSelectedYear] = useState("")
 
   // Fetch students from API
   useEffect(() => {
@@ -134,14 +137,39 @@ export default function StudentsPage() {
     fetchStudents()
   }, [])
 
-  // Filter students based on search term
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/api/v1/admin/courses", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        })
+        if (!res.ok) throw new Error("Failed to fetch courses")
+        const data = await res.json()
+        setCourses(data)
+      } catch (error) {
+        setCourses([])
+        console.error("Failed to fetch courses:", error)
+      }
+    }
+    fetchCourses()
+  }, [])
 
+  // Get unique years of study from students
+  const yearsOfStudy = Array.from(new Set(students.map(s => s.year_of_study))).sort((a, b) => a - b)
+
+  // Filter students based on search term
   const filteredStudents = students.filter(
     (student) =>
-      student.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.reg_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.course.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      (selectedCourse === "" || student.course.id === selectedCourse) &&
+      (selectedYear === "" || String(student.year_of_study) === selectedYear) &&
+      (
+        student.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.reg_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.course.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
   )
 
   const handleAddStudent = async (studentData: any) => {
@@ -322,11 +350,33 @@ export default function StudentsPage() {
                   className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
-
-              <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm flex items-center space-x-2">
-                <Filter size={16} />
-                <span>Filter</span>
-              </button>
+              <div className="flex items-center space-x-2">
+                <Filter size={16} className="text-gray-400" />
+                <select
+                  value={selectedCourse}
+                  onChange={(e) => setSelectedCourse(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                >
+                  <option value="">All Courses</option>
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.code} - {course.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                >
+                  <option value="">All Years</option>
+                  {yearsOfStudy.map((year) => (
+                    <option key={year} value={String(year)}>
+                      Year {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Content */}
@@ -351,28 +401,46 @@ export default function StudentsPage() {
                 onAction={() => setShowAddModal(true)}
               />
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {filteredStudents.map((student, index) => (
-                  <motion.div
-                    key={student.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.1 * index }}
-                  >
-                    <StudentCard
-                      student={student}
-                      onEdit={handleEditStudent}
-                      onDelete={handleDeleteStudent}
-                      onView={handleViewStudent}
-                    />
-                  </motion.div>
-                ))}
-              </motion.div>
+              <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registration Number</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Year of Study</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {filteredStudents.map((student) => (
+                      <tr key={student.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-gray-800">{student.firstname} {student.surname}</div>
+                          <div className="text-xs text-gray-500">{student.othernames}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{student.reg_number}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{student.course.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-semibold">
+                            Year {student.year_of_study}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex space-x-2">
+                            <button onClick={() => handleEditStudent(student)} className="hover:bg-gray-100 p-1 rounded">
+                              <Edit size={16} className="text-blue-600" />
+                            </button>
+                            <button onClick={() => handleDeleteStudent(student.id)} className="hover:bg-gray-100 p-1 rounded">
+                              <Trash2 size={16} className="text-red-600" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </main>
