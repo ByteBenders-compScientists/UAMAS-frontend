@@ -74,8 +74,6 @@ const getAuthToken = () => {
   return localStorage.getItem("access_token") || "";
 };
 
-
-
 // ===== API FUNCTIONS =====
 const api = {
   // Get all courses
@@ -121,6 +119,9 @@ const api = {
   generateAssessment: async (
     data: any
   ): Promise<{ assessment_id: string; message: string; title: string }> => {
+    const jsonData = JSON.stringify(data);
+    console.log("JSON payload:", jsonData);
+    console.log("JSON payload length:", jsonData.length);
     const response = await fetch(`${API_BASE_URL}/bd/ai/generate-assessments`, {
       method: "POST",
       headers: {
@@ -129,7 +130,7 @@ const api = {
       credentials: "include",
       body: JSON.stringify(data),
     });
-    
+
     if (!response.ok) throw new Error("Failed to generate assessment");
     return response.json();
   },
@@ -138,9 +139,9 @@ const api = {
   createAssessment: async (
     data: any
   ): Promise<{ assessment_id: string; message: string; title: string }> => {
-     const jsonData = JSON.stringify(data);
-     console.log("JSON payload:", jsonData);
-     console.log("JSON payload length:", jsonData.length);
+    const jsonData = JSON.stringify(data);
+    console.log("JSON payload:", jsonData);
+    console.log("JSON payload length:", jsonData.length);
     const response = await fetch(
       `${API_BASE_URL}/bd/lecturer/generate-assessments`,
       {
@@ -152,7 +153,7 @@ const api = {
         body: JSON.stringify(data),
       }
     );
-    console.log(data)
+    console.log(data);
     if (!response.ok) throw new Error("Failed to create assessment");
     return response.json();
   },
@@ -262,14 +263,16 @@ const getDifficultyColor = (difficulty: string) => {
 };
 
 // ===== COMPONENTS =====
-const CreateAssessmentModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: any, isAI: boolean) => void;
-  loading: boolean;
-  courses: Course[];
-  units: Unit[];
-}> = ({ isOpen, onClose, onSubmit, loading, courses, units }) => {
+
+
+const CreateAssessmentModal = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  loading, 
+  courses, 
+  units 
+}) => {
   const { currentWeek } = useLayout();
   const [formData, setFormData] = useState({
     title: "",
@@ -285,6 +288,15 @@ const CreateAssessmentModal: React.FC<{
     week: currentWeek,
   });
 
+  // Track which fields have been touched for validation display
+  const [touchedFields, setTouchedFields] = useState(new Set());
+
+  // Define required fields matching backend expectations
+  const requiredFields = [
+    'title', 'description', 'course_id', 'unit_id', 'topic', 
+    'week', 'type', 'questions_type', 'total_marks', 'difficulty', 'number_of_questions'
+  ];
+
   // Update week when currentWeek changes and modal is opened
   useEffect(() => {
     if (isOpen) {
@@ -295,21 +307,144 @@ const CreateAssessmentModal: React.FC<{
   // Reset unit when course changes
   useEffect(() => {
     setFormData(prev => ({ ...prev, unit_id: "" }));
+    // Remove unit_id from touched fields when course changes
+    setTouchedFields(prev => {
+      const newTouched = new Set(prev);
+      newTouched.delete('unit_id');
+      return newTouched;
+    });
   }, [formData.course_id]);
 
   // Filter units based on selected course
   const availableUnits = units.filter(unit => unit.course_id === formData.course_id);
 
-  const handleSubmit = (isAI: boolean) => {
-    onSubmit(formData, isAI);
+  // Get unit name for the selected unit
+  const getUnitName = () => {
+    const selectedUnit = availableUnits.find(unit => 
+      (unit.id || unit.unit_id) === formData.unit_id
+    );
+    return selectedUnit ? (selectedUnit.name || selectedUnit.unit_name || '') : '';
   };
 
-  const handleWeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Enhanced form validation
+  const isFormValid = () => {
+    // Check all required fields
+    const basicValidation = requiredFields.every(field => {
+      const value = formData[field];
+      if (typeof value === 'string') {
+        return value && value.trim() !== '';
+      }
+      if (typeof value === 'number') {
+        return value > 0;
+      }
+      return value !== null && value !== undefined && value !== '';
+    });
+    
+    // Additional validation for unit_name
+    const unitName = getUnitName();
+    const hasValidUnit = unitName && unitName.trim() !== '';
+    
+    // Validate numeric fields
+    const hasValidNumbers = formData.total_marks > 0 && formData.number_of_questions > 0 && formData.week > 0;
+    
+    return basicValidation && hasValidUnit && hasValidNumbers;
+  };
+
+  // Check if a field is required and invalid
+  const isFieldInvalid = (fieldName) => {
+    const isRequired = requiredFields.includes(fieldName);
+    const isTouched = touchedFields.has(fieldName);
+    const value = formData[fieldName];
+    
+    let isEmpty = false;
+    if (typeof value === 'string') {
+      isEmpty = !value || value.trim() === '';
+    } else if (typeof value === 'number') {
+      isEmpty = value <= 0;
+    } else {
+      isEmpty = !value;
+    }
+    
+    return isRequired && isTouched && isEmpty;
+  };
+
+  // Handle field blur to mark as touched
+  const handleFieldBlur = (fieldName) => {
+    setTouchedFields(prev => new Set([...prev, fieldName]));
+  };
+
+  // Enhanced handleSubmit function
+  const handleSubmit = (isAI) => {
+    // Mark all required fields as touched to show validation errors
+    setTouchedFields(new Set(requiredFields));
+    
+    if (!isFormValid()) {
+      console.log('Form validation failed');
+      console.log('Current form data:', formData);
+      console.log('Unit name:', getUnitName());
+      return;
+    }
+
+    const unitName = getUnitName();
+    if (!unitName) {
+      console.error('Unit name is missing');
+      return;
+    }
+
+    // Ensure proper data types and include all required fields
+    const submissionData = {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      week: Number(formData.week),
+      type: formData.type,
+      unit_id: formData.unit_id,
+      course_id: formData.course_id,
+      questions_type: formData.questions_type,
+      topic: formData.topic.trim(),
+      total_marks: Number(formData.total_marks),
+      unit_name: unitName.trim(),
+      difficulty: formData.difficulty,
+      number_of_questions: Number(formData.number_of_questions)
+    };
+    
+    console.log('Submitting data:', submissionData);
+    onSubmit(submissionData, isAI);
+  };
+
+  const handleWeekChange = (e) => {
     const week = parseInt(e.target.value);
     if (week >= 1 && week <= 52) {
       setFormData({ ...formData, week });
     }
   };
+
+  const handleNumberChange = (field, value) => {
+    const numValue = parseInt(value) || 0;
+    if (numValue >= 0) {
+      setFormData({ ...formData, [field]: numValue });
+    }
+  };
+
+  // Reset touched fields when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setTouchedFields(new Set());
+      // Reset form data when modal closes
+      setFormData({
+        title: "",
+        description: "",
+        type: "CAT",
+        unit_id: "",
+        course_id: "",
+        questions_type: "close-ended",
+        topic: "",
+        total_marks: 20,
+        difficulty: "intermediate",
+        number_of_questions: 5,
+        week: currentWeek,
+      });
+    }
+  }, [isOpen, currentWeek]);
 
   if (!isOpen) return null;
 
@@ -333,62 +468,91 @@ const CreateAssessmentModal: React.FC<{
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Title
+                Title <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
+                  isFieldInvalid('title') 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300'
+                }`}
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
+                onBlur={() => handleFieldBlur('title')}
                 placeholder="Assessment title"
               />
+              {isFieldInvalid('title') && (
+                <p className="text-red-500 text-xs mt-1">Title is required</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Type
+                Type <span className="text-red-500">*</span>
               </label>
               <select
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
+                  isFieldInvalid('type') 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300'
+                }`}
                 value={formData.type}
                 onChange={(e) =>
                   setFormData({ ...formData, type: e.target.value })
                 }
+                onBlur={() => handleFieldBlur('type')}
               >
                 <option value="CAT">CAT</option>
                 <option value="assignment">Assignment</option>
               </select>
+              {isFieldInvalid('type') && (
+                <p className="text-red-500 text-xs mt-1">Type is required</p>
+              )}
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
+              Description <span className="text-red-500">*</span>
             </label>
             <textarea
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
+                isFieldInvalid('description') 
+                  ? 'border-red-300 bg-red-50' 
+                  : 'border-gray-300'
+              }`}
               rows={3}
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
+              onBlur={() => handleFieldBlur('description')}
               placeholder="Assessment description"
             />
+            {isFieldInvalid('description') && (
+              <p className="text-red-500 text-xs mt-1">Description is required</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Course
+                Course <span className="text-red-500">*</span>
               </label>
               <select
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
+                  isFieldInvalid('course_id') 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300'
+                }`}
                 value={formData.course_id}
                 onChange={(e) =>
                   setFormData({ ...formData, course_id: e.target.value })
                 }
+                onBlur={() => handleFieldBlur('course_id')}
               >
                 <option value="">Select Course</option>
                 {courses.map((course) => (
@@ -397,26 +561,35 @@ const CreateAssessmentModal: React.FC<{
                   </option>
                 ))}
               </select>
+              {isFieldInvalid('course_id') && (
+                <p className="text-red-500 text-xs mt-1">Course is required</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Unit
+                Unit <span className="text-red-500">*</span>
               </label>
               <select
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
+                  isFieldInvalid('unit_id') 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300'
+                }`}
                 value={formData.unit_id}
                 onChange={(e) =>
                   setFormData({ ...formData, unit_id: e.target.value })
                 }
+                onBlur={() => handleFieldBlur('unit_id')}
                 disabled={!formData.course_id}
               >
                 <option value="">
                   {!formData.course_id ? "Select Course First" : "Select Unit"}
                 </option>
                 {availableUnits.map((unit) => (
-                  <option key={unit.id} value={unit.id}>
-                    {unit.name} ({unit.code})
+                  <option key={unit.id || unit.unit_id} value={unit.id || unit.unit_id}>
+                    {unit.name || unit.unit_name || 'Unnamed Unit'} 
+                    {unit.code || unit.unit_code ? ` (${unit.code || unit.unit_code})` : ''}
                   </option>
                 ))}
               </select>
@@ -425,24 +598,40 @@ const CreateAssessmentModal: React.FC<{
                   Please select a course first to see available units
                 </p>
               )}
+              {formData.course_id && availableUnits.length === 0 && (
+                <p className="text-xs text-yellow-600 mt-1">
+                  No units found for selected course
+                </p>
+              )}
+              {isFieldInvalid('unit_id') && formData.course_id && (
+                <p className="text-red-500 text-xs mt-1">Unit is required</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <div className="flex items-center space-x-1">
                   <Calendar className="w-4 h-4" />
-                  <span>Week</span>
+                  <span>Week <span className="text-red-500">*</span></span>
                 </div>
               </label>
               <input
                 type="number"
                 min="1"
                 max="52"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
+                  isFieldInvalid('week') 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300'
+                }`}
                 value={formData.week}
                 onChange={handleWeekChange}
+                onBlur={() => handleFieldBlur('week')}
                 placeholder={`Current: ${currentWeek}`}
               />
+              {isFieldInvalid('week') && (
+                <p className="text-red-500 text-xs mt-1">Valid week is required (1-52)</p>
+              )}
               <p className="text-xs text-gray-500 mt-1">
                 Current week: {currentWeek}
               </p>
@@ -452,90 +641,138 @@ const CreateAssessmentModal: React.FC<{
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Question Type
+                Question Type <span className="text-red-500">*</span>
               </label>
               <select
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
+                  isFieldInvalid('questions_type') 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300'
+                }`}
                 value={formData.questions_type}
                 onChange={(e) =>
                   setFormData({ ...formData, questions_type: e.target.value })
                 }
+                onBlur={() => handleFieldBlur('questions_type')}
               >
                 <option value="close-ended">Close-ended</option>
                 <option value="open-ended">Open-ended</option>
               </select>
+              {isFieldInvalid('questions_type') && (
+                <p className="text-red-500 text-xs mt-1">Question type is required</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Difficulty
+                Difficulty <span className="text-red-500">*</span>
               </label>
               <select
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
+                  isFieldInvalid('difficulty') 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300'
+                }`}
                 value={formData.difficulty}
                 onChange={(e) =>
                   setFormData({ ...formData, difficulty: e.target.value })
                 }
+                onBlur={() => handleFieldBlur('difficulty')}
               >
                 <option value="easy">Easy</option>
                 <option value="intermediate">Intermediate</option>
                 <option value="hard">Hard</option>
               </select>
+              {isFieldInvalid('difficulty') && (
+                <p className="text-red-500 text-xs mt-1">Difficulty is required</p>
+              )}
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Topic
+              Topic <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
+                isFieldInvalid('topic') 
+                  ? 'border-red-300 bg-red-50' 
+                  : 'border-gray-300'
+              }`}
               value={formData.topic}
               onChange={(e) =>
                 setFormData({ ...formData, topic: e.target.value })
               }
+              onBlur={() => handleFieldBlur('topic')}
               placeholder="Main topic or subject area"
             />
+            {isFieldInvalid('topic') && (
+              <p className="text-red-500 text-xs mt-1">Topic is required</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Total Marks
+                Total Marks <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
+                  isFieldInvalid('total_marks') 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300'
+                }`}
                 value={formData.total_marks}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    total_marks: parseInt(e.target.value),
-                  })
+                  handleNumberChange('total_marks', e.target.value)
                 }
+                onBlur={() => handleFieldBlur('total_marks')}
                 min="1"
+                placeholder="e.g., 20"
               />
+              {isFieldInvalid('total_marks') && (
+                <p className="text-red-500 text-xs mt-1">Total marks must be greater than 0</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Number of Questions
+                Number of Questions <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
+                  isFieldInvalid('number_of_questions') 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300'
+                }`}
                 value={formData.number_of_questions}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    number_of_questions: parseInt(e.target.value),
-                  })
+                  handleNumberChange('number_of_questions', e.target.value)
                 }
+                onBlur={() => handleFieldBlur('number_of_questions')}
                 min="1"
+                placeholder="e.g., 5"
               />
+              {isFieldInvalid('number_of_questions') && (
+                <p className="text-red-500 text-xs mt-1">Number of questions must be greater than 0</p>
+              )}
             </div>
           </div>
+
+          {/* Debug info - remove in production */}
+          {/* {process.env.NODE_ENV === 'development' && (
+            <div className="bg-gray-50 p-3 rounded-lg text-xs">
+              <p><strong>Debug Info:</strong></p>
+              <p>Form Valid: {isFormValid() ? 'Yes' : 'No'}</p>
+              <p>Unit Name: {getUnitName() || 'None selected'}</p>
+              <p>Available Units: {availableUnits.length}</p>
+              <p>Units Data: {JSON.stringify(availableUnits, null, 2)}</p>
+              <p>Touched Fields: {Array.from(touchedFields).join(', ')}</p>
+            </div>
+          )} */}
         </div>
 
         <div className="p-6 border-t border-gray-200 flex justify-between">
@@ -549,8 +786,8 @@ const CreateAssessmentModal: React.FC<{
           <div className="flex space-x-3">
             <button
               onClick={() => handleSubmit(false)}
-              disabled={loading}
-              className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              disabled={loading || !isFormValid()}
+              className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -561,8 +798,9 @@ const CreateAssessmentModal: React.FC<{
             </button>
             <button
               onClick={() => handleSubmit(true)}
-              disabled={loading}
-              className="flex items-center px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50"
+              disabled={loading || !isFormValid()}
+              className="flex items-center px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title={!isFormValid() ? 'Please fill all required fields' : 'Generate assessment with AI'}
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
