@@ -2,48 +2,28 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from '@/components/lecturerSidebar';
 import {
-  BookMarked,
   BarChart3,
-  Clock,
-  Monitor,
   Loader,
-  Plus,
-  Star,
   User,
-  Users,
   Bell,
   Menu,
   X,
   Text as LetterText,
   ChevronDown,
-  ChevronUp,
-  GraduationCap,
   FileText,
-  MessageSquare,
   Library,
-  Settings,
   Upload,
-  Image,
   Calendar,
   File,
-  CheckCircle,
   AlertCircle,
-  BookOpen,
-  ChevronRight,
   Download,
-  MessageCircle,
-  Book,
   Search,
   Filter,
   Grid,
   List,
-  Eye,
-  Edit,
   Trash2,
   PlusCircle,
-  FolderPlus,
-  Share2,
-  ExternalLink,
+  RefreshCw
 } from "lucide-react";
 
 // ===== CONSTANTS =====
@@ -309,62 +289,62 @@ const getFileTypeIcon = (fileType: string) => {
 
 const getFileTypeColor = (fileType: string) => {
   const colors = {
-    pdf: "bg-red-100 text-red-700",
-    doc: "bg-blue-100 text-blue-700",
-    docx: "bg-blue-100 text-blue-700",
-    ppt: "bg-orange-100 text-orange-700",
-    pptx: "bg-orange-100 text-orange-700",
+    pdf: "bg-red-100 text-red-700 border-red-200",
+    doc: "bg-blue-100 text-blue-700 border-blue-200",
+    docx: "bg-blue-100 text-blue-700 border-blue-200",
+    ppt: "bg-orange-100 text-orange-700 border-orange-200",
+    pptx: "bg-orange-100 text-orange-700 border-orange-200",
   };
-  return colors[fileType as keyof typeof colors] || "bg-gray-100 text-gray-700";
+  return colors[fileType as keyof typeof colors] || "bg-gray-100 text-gray-700 border-gray-200";
 };
 
 // ===== COMPONENTS =====
-const SidebarHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-  <div className="flex items-center justify-between p-6 border-b border-rose-200">
-    <div className="flex items-center space-x-2 text-xl font-bold">
-      <LetterText className="w-6 h-6 text-rose-600" />
-      <span className="text-white">EduPortal</span>
-    </div>
-    <button
-      className="lg:hidden text-white hover:text-rose-100 transition-colors"
-      onClick={onClose}
-      aria-label="Close sidebar"
-    >
-      <X className="w-6 h-6" />
-    </button>
-  </div>
-);
-
-const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({
+const TopHeader: React.FC<{ onSidebarToggle: () => void; onRefresh: () => void }> = ({
   onSidebarToggle,
+  onRefresh,
 }) => (
-  <header className="flex items-center justify-between px-4 py-4 lg:py-6 bg-white border-b border-gray-200 shadow-sm lg:shadow-none">
-    <div className="flex items-center space-x-3">
+  <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 shadow-sm">
+    <div className="flex items-center space-x-4">
       <button
-        className="lg:hidden text-rose-600 hover:text-emerald-800 transition-colors"
+        className="lg:hidden text-emerald-600 hover:text-emerald-800 transition-colors p-2 rounded-lg hover:bg-emerald-50"
         onClick={onSidebarToggle}
         aria-label="Open sidebar"
       >
         <Menu className="w-6 h-6" />
       </button>
-      <span className="text-xl font-bold text-rose-600 hidden lg:inline">
-        EduPortal
-      </span>
+      <div className="flex items-center space-x-3">
+        <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+          <Library className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Notes Library</h1>
+          <p className="text-sm text-gray-500 hidden sm:block">Manage your course materials</p>
+        </div>
+      </div>
     </div>
-    <div className="flex items-center space-x-4">
-      <button className="relative text-gray-500 hover:text-emerald-600 transition-colors">
-        <Bell className="w-6 h-6" />
-        <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full px-1.5 py-0.5">
+    
+    <div className="flex items-center space-x-3">
+      <button 
+        onClick={onRefresh}
+        className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+        title="Refresh"
+      >
+        <RefreshCw className="w-5 h-5" />
+      </button>
+      <button className="relative text-gray-500 hover:text-emerald-600 transition-colors p-2 rounded-lg hover:bg-emerald-50">
+        <Bell className="w-5 h-5" />
+        <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
           3
         </span>
       </button>
-      <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
-          <User className="w-4 h-4 text-emerald-600" />
+      <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
+        <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-white" />
         </div>
-        <span className="text-sm font-semibold text-gray-700 hidden md:inline">
-          Dr. Alex Kimani
-        </span>
+        <div className="hidden md:block">
+          <p className="text-sm font-semibold text-gray-900">Dr. Alex Kimani</p>
+          <p className="text-xs text-gray-500">Senior Lecturer</p>
+        </div>
       </div>
     </div>
   </header>
@@ -416,59 +396,68 @@ const CourseUnitFilter: React.FC<CourseUnitFilterProps> = ({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 mb-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
         <div className="flex items-center justify-center py-8">
-          <Loader className="w-6 h-6 animate-spin text-rose-600" />
-          <span className="ml-2 text-gray-600">
-            Loading courses and units...
-          </span>
+          <Loader className="w-6 h-6 animate-spin text-emerald-600" />
+          <span className="ml-3 text-gray-600">Loading courses and units...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 mb-6">
-      <h3 className="font-bold text-lg mb-4 flex items-center">
-        <Filter className="w-5 h-5 mr-2 text-rose-600" />
-        Filter by Course & Unit
-      </h3>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="font-bold text-lg flex items-center text-gray-900">
+          <Filter className="w-5 h-5 mr-2 text-emerald-600" />
+          Filter by Course & Unit
+        </h3>
+        {(selectedCourse || selectedUnit) && (
+          <button
+            onClick={() => {
+              onCourseChange(null);
+              onUnitChange(null);
+            }}
+            className="text-sm text-emerald-600 hover:text-emerald-800 font-medium"
+          >
+            Clear Filters
+          </button>
+        )}
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Course Dropdown */}
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
             Course
           </label>
           <button
             onClick={() => setCourseDropdownOpen(!courseDropdownOpen)}
-            className="w-full text-left p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center justify-between"
+            className="w-full text-left p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-all duration-200 flex items-center justify-between shadow-sm hover:shadow-md"
           >
-            <span
-              className={selectedCourseData ? "text-gray-900" : "text-gray-500"}
-            >
+            <span className={selectedCourseData ? "text-gray-900 font-medium" : "text-gray-500"}>
               {selectedCourseData
                 ? `${selectedCourseData.code} - ${selectedCourseData.name}`
                 : "Select a course"}
             </span>
             <ChevronDown
-              className={`w-4 h-4 transition-transform ${
+              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
                 courseDropdownOpen ? "rotate-180" : ""
               }`}
             />
           </button>
 
           {courseDropdownOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-20 max-h-64 overflow-y-auto">
               <button
                 onClick={() => {
                   onCourseChange(null);
                   onUnitChange(null);
                   setCourseDropdownOpen(false);
                 }}
-                className="w-full text-left p-3 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                className="w-full text-left p-4 hover:bg-gray-50 transition-colors border-b border-gray-100"
               >
-                <span className="text-gray-600">All Courses</span>
+                <span className="text-gray-600 font-medium">All Courses</span>
               </button>
               {courses.map((course) => (
                 <button
@@ -477,15 +466,13 @@ const CourseUnitFilter: React.FC<CourseUnitFilterProps> = ({
                     onCourseChange(course.id);
                     setCourseDropdownOpen(false);
                   }}
-                  className={`w-full text-left p-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
-                    selectedCourse === course.id
-                      ? "bg-rose-50 text-rose-700"
-                      : ""
+                  className={`w-full text-left p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                    selectedCourse === course.id ? "bg-emerald-50 text-emerald-700" : ""
                   }`}
                 >
                   <div>
-                    <div className="font-medium">{course.code}</div>
-                    <div className="text-sm text-gray-600">{course.name}</div>
+                    <div className="font-semibold text-gray-900">{course.code}</div>
+                    <div className="text-sm text-gray-600 mt-1">{course.name}</div>
                   </div>
                 </button>
               ))}
@@ -495,21 +482,19 @@ const CourseUnitFilter: React.FC<CourseUnitFilterProps> = ({
 
         {/* Unit Dropdown */}
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
             Unit
           </label>
           <button
             onClick={() => setUnitDropdownOpen(!unitDropdownOpen)}
             disabled={!selectedCourse}
-            className={`w-full text-left p-3 border border-gray-300 rounded-lg transition-colors flex items-center justify-between ${
+            className={`w-full text-left p-4 border border-gray-200 rounded-xl transition-all duration-200 flex items-center justify-between shadow-sm ${
               !selectedCourse
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white hover:bg-gray-50"
+                ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                : "bg-white hover:bg-gray-50 hover:shadow-md"
             }`}
           >
-            <span
-              className={selectedUnitData ? "text-gray-900" : "text-gray-500"}
-            >
+            <span className={selectedUnitData ? "text-gray-900 font-medium" : "text-gray-500"}>
               {!selectedCourse
                 ? "Select a course first"
                 : selectedUnitData
@@ -517,22 +502,22 @@ const CourseUnitFilter: React.FC<CourseUnitFilterProps> = ({
                 : "Select a unit"}
             </span>
             <ChevronDown
-              className={`w-4 h-4 transition-transform ${
+              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
                 unitDropdownOpen ? "rotate-180" : ""
               }`}
             />
           </button>
 
           {unitDropdownOpen && selectedCourse && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-20 max-h-64 overflow-y-auto">
               <button
                 onClick={() => {
                   onUnitChange(null);
                   setUnitDropdownOpen(false);
                 }}
-                className="w-full text-left p-3 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                className="w-full text-left p-4 hover:bg-gray-50 transition-colors border-b border-gray-100"
               >
-                <span className="text-gray-600">All Units</span>
+                <span className="text-gray-600 font-medium">All Units</span>
               </button>
               {filteredUnits.map((unit) => (
                 <button
@@ -541,15 +526,13 @@ const CourseUnitFilter: React.FC<CourseUnitFilterProps> = ({
                     onUnitChange(unit.id);
                     setUnitDropdownOpen(false);
                   }}
-                  className={`w-full text-left p-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
-                    selectedUnit === unit.id ? "bg-rose-50 text-rose-700" : ""
+                  className={`w-full text-left p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                    selectedUnit === unit.id ? "bg-emerald-50 text-emerald-700" : ""
                   }`}
                 >
                   <div>
-                    <div className="font-medium">{unit.unit_code}</div>
-                    <div className="text-sm text-gray-600">
-                      {unit.unit_name}
-                    </div>
+                    <div className="font-semibold text-gray-900">{unit.unit_code}</div>
+                    <div className="text-sm text-gray-600 mt-1">{unit.unit_name}</div>
                   </div>
                 </button>
               ))}
@@ -560,29 +543,29 @@ const CourseUnitFilter: React.FC<CourseUnitFilterProps> = ({
 
       {/* Selected filters display */}
       {(selectedCourse || selectedUnit) && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap gap-2">
           {selectedCourse && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-rose-100 text-rose-700">
-              Course: {selectedCourseData?.code}
+            <span className="inline-flex items-center px-3 py-2 rounded-full text-sm bg-emerald-100 text-emerald-700 border border-emerald-200">
+              <span className="font-medium">Course: {selectedCourseData?.code}</span>
               <button
                 onClick={() => {
                   onCourseChange(null);
                   onUnitChange(null);
                 }}
-                className="ml-2 hover:text-rose-900"
+                className="ml-2 hover:text-emerald-900 transition-colors"
               >
-                <X className="w-3 h-3" />
+                <X className="w-4 h-4" />
               </button>
             </span>
           )}
           {selectedUnit && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-700">
-              Unit: {selectedUnitData?.unit_code}
+            <span className="inline-flex items-center px-3 py-2 rounded-full text-sm bg-blue-100 text-blue-700 border border-blue-200">
+              <span className="font-medium">Unit: {selectedUnitData?.unit_code}</span>
               <button
                 onClick={() => onUnitChange(null)}
-                className="ml-2 hover:text-blue-900"
+                className="ml-2 hover:text-blue-900 transition-colors"
               >
-                <X className="w-3 h-3" />
+                <X className="w-4 h-4" />
               </button>
             </span>
           )}
@@ -613,63 +596,65 @@ const NoteCard: React.FC<NoteCardProps> = ({
 
   if (viewMode === "list") {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200">
         <div className="flex items-start space-x-4">
           <div className="flex-shrink-0">
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-              <Icon className="w-6 h-6 text-gray-600" />
+            <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+              <Icon className="w-7 h-7 text-gray-600" />
             </div>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
-              <h3 className="font-semibold text-gray-900 truncate">
+              <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-1">
                 {note.title}
               </h3>
               <div className="flex items-center space-x-2 ml-4">
-                <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${getFileTypeColor(
-                    note.file_type
-                  )}`}
-                >
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getFileTypeColor(note.file_type)}`}>
                   {note.file_type.toUpperCase()}
                 </span>
               </div>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-600 mb-2 font-medium">
               {note.original_filename}
             </p>
             {note.description && (
-              <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+              <p className="text-sm text-gray-500 mb-3 line-clamp-2">
                 {note.description}
               </p>
             )}
 
             {/* Course and Unit info */}
-            <div className="flex items-center space-x-4 mt-2">
-              <span className="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded">
+            <div className="flex items-center space-x-3 mb-4">
+              <span className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-semibold border border-emerald-200">
                 {course.code}
               </span>
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+              <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold border border-blue-200">
                 {unit.unit_code}
               </span>
             </div>
 
-            <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4 text-xs text-gray-500">
-                <span>{formatDate(note.created_at)}</span>
-                <span>{formatFileSize(note.file_size)}</span>
+                <span className="flex items-center">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  {formatDate(note.created_at)}
+                </span>
+                <span className="flex items-center">
+                  <File className="w-3 h-3 mr-1" />
+                  {formatFileSize(note.file_size)}
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => onDownload(note.id)}
-                  className="text-rose-600 hover:text-rose-800 transition-colors"
+                  className="p-2 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-all duration-200"
                   title="Download"
                 >
                   <Download className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => onDelete(note.id)}
-                  className="text-red-600 hover:text-red-800 transition-colors"
+                  className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200"
                   title="Delete"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -683,58 +668,60 @@ const NoteCard: React.FC<NoteCardProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-3">
-        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-          <Icon className="w-6 h-6 text-gray-600" />
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 group">
+      <div className="flex items-start justify-between mb-4">
+        <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+          <Icon className="w-7 h-7 text-gray-600" />
         </div>
-        <span
-          className={`px-2 py-1 rounded text-xs font-medium ${getFileTypeColor(
-            note.file_type
-          )}`}
-        >
+        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getFileTypeColor(note.file_type)}`}>
           {note.file_type.toUpperCase()}
         </span>
       </div>
 
-      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+      <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors">
         {note.title}
       </h3>
-      <p className="text-sm text-gray-600 mb-2">{note.original_filename}</p>
+      <p className="text-sm text-gray-600 mb-2 font-medium">{note.original_filename}</p>
       {note.description && (
-        <p className="text-sm text-gray-500 mb-3 line-clamp-3">
+        <p className="text-sm text-gray-500 mb-4 line-clamp-3">
           {note.description}
         </p>
       )}
 
       {/* Course and Unit info */}
-      <div className="flex flex-wrap gap-1 mb-3">
-        <span className="px-2 py-1 bg-rose-100 text-rose-700 text-xs rounded">
+      <div className="flex flex-wrap gap-2 mb-4">
+        <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full font-semibold border border-emerald-200">
           {course.code}
         </span>
-        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+        <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-semibold border border-blue-200">
           {unit.unit_code}
         </span>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-        <span>{formatDate(note.created_at)}</span>
-        <span>{formatFileSize(note.file_size)}</span>
+      <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+        <span className="flex items-center">
+          <Calendar className="w-3 h-3 mr-1" />
+          {formatDate(note.created_at)}
+        </span>
+        <span className="flex items-center">
+          <File className="w-3 h-3 mr-1" />
+          {formatFileSize(note.file_size)}
+        </span>
       </div>
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">Uploaded by you</span>
+      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <span className="text-xs text-gray-500 font-medium">Uploaded by you</span>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => onDownload(note.id)}
-            className="text-rose-600 hover:text-rose-800 transition-colors"
+            className="p-2 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-all duration-200"
             title="Download"
           >
             <Download className="w-4 h-4" />
           </button>
           <button
             onClick={() => onDelete(note.id)}
-            className="text-red-600 hover:text-red-800 transition-colors"
+            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200"
             title="Delete"
           >
             <Trash2 className="w-4 h-4" />
@@ -748,7 +735,7 @@ const NoteCard: React.FC<NoteCardProps> = ({
 interface UploadFormProps {
   courses: Course[];
   units: Unit[];
-  onUpload: (formData: FormData) => Promise<void>;
+  onUpload: (courseId: number, unitId: number, formData: FormData) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
 }
@@ -762,119 +749,248 @@ const UploadForm: React.FC<UploadFormProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     title: "",
-    courseId: "",
-    unitId: "",
+    courseId: null as number | null,
+    unitId: null as number | null,
     description: "",
     file: null as File | null,
   });
 
+  const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
+  const [unitDropdownOpen, setUnitDropdownOpen] = useState(false);
+
+  // Filter units based on selected course
   const filteredUnits = formData.courseId
-    ? units.filter((unit) => unit.course_id === parseInt(formData.courseId))
+    ? units.filter((unit) => unit.course_id === formData.courseId)
     : [];
+
+  const selectedCourseData = courses.find(
+    (course) => course.id === formData.courseId
+  );
+  const selectedUnitData = units.find((unit) => unit.id === formData.unitId);
+
+  // Reset unit when course changes
+  useEffect(() => {
+    if (formData.courseId && formData.unitId) {
+      const unitBelongsToCourse = units.find(
+        (unit) => unit.id === formData.unitId && unit.course_id === formData.courseId
+      );
+      if (!unitBelongsToCourse) {
+        setFormData(prev => ({ ...prev, unitId: null }));
+      }
+    }
+  }, [formData.courseId, formData.unitId, units]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.file || !formData.courseId || !formData.unitId) {
+    if (!formData.file || !formData.courseId || !formData.unitId || !formData.title.trim()) {
       alert("Please fill in all required fields and select a file.");
       return;
     }
 
     const uploadFormData = new FormData();
-    uploadFormData.append("title", formData.title);
-    uploadFormData.append("description", formData.description);
+    uploadFormData.append("title", formData.title.trim());
+    uploadFormData.append("description", formData.description.trim());
     uploadFormData.append("file", formData.file);
 
-    await onUpload(uploadFormData);
+    await onUpload(formData.courseId, formData.unitId, uploadFormData);
 
     // Reset form
     setFormData({
       title: "",
-      courseId: "",
-      unitId: "",
+      courseId: null,
+      unitId: null,
       description: "",
       file: null,
     });
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 mb-6">
-      <h3 className="font-bold text-lg mb-4">Upload New Note</h3>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="font-bold text-xl flex items-center text-gray-900">
+          <Upload className="w-6 h-6 mr-3 text-emerald-600" />
+          Upload New Notes
+        </h3>
+        <button
+          onClick={onCancel}
+          disabled={loading}
+          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            type="text"
-            placeholder="Note Title *"
-            value={formData.title}
-            onChange={(e) =>
-              setFormData({ ...formData, title: e.target.value })
-            }
-            className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-            required
-            disabled={loading}
-          />
-          <select
-            value={formData.courseId}
-            onChange={(e) =>
-              setFormData({ ...formData, courseId: e.target.value, unitId: "" })
-            }
-            className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-            required
-            disabled={loading}
-          >
-            <option value="">Select Course *</option>
-            {courses.map((course) => (
-              <option key={course.id} value={course.id}>
-                {course.code} - {course.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={formData.unitId}
-            onChange={(e) =>
-              setFormData({ ...formData, unitId: e.target.value })
-            }
-            className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-            disabled={!formData.courseId || loading}
-            required
-          >
-            <option value="">Select Unit *</option>
-            {filteredUnits.map((unit) => (
-              <option key={unit.id} value={unit.id}>
-                {unit.unit_code} - {unit.unit_name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="file"
-            onChange={(e) =>
-              setFormData({ ...formData, file: e.target.files?.[0] || null })
-            }
-            className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-            accept=".pdf,.doc,.docx,.ppt,.pptx"
-            required
-            disabled={loading}
-          />
-          <textarea
-            placeholder="Description (optional)"
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
-            className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent md:col-span-2"
-            rows={3}
-            disabled={loading}
-          />
-          <div className="md:col-span-2 flex space-x-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Note Title *
+            </label>
+            <input
+              type="text"
+              placeholder="Enter a descriptive title for your note"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 shadow-sm"
+              required
+              disabled={loading}
+            />
+          </div>
+
+          {/* Course Dropdown */}
+          <div className="relative">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Course *
+            </label>
+            <button
+              type="button"
+              onClick={() => setCourseDropdownOpen(!courseDropdownOpen)}
+              disabled={loading}
+              className="w-full text-left p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-all duration-200 flex items-center justify-between shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className={selectedCourseData ? "text-gray-900 font-medium" : "text-gray-500"}>
+                {selectedCourseData
+                  ? `${selectedCourseData.code} - ${selectedCourseData.name}`
+                  : "Select a course"}
+              </span>
+              <ChevronDown
+                className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                  courseDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {courseDropdownOpen && !loading && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-20 max-h-64 overflow-y-auto">
+                {courses.map((course) => (
+                  <button
+                    key={course.id}
+                    type="button"
+                    onClick={() => {
+                      setFormData({ ...formData, courseId: course.id, unitId: null });
+                      setCourseDropdownOpen(false);
+                    }}
+                    className={`w-full text-left p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                      formData.courseId === course.id ? "bg-emerald-50 text-emerald-700" : ""
+                    }`}
+                  >
+                    <div>
+                      <div className="font-semibold text-gray-900">{course.code}</div>
+                      <div className="text-sm text-gray-600 mt-1">{course.name}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Unit Dropdown */}
+          <div className="relative">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Unit *
+            </label>
+            <button
+              type="button"
+              onClick={() => setUnitDropdownOpen(!unitDropdownOpen)}
+              disabled={!formData.courseId || loading}
+              className={`w-full text-left p-4 border border-gray-200 rounded-xl transition-all duration-200 flex items-center justify-between shadow-sm ${
+                !formData.courseId || loading
+                  ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                  : "bg-white hover:bg-gray-50 hover:shadow-md"
+              }`}
+            >
+              <span className={selectedUnitData ? "text-gray-900 font-medium" : "text-gray-500"}>
+                {!formData.courseId
+                  ? "Select a course first"
+                  : selectedUnitData
+                  ? `${selectedUnitData.unit_code} - ${selectedUnitData.unit_name}`
+                  : "Select a unit"}
+              </span>
+              <ChevronDown
+                className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                  unitDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {unitDropdownOpen && formData.courseId && !loading && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-20 max-h-64 overflow-y-auto">
+                {filteredUnits.length > 0 ? (
+                  filteredUnits.map((unit) => (
+                    <button
+                      key={unit.id}
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, unitId: unit.id });
+                        setUnitDropdownOpen(false);
+                      }}
+                      className={`w-full text-left p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                        formData.unitId === unit.id ? "bg-emerald-50 text-emerald-700" : ""
+                      }`}
+                    >
+                      <div>
+                        <div className="font-semibold text-gray-900">{unit.unit_code}</div>
+                        <div className="text-sm text-gray-600 mt-1">{unit.unit_name}</div>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    No units found for the selected course
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              File *
+            </label>
+            <input
+              type="file"
+              onChange={(e) =>
+                setFormData({ ...formData, file: e.target.files?.[0] || null })
+              }
+              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 shadow-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+              accept=".pdf,.doc,.docx,.ppt,.pptx"
+              required
+              disabled={loading}
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              Supported formats: PDF, DOC, DOCX, PPT, PPTX (Max 50MB)
+            </p>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Description
+            </label>
+            <textarea
+              placeholder="Add a brief description of the note content (optional)"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 shadow-sm resize-none"
+              rows={4}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="md:col-span-2 flex space-x-4 pt-4">
             <button
               type="submit"
-              disabled={loading}
-              className="bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || !formData.file || !formData.courseId || !formData.unitId || !formData.title.trim()}
+              className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-6 py-3 rounded-xl hover:from-emerald-700 hover:to-green-700 transition-all duration-200 flex items-center font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg"
             >
               {loading ? (
-                <Loader className="w-4 h-4 mr-2 animate-spin" />
+                <Loader className="w-5 h-5 mr-2 animate-spin" />
               ) : (
-                <Upload className="w-4 h-4 mr-2" />
+                <Upload className="w-5 h-5 mr-2" />
               )}
               {loading ? "Uploading..." : "Upload Note"}
             </button>
@@ -882,7 +998,7 @@ const UploadForm: React.FC<UploadFormProps> = ({
               type="button"
               onClick={onCancel}
               disabled={loading}
-              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-gray-500 text-white px-6 py-3 rounded-xl hover:bg-gray-600 transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
@@ -894,7 +1010,7 @@ const UploadForm: React.FC<UploadFormProps> = ({
 };
 
 const Page: React.FC = () => {
-  const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
@@ -910,30 +1026,30 @@ const Page: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch initial data
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch courses, units, and lecturer notes in parallel
+      const [coursesData, unitsData, notesData] = await Promise.all([
+        fetchCourses(),
+        fetchUnits(),
+        fetchAllLecturerNotes(),
+      ]);
+
+      setCourses(coursesData);
+      setUnits(unitsData);
+      setNotes(notesData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load data");
+      console.error("Error loading data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Fetch courses, units, and lecturer notes in parallel
-        const [coursesData, unitsData, notesData] = await Promise.all([
-          fetchCourses(),
-          fetchUnits(),
-          fetchAllLecturerNotes(),
-        ]);
-
-        setCourses(coursesData);
-        setUnits(unitsData);
-        setNotes(notesData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load data");
-        console.error("Error loading data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadData();
   }, []);
 
@@ -969,17 +1085,10 @@ const Page: React.FC = () => {
     }
   }, [selectedCourse, selectedUnit, loading]);
 
-  const toggleCreateDropdown = () => setCreateDropdownOpen(!createDropdownOpen);
-
-  const handleUpload = async (formData: FormData) => {
-    if (!selectedCourse || !selectedUnit) {
-      alert("Please select a course and unit first.");
-      return;
-    }
-
+  const handleUpload = async (courseId: number, unitId: number, formData: FormData) => {
     try {
       setUploading(true);
-      await uploadNote(selectedCourse, selectedUnit, formData);
+      await uploadNote(courseId, unitId, formData);
 
       // Refresh notes
       const updatedNotes =
@@ -1040,16 +1149,16 @@ const Page: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-green-50 flex items-center justify-center">
+        <div className="text-center bg-white rounded-2xl shadow-lg p-8 max-w-md mx-4">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Error Loading Data
           </h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors"
+            className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-6 py-3 rounded-xl hover:from-emerald-700 hover:to-green-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
           >
             Retry
           </button>
@@ -1059,31 +1168,30 @@ const Page: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <Sidebar/>
-      <div className="flex-1 flex flex-col">
-        <TopHeader onSidebarToggle={toggleCreateDropdown} />
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-green-50 flex">
+      {/* Mock Sidebar for spacing */}
+      <Sidebar />
+      
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+      
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col lg:ml-64">
+        <TopHeader onSidebarToggle={() => setSidebarOpen(true)} onRefresh={loadData} />
 
-        <main className="flex-1 p-4 lg:p-6 max-w-7xl mx-auto w-full">
-          <div className="mb-6">
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">
-              Notes Library
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Manage and access your course notes and materials.
-            </p>
-          </div>
-
+        <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
           {/* Search and Actions Bar */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 mb-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div className="flex-1 max-w-md">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder="Search notes..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    placeholder="Search notes, filenames, or descriptions..."
+                    className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 shadow-sm"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -1091,12 +1199,12 @@ const Page: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-1 border border-gray-300 rounded-lg p-1">
+                <div className="flex items-center space-x-1 border border-gray-200 rounded-xl p-1 bg-gray-50">
                   <button
                     onClick={() => setViewMode("grid")}
-                    className={`p-2 rounded transition-colors ${
+                    className={`p-2 rounded-lg transition-all duration-200 ${
                       viewMode === "grid"
-                        ? "bg-rose-100 text-rose-600"
+                        ? "bg-emerald-100 text-emerald-600 shadow-sm"
                         : "text-gray-600 hover:bg-gray-100"
                     }`}
                   >
@@ -1104,9 +1212,9 @@ const Page: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setViewMode("list")}
-                    className={`p-2 rounded transition-colors ${
+                    className={`p-2 rounded-lg transition-all duration-200 ${
                       viewMode === "list"
-                        ? "bg-rose-100 text-rose-600"
+                        ? "bg-emerald-100 text-emerald-600 shadow-sm"
                         : "text-gray-600 hover:bg-gray-100"
                     }`}
                   >
@@ -1116,9 +1224,9 @@ const Page: React.FC = () => {
 
                 <button
                   onClick={() => setShowUploadForm(!showUploadForm)}
-                  className="bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors flex items-center"
+                  className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-6 py-3 rounded-xl hover:from-emerald-700 hover:to-green-700 transition-all duration-200 flex items-center font-semibold shadow-lg hover:shadow-xl"
                 >
-                  <PlusCircle className="w-4 h-4 mr-2" />
+                  <PlusCircle className="w-5 h-5 mr-2" />
                   Add Note
                 </button>
               </div>
@@ -1156,9 +1264,11 @@ const Page: React.FC = () => {
             }`}
           >
             {loading ? (
-              <div className="col-span-full flex items-center justify-center py-12">
-                <Loader className="w-8 h-8 animate-spin text-rose-600 mr-3" />
-                <span className="text-gray-600">Loading notes...</span>
+              <div className="col-span-full flex items-center justify-center py-16">
+                <div className="text-center">
+                  <Loader className="w-8 h-8 animate-spin text-emerald-600 mx-auto mb-4" />
+                  <p className="text-gray-600 font-medium">Loading your notes...</p>
+                </div>
               </div>
             ) : filteredNotes.length > 0 ? (
               filteredNotes.map((note) => {
@@ -1180,41 +1290,72 @@ const Page: React.FC = () => {
                 );
               })
             ) : (
-              <div className="col-span-full text-center text-gray-500 py-12">
-                <Library className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-semibold mb-2">No notes found</h3>
-                <p>
-                  No notes found matching your criteria. Upload your first note
-                  to get started!
-                </p>
+              <div className="col-span-full text-center py-16">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12">
+                  <Library className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">No notes found</h3>
+                  <p className="text-gray-600 mb-6">
+                    {searchQuery || selectedCourse || selectedUnit
+                      ? "No notes match your current search or filter criteria."
+                      : "Upload your first note to get started with your digital library!"}
+                  </p>
+                  {!searchQuery && !selectedCourse && !selectedUnit && (
+                    <button
+                      onClick={() => setShowUploadForm(true)}
+                      className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-6 py-3 rounded-xl hover:from-emerald-700 hover:to-green-700 transition-all duration-200 flex items-center mx-auto font-semibold shadow-lg hover:shadow-xl"
+                    >
+                      <PlusCircle className="w-5 h-5 mr-2" />
+                      Upload First Note
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
 
           {/* Summary Stats */}
-          {!loading && (
-            <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-800 mb-2">
-                Notes Summary:
+          {!loading && notes.length > 0 && (
+            <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6">
+              <h4 className="font-bold text-blue-900 mb-4 flex items-center">
+                <BarChart3 className="w-5 h-5 mr-2" />
+                Library Statistics
               </h4>
-              <div className="text-sm text-blue-700 space-y-1">
-                <p>Total Notes: {notes.length}</p>
-                <p>Filtered Notes: {filteredNotes.length}</p>
-                <p>Courses: {courses.length}</p>
-                <p>Units: {units.length}</p>
-                {selectedCourse && (
-                  <p>
-                    Selected Course:{" "}
-                    {courses.find((c) => c.id === selectedCourse)?.name}
-                  </p>
-                )}
-                {selectedUnit && (
-                  <p>
-                    Selected Unit:{" "}
-                    {units.find((u) => u.id === selectedUnit)?.unit_name}
-                  </p>
-                )}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-800">{notes.length}</div>
+                  <div className="text-blue-600">Total Notes</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-800">{filteredNotes.length}</div>
+                  <div className="text-blue-600">Filtered Notes</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-800">{courses.length}</div>
+                  <div className="text-blue-600">Courses</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-800">{units.length}</div>
+                  <div className="text-blue-600">Units</div>
+                </div>
               </div>
+              {(selectedCourse || selectedUnit) && (
+                <div className="mt-4 pt-4 border-t border-blue-200">
+                  <div className="text-sm text-blue-700 space-y-1">
+                    {selectedCourse && (
+                      <p>
+                        <span className="font-semibold">Selected Course:</span>{" "}
+                        {courses.find((c) => c.id === selectedCourse)?.name}
+                      </p>
+                    )}
+                    {selectedUnit && (
+                      <p>
+                        <span className="font-semibold">Selected Unit:</span>{" "}
+                        {units.find((u) => u.id === selectedUnit)?.unit_name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </main>
