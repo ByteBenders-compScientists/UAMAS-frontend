@@ -175,24 +175,6 @@ const api = {
     return response.json();
   },
 
-  // delete assessment
-  deleteAssessment: async (
-    assessmentId: string
-  ): Promise<{ message: string }> => {
-    const response = await fetch(
-      `${API_BASE_URL}/bd/lecturer/assessments/${assessmentId}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      }
-    );
-    if (!response.ok) throw new Error("Failed to delete assessment");
-    return response.json();
-  },
-
   // Add question to assessment
   addQuestion: async (
     assessmentId: string,
