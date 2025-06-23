@@ -301,21 +301,20 @@ export default function CatsPage() {
                 </div>
 
                 {isTakingCat && questions.length > 0 && (
-                  <>
-                    <CatQuestions
-                      questions={questions}
-                      currentQuestion={currentQuestion}
-                      selectedAnswers={selectedAnswers}
-                      flaggedQuestions={flaggedQuestions}
-                      handleAnswerSelect={handleAnswerSelect}
-                      toggleFlagQuestion={toggleFlagQuestion}
-                      setCurrentQuestion={setCurrentQuestion}
-                      openEndedAnswers={openEndedAnswers}
-                      setOpenEndedAnswers={setOpenEndedAnswers}
-                      openEndedImages={openEndedImages}
-                      setOpenEndedImages={setOpenEndedImages}
-                      questionsType={questionsType}
-                    />
+                  <CatQuestions
+                    questions={questions}
+                    currentQuestion={currentQuestion}
+                    selectedAnswers={selectedAnswers}
+                    flaggedQuestions={flaggedQuestions}
+                    handleAnswerSelect={handleAnswerSelect}
+                    toggleFlagQuestion={toggleFlagQuestion}
+                    setCurrentQuestion={setCurrentQuestion}
+                    openEndedAnswers={openEndedAnswers}
+                    setOpenEndedAnswers={setOpenEndedAnswers}
+                    openEndedImages={openEndedImages}
+                    setOpenEndedImages={setOpenEndedImages}
+                    questionsType={questionsType}
+                  >
                     <div className="w-full bg-gray-200 rounded-full h-2.5">
                       <div
                         className="h-2.5 rounded-full bg-blue-600"
@@ -327,7 +326,7 @@ export default function CatsPage() {
                     <div className="text-xs text-gray-500 mt-1">
                       {getAnsweredCount()} of {questions.length} answered
                     </div>
-                  </>
+                  </CatQuestions>
                 )}
               </div>
 
@@ -461,6 +460,37 @@ export default function CatsPage() {
                       </div>
                       <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
                         <CheckCircle size={24} className="text-green-600" />
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{
+                    opacity: isLoading ? 0 : 1,
+                    y: isLoading ? 20 : 0,
+                  }}
+                  transition={{ delay: 0.3 }}
+                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
+                >
+                  {isLoading ? (
+                    <div className="animate-pulse space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-8 bg-gray-300 rounded w-1/3"></div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">
+                          Average Score
+                        </p>
+                        <p className="text-2xl font-bold text-blue-600">
+                          {averageScore ? averageScore.toFixed(1) : "0"}%
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                        <TrendingUp size={24} className="text-blue-600" />
                       </div>
                     </div>
                   )}
