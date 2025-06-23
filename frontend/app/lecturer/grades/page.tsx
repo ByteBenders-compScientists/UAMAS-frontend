@@ -1,5 +1,7 @@
 'use client';
 import React, { useState } from 'react';
+import {useLayout} from '@/components/LayoutController';
+import Sidebar from '@/components/lecturerSidebar';
 import { 
   BookMarked, BarChart3, Clock, Monitor, Plus, Star, User, 
   Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp, GraduationCap,
@@ -203,34 +205,27 @@ const SidebarHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
 );
 
 const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle }) => (
-  <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-gray-200 shadow-sm">
-    <div className="flex items-center space-x-4">
+  <header className="flex items-center justify-between px-4 py-4 lg:py-6 bg-white border-b border-gray-200 shadow-sm lg:shadow-none">
+    <div className="flex items-center space-x-3">
       <button
-        className="lg:hidden text-gray-600 hover:text-rose-600 transition-colors p-2"
+        className="lg:hidden text-rose-600 hover:text-emerald-800 transition-colors"
         onClick={onSidebarToggle}
         aria-label="Open sidebar"
       >
-        <Menu className="w-5 h-5" />
+        <Menu className="w-6 h-6" />
       </button>
-      <div className="hidden lg:block">
-        <h1 className="text-lg font-semibold text-gray-900">Grades Management</h1>
-        <p className="text-sm text-gray-500">Track and manage student grades</p>
-      </div>
+      <span className="text-xl font-bold text-emerald-600">EduPortal</span>
     </div>
-    
     <div className="flex items-center space-x-4">
-      <button className="relative text-gray-500 hover:text-rose-600 transition-colors p-2">
-        <Bell className="w-5 h-5" />
-        <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+      <button className="relative text-gray-500 hover:text-emerald-600 transition-colors">
+        <Bell className="w-6 h-6" />
+        <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs rounded-full px-1.5 py-0.5">3</span>
       </button>
-      <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 bg-gradient-to-r from-rose-500 to-pink-500 rounded-full flex items-center justify-center">
-          <User className="w-4 h-4 text-white" />
+      <div className="flex items-center space-x-2">
+        <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-emerald-600" />
         </div>
-        <div className="hidden md:block">
-          <div className="text-sm font-semibold text-gray-900">Dr. Alex Kimani</div>
-          <div className="text-xs text-gray-500">Senior Lecturer</div>
-        </div>
+        <span className="text-sm font-semibold text-gray-700 hidden md:inline">Dr. Alex Kimani</span>
       </div>
     </div>
   </header>
@@ -337,59 +332,6 @@ interface SidebarProps {
   isCreateDropdownOpen: boolean;
   onCreateDropdownToggle: () => void;
 }
-
-const Sidebar: React.FC<SidebarProps> = ({
-  isOpen,
-  onClose,
-  navigationItems,
-  isCreateDropdownOpen,
-  onCreateDropdownToggle
-}) => {
-  const [dropdownOpenIndex, setDropdownOpenIndex] = useState<number | null>(null);
-
-  const handleDropdownToggle = (index: number) => {
-    setDropdownOpenIndex(dropdownOpenIndex === index ? null : index);
-  };
-
-  return (
-    <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={onClose}
-        />
-      )}
-      
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-gradient-to-b from-rose-600 to-rose-700 shadow-xl transform transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        aria-label="Sidebar"
-      >
-        <SidebarHeader onClose={onClose} />
-        <UserProfile />
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          {navigationItems.map((item, idx) => (
-            <NavigationItemComponent
-              key={item.label}
-              item={item}
-              isDropdownOpen={dropdownOpenIndex === idx || (item.label === 'Create' && isCreateDropdownOpen)}
-              onDropdownToggle={() => {
-                if (item.label === 'Create') {
-                  onCreateDropdownToggle();
-                } else {
-                  handleDropdownToggle(idx);
-                }
-              }}
-            />
-          ))}
-        </nav>
-      </aside>
-    </>
-  );
-};
 
 const GradeStats: React.FC<{ grades: GradeEntry[] }> = ({ grades }) => {
   const totalGraded = grades.filter(g => g.status === 'Graded').length;
@@ -544,63 +486,16 @@ const GradesTable: React.FC<{ grades: GradeEntry[], onGradeEdit: (gradeId: strin
 
 // ===== MAIN COMPONENT =====
 const page: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [grades, setGrades] = useState<GradeEntry[]>(SAMPLE_GRADES);
 
-  // Navigation items for sidebar
-  const navigationItems: NavigationItem[] = [
-    {
-      icon: BookMarked,
-      label: 'Dashboard',
-      active: false,
-      path: '/lecturer/dashboard'
-    },
-    {
-      icon: GraduationCap,
-      label: 'Grades',
-      active: true,
-      path: '/lecturer/grades'
-    },
-    {
-      icon: Users,
-      label: 'Students',
-      active: false,
-      path: '/lecturer/students'
-    },
-    {
-      icon: FileText,
-      label: 'Assignments',
-      active: false,
-      path: '/lecturer/assignments'
-    },
-    {
-      icon: BarChart3,
-      label: 'Reports',
-      active: false,
-      path: '/lecturer/reports'
-    },
-    {
-      icon: Plus,
-      label: 'Create',
-      hasDropdown: true,
-      dropdownItems: [
-        { label: 'New Assignment', path: '/lecturer/assignments/new', icon: FileText },
-        { label: 'New Grade Entry', path: '/lecturer/grades/new', icon: Edit }
-      ]
-    },
-    {
-      icon: Settings,
-      label: 'Settings',
-      active: false,
-      path: '/lecturer/settings'
-    }
-  ];
+  
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  
   const toggleCreateDropdown = () => setCreateDropdownOpen(!createDropdownOpen);
 
   const handleGradeEdit = (gradeId: string) => {
@@ -622,16 +517,13 @@ const page: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar 
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        navigationItems={navigationItems}
-        isCreateDropdownOpen={createDropdownOpen}
-        onCreateDropdownToggle={toggleCreateDropdown}
       />
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
-        <TopHeader onSidebarToggle={toggleSidebar} />
+      <div className="flex-1 flex flex-col lg:ml-64">
+        
+        
+        <TopHeader onSidebarToggle={toggleCreateDropdown} />
         
         <main className="flex-1 p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">

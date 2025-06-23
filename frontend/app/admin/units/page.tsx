@@ -9,43 +9,6 @@ import EmptyState from "@/components/EmptyState"
 import AddUnitModal from "@/components/admin/AddUnitModal"
 import { BookOpen, Plus, Search, Filter, Edit, Trash2, Eye, GraduationCap, Calendar, MoreVertical } from "lucide-react"
 
-// Mock data
-const mockUnits = [
-  {
-    id: "1",
-    unit_code: "CS 4102",
-    unit_name: "Machine Learning",
-    level: 4,
-    semester: 1,
-    course: {
-      name: "BSc. Computer Science",
-      code: "CS",
-    },
-  },
-  {
-    id: "2",
-    unit_code: "CS 3208",
-    unit_name: "Multimedia Systems",
-    level: 3,
-    semester: 2,
-    course: {
-      name: "BSc. Computer Science",
-      code: "CS",
-    },
-  },
-  {
-    id: "3",
-    unit_code: "IT 2101",
-    unit_name: "Database Systems",
-    level: 2,
-    semester: 1,
-    course: {
-      name: "BSc. Information Technology",
-      code: "IT",
-    },
-  },
-]
-
 type Unit = {
   id: string
   unit_code: string
@@ -53,6 +16,7 @@ type Unit = {
   level: number
   semester: number
   course: {
+    id: string
     name: string
     code: string
   }
@@ -118,7 +82,7 @@ const UnitCard = ({
       <div className="flex items-center text-sm text-gray-600">
         <GraduationCap size={14} className="mr-2" />
         <span>
-          {unit.course.name} ({unit.course.code})
+          {unit.unit_name} ({unit.unit_code})
         </span>
       </div>
 
@@ -144,11 +108,28 @@ export default function UnitsPage() {
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setUnits(mockUnits)
-      setIsLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
+    const fetchUnits = async () => {
+      setIsLoading(true)
+      try {
+        const res = await fetch("http://localhost:8080/api/v1/admin/units", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+        const data = await res.json()
+        setUnits(data)
+        // console.log("Fetched units:", data)
+        setIsLoading(false)
+      } catch (error) {
+        setIsLoading(false)
+        setUnits([])
+        console.error("Failed to fetch units:", error)
+      }
+    }
+
+    fetchUnits()
   }, [])
 
   const filteredUnits = units.filter(
@@ -158,9 +139,70 @@ export default function UnitsPage() {
       unit.course.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleAddUnit = (unitData: any) => {
-    console.log("Adding unit:", unitData)
-    setShowAddModal(false)
+  const handleAddUnit = async (unitData: any) => {
+    try {
+      if (selectedUnit) {
+        // Update existing unit
+        const response = await fetch(`http://localhost:8080/api/v1/admin/units/${selectedUnit.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(unitData),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to update unit")
+        }
+      } else {
+        // Add new unit
+        const response = await fetch("http://localhost:8080/api/v1/admin/units", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(unitData),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to add unit")
+        }
+      }
+
+      // Reload the units list
+      const unitsResponse = await fetch("http://localhost:8080/api/v1/admin/units", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const unitsData = await unitsResponse.json()
+      setUnits(unitsData)
+
+      setShowAddModal(false)
+      setSelectedUnit(null)
+    } catch (error) {
+      console.error("Error saving unit:", error)
+      // Reload the units list even if there was an error
+      const unitsResponse = await fetch("http://localhost:8080/api/v1/admin/units", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const unitsData = await unitsResponse.json()
+      setUnits(unitsData)
+    }
   }
 
   const handleEditUnit = (unit: Unit) => {
@@ -168,8 +210,50 @@ export default function UnitsPage() {
     setShowAddModal(true)
   }
 
-  const handleDeleteUnit = (id: string) => {
-    console.log("Deleting unit:", id)
+  const handleDeleteUnit = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this unit?")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/admin/units/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "Failed to delete unit")
+      }
+
+      // Reload the units list
+      const unitsResponse = await fetch("http://localhost:8080/api/v1/admin/units", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const unitsData = await unitsResponse.json()
+      setUnits(unitsData)
+    } catch (error) {
+      console.error("Error deleting unit:", error)
+      // Reload the units list even if there was an error
+      const unitsResponse = await fetch("http://localhost:8080/api/v1/admin/units", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const unitsData = await unitsResponse.json()
+      setUnits(unitsData)
+    }
   }
 
   const handleViewUnit = (unit: Unit) => {
@@ -247,7 +331,7 @@ export default function UnitsPage() {
                 description={
                   searchTerm ? "No units match your search criteria." : "Start by adding your first unit to the system."
                 }
-                actionLabel="Add Unit"
+                actionText="Add Unit"
                 onAction={() => setShowAddModal(true)}
               />
             ) : (

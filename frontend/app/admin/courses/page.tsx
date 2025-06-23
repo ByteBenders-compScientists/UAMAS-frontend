@@ -9,29 +9,6 @@ import EmptyState from "@/components/EmptyState"
 import AddCourseModal from "@/components/admin/AddCourseModal"
 import { GraduationCap, Plus, Search, Filter, Edit, Trash2, Eye, Building, MoreVertical } from "lucide-react"
 
-// Mock data
-const mockCourses = [
-  {
-    id: "1",
-    code: "CS",
-    name: "BSc. Computer Science",
-    department: "Computer Science",
-    school: "CS & IT",
-    units: [
-      { unit_code: "CS 4102", unit_name: "Machine Learning", level: 4, semester: 1 },
-      { unit_code: "CS 3208", unit_name: "Multimedia Systems", level: 3, semester: 2 },
-    ],
-  },
-  {
-    id: "2",
-    code: "IT",
-    name: "BSc. Information Technology",
-    department: "Information Technology",
-    school: "CS & IT",
-    units: [{ unit_code: "IT 2101", unit_name: "Database Systems", level: 2, semester: 1 }],
-  },
-]
-
 type Course = {
   id: string
   code: string
@@ -152,11 +129,22 @@ export default function CoursesPage() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setCourses(mockCourses)
+    const fetchCourses = async () => {
+      setIsLoading(true)
+      const res = await fetch("http://localhost:8080/api/v1/admin/courses", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const data = await res.json()
+      setCourses(data)
       setIsLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
+    }
+
+    fetchCourses()
   }, [])
 
   const filteredCourses = courses.filter(
@@ -167,18 +155,121 @@ export default function CoursesPage() {
       course.school.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleAddCourse = (courseData: any) => {
-    console.log("Adding course:", courseData)
-    setShowAddModal(false)
-  }
-
   const handleEditCourse = (course: Course) => {
     setSelectedCourse(course)
     setShowAddModal(true)
   }
 
-  const handleDeleteCourse = (id: string) => {
-    console.log("Deleting course:", id)
+  const handleDeleteCourse = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this course? This will also delete all related units.")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/admin/courses/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "Failed to delete course")
+      }
+
+      // Reload the courses list
+      const coursesResponse = await fetch("http://localhost:8080/api/v1/admin/courses", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const coursesData = await coursesResponse.json()
+      setCourses(coursesData)
+    } catch (error) {
+      console.error("Error deleting course:", error)
+      // Reload the courses list even if there was an error
+      const coursesResponse = await fetch("http://localhost:8080/api/v1/admin/courses", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const coursesData = await coursesResponse.json()
+      setCourses(coursesData)
+    }
+  }
+
+  const handleAddCourse = async (courseData: any) => {
+    try {
+      if (selectedCourse) {
+        // Update existing course
+        const response = await fetch(`http://localhost:8080/api/v1/admin/courses/${selectedCourse.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(courseData),
+        })
+
+        const data = await response.json()
+
+        // if (!response.ok) {
+        //   throw new Error(data.message || "Failed to update course")
+        // }
+      } else {
+        // Add new course
+        const response = await fetch("http://localhost:8080/api/v1/admin/courses", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(courseData),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to add course")
+        }
+      }
+
+      // Reload the courses list
+      const coursesResponse = await fetch("http://localhost:8080/api/v1/admin/courses", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const coursesData = await coursesResponse.json()
+      setCourses(coursesData)
+
+      setShowAddModal(false)
+      setSelectedCourse(null)
+    } catch (error) {
+      console.error("Error saving course:", error)
+      // Reload the courses list even if there was an error
+      const coursesResponse = await fetch("http://localhost:8080/api/v1/admin/courses", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const coursesData = await coursesResponse.json()
+      setCourses(coursesData)
+    }
   }
 
   const handleViewCourse = (course: Course) => {
@@ -258,7 +349,7 @@ export default function CoursesPage() {
                     ? "No courses match your search criteria."
                     : "Start by adding your first course to the system."
                 }
-                actionLabel="Add Course"
+                actionText="Add Course"
                 onAction={() => setShowAddModal(true)}
               />
             ) : (

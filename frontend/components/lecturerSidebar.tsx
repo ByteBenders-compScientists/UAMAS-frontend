@@ -1,163 +1,240 @@
-// components/Sidebar.tsx
-import React, { useState } from 'react';
-import { 
-  BookMarked, GraduationCap, Monitor, FileText, MessageCircle, BarChart3, 
-  User, Settings, Plus, LetterText, ChevronDown, ChevronUp, X 
-} from 'lucide-react';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion} from 'framer-motion';
+import { useLayout } from './LayoutController';
+import {
+  LayoutDashboard,
+  BookOpen,
+  ClipboardList,
+  GraduationCap,
+  Calendar,
+  Library,
+  MessageSquare,
+  Settings,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  User,
+  X
+} from 'lucide-react';
 
-// ===== TYPES =====
-interface NavigationItem {
-  icon: React.ElementType;
-  label: string;
-  active?: boolean;
-  count?: number;
-  hasDropdown?: boolean;
-  dropdownItems?: DropdownItem[];
-  path?: string;
-}
-
-interface DropdownItem {
-  label: string;
-  path: string;
-  icon?: React.ElementType;
-}
-
-// ===== Sidebar Component =====
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  navigationItems: NavigationItem[];
-  isCreateDropdownOpen: boolean;
-  onCreateDropdownToggle: () => void;
-  onDropdownItemClick: (path: string) => void;
+  showMobileOnly?: boolean;
 }
 
-const lecturerSidebar: React.FC<SidebarProps> = ({
-  isOpen,
-  onClose,
-  navigationItems,
-  isCreateDropdownOpen,
-  onCreateDropdownToggle,
-  onDropdownItemClick
-}) => {
-  const [dropdownOpenIndex, setDropdownOpenIndex] = useState<number | null>(null);
+type NavItemType = {
+  name: string;
+  icon: React.ReactNode;
+  path: string;
+  badge?: number | string;
+};
 
-  const handleDropdownToggle = (index: number) => {
-    setDropdownOpenIndex(dropdownOpenIndex === index ? null : index);
+const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
+  const pathname = usePathname();
+  const { 
+    sidebarCollapsed, 
+    setSidebarCollapsed, 
+    isMobileMenuOpen, 
+    setMobileMenuOpen,
+    isMobileView,
+    isTabletView
+  } = useLayout();
+  
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  // Only show the mobile version if explicitly requested
+  if (showMobileOnly && !isMobileView && !isTabletView) return null;
+
+  // Hide desktop sidebar on mobile/tablet unless menu is open
+  if (!showMobileOnly && (isMobileView || isTabletView) && !isMobileMenuOpen) return null;
+
+  const navItems: NavItemType[] = [
+    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/lecturer/dashboard' },
+    { name: 'Assessments', icon: <ClipboardList size={20} />, path: '/lecturer/assessments', badge: 3 },
+    { name: 'Grades', icon: <GraduationCap size={20} />, path: '/lecturer/grades' },
+    { name: 'My Courses', icon: <Calendar size={20} />, path: '/lecturer/courses' },
+    { name: 'Library', icon: <Library size={20} />, path: '/lecturer/library' },
+    { name: 'Forums', icon: <MessageSquare size={20} />, path: '/lecturer/forums', badge: 'New' },
+  ];
+
+  const bottomNavItems: NavItemType[] = [
+    { name: 'Profile', icon: <User size={20} />, path: '/lecturer/profile' },
+    { name: 'Settings', icon: <Settings size={20} />, path: '/settings' },
+    { name: 'Logout', icon: <LogOut size={20} />, path: '/logout' },
+  ];
+
+  const sidebarVariants = {
+    desktop: {
+      width: sidebarCollapsed ? 80 : 240,
+      transition: { duration: 0.3, ease: "easeInOut" }
+    },
+    mobile: {
+      x: 0,
+      transition: { duration: 0.3, ease: "easeInOut" }
+    },
+    mobileHidden: {
+      x: "-100%",
+      transition: { duration: 0.3, ease: "easeInOut" }
+    }
+  };
+
+  // Mobile/tablet overlay when sidebar is open
+  const renderOverlay = () => {
+    if ((isMobileView || isTabletView) && isMobileMenuOpen) {
+      return (
+        <motion.div 
+          className="fixed inset-0 bg-black/50 z-30"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      );
+    }
+    return null;
+  };
+
+  const renderNavItem = (item: NavItemType) => {
+    const isActive = pathname === item.path;
+    
+    return (
+      <Link
+        key={item.path}
+        href={item.path}
+        className={`
+          flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
+          ${isActive 
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium' 
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+          }
+          ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
+        `}
+      >
+        <div className={`${isActive ? 'text-emerald-600' : 'text-gray-500'}`}>
+          {item.icon}
+        </div>
+        
+        {(!sidebarCollapsed || isMobileView || isTabletView) && (
+          <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{item.name}</span>
+        )}
+        
+        {(!sidebarCollapsed || isMobileView || isTabletView) && item.badge && (
+          <div className={`ml-auto ${typeof item.badge === 'number' ? 'bg-emerald-500' : 'bg-amber-500'} text-white text-xs px-2 py-0.5 rounded-full`}>
+            {item.badge}
+          </div>
+        )}
+      </Link>
+    );
   };
 
   return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-40 w-64 bg-rose-600 shadow-lg transform transition-transform duration-300 lg:translate-x-0 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:static lg:inset-auto lg:shadow-none`}
-      aria-label="Sidebar"
-    >
-      <div className="flex items-center justify-between p-6 border-b border-rose-200">
-        <div className="flex items-center space-x-2 text-xl font-bold">
-          <LetterText className="w-6 h-6 text-rose-600" />
-          <span className="text-white">EduPortal</span>
-        </div>
-        <button 
-          className="lg:hidden text-white hover:text-rose-100 transition-colors"
-          onClick={onClose}
-          aria-label="Close sidebar"
-        >
-          <X className="w-6 h-6" />
-        </button>
-      </div>
-      <nav className="flex-1 px-4 py-6 space-y-1">
-        {navigationItems.map((item, idx) => (
-          <div key={item.label}>
-            <NavigationItemComponent
-              item={item}
-              isDropdownOpen={dropdownOpenIndex === idx || (item.label === 'Create' && isCreateDropdownOpen)}
-              onDropdownToggle={() => {
-                if (item.label === 'Create') {
-                  onCreateDropdownToggle();
-                } else {
-                  handleDropdownToggle(idx);
-                }
-              }}
-              onDropdownItemClick={onDropdownItemClick}
-            />
+    <>
+      {renderOverlay()}
+      <motion.div 
+        initial={isMobileView || isTabletView ? "mobileHidden" : "desktop"}
+        animate={
+          isMobileView || isTabletView 
+            ? (isMobileMenuOpen ? "mobile" : "mobileHidden") 
+            : "desktop"
+        }
+        variants={sidebarVariants}
+        className={`
+          h-screen fixed left-0 top-0 z-40 flex flex-col
+          bg-white text-gray-700 shadow-xl border-r border-gray-200
+          ${(isMobileView || isTabletView) ? 'w-[270px]' : ''}
+        `}
+      >
+        {/* Header Section */}
+        <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center">
+            <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center shadow-md">
+              <span className="text-white font-extrabold text-lg">E</span>
+            </div>
+            {(!sidebarCollapsed || isMobileView || isTabletView) && (
+              <span className="ml-3 font-semibold text-lg tracking-wide text-gray-800">EduPortal</span>
+            )}
           </div>
-        ))}
-      </nav>
-    </aside>
-  );
-};
-
-const NavigationItemComponent: React.FC<{
-  item: NavigationItem;
-  isDropdownOpen: boolean;
-  onDropdownToggle: () => void;
-  onDropdownItemClick: (path: string) => void;
-}> = ({ item, isDropdownOpen, onDropdownToggle, onDropdownItemClick }) => {
-  if (item.hasDropdown) {
-    return (
-      <div>
-        <button
-          onClick={onDropdownToggle}
-          className={`w-full flex items-center justify-between space-x-3 p-3 rounded-lg transition-all duration-200 ${
-            item.active 
-              ? 'bg-white text-rose-500 shadow-sm' 
-              : 'hover:bg-rose-300 hover:bg-opacity-50 text-white'
-          }`}
-          aria-expanded={isDropdownOpen}
-        >
-          <div className="flex items-center space-x-3">
-            <item.icon className="w-5 h-5" />
-            <span className="text-sm font-medium">{item.label}</span>
-          </div>
-          {isDropdownOpen ? (
-            <ChevronUp className="w-4 h-4" />
+          
+          {(isMobileView || isTabletView) ? (
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
+            >
+              <X size={18} />
+            </button>
           ) : (
-            <ChevronDown className="w-4 h-4" />
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
+            >
+              {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+            </button>
           )}
-        </button>
-        
-        {isDropdownOpen && (
-          <div className="ml-8 mt-2 space-y-1">
-            {item.dropdownItems && item.dropdownItems.map((dropdownItem, index) => (
-              <Link
-                key={index}
-                href={dropdownItem.path}
-                className="w-full text-left block p-2 text-sm font-medium rounded-lg hover:bg-rose-300 hover:bg-opacity-50 transition-all duration-200 text-white flex items-center"
-                onClick={() => onDropdownItemClick(dropdownItem.path)}
-              >
-                {dropdownItem.icon && <dropdownItem.icon className="w-4 h-4 mr-2" />}
-                {dropdownItem.label}
-              </Link>
-            ))}
+        </div>
+
+        {/* User Profile Section */}
+        {(!sidebarCollapsed || isMobileView || isTabletView) && (
+          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center">
+              <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-medium text-sm shadow-sm">
+                JO
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-800">Dr Alex Kimani</p>
+                <p className="text-xs text-gray-500">Lecturer ID :10001</p>
+              </div>
+            </div>
           </div>
         )}
-      </div>
-    );
-  }
 
-  return (
-    <Link 
-      href={item.path || "#"} 
-      className={`flex items-center justify-between space-x-3 p-3 rounded-lg transition-all duration-200 ${
-        item.active 
-          ? 'bg-white text-rose-500 shadow-sm' 
-          : 'hover:bg-rose-300 hover:bg-opacity-50 text-white'
-      }`}
-      onClick={() => onDropdownItemClick(item.path || '')}
-    >
-      <div className="flex items-center space-x-3">
-        <item.icon className="w-5 h-5" />
-        <span className="text-sm font-medium">{item.label}</span>
-      </div>
-      {item.count && (
-        <span className="bg-white text-rose-500 text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-          {item.count}
-        </span>
-      )}
-    </Link>
+        {/* Navigation Section */}
+        <div className="flex flex-col flex-1 overflow-y-auto py-4">
+          <nav className="flex-1 px-3 space-y-1">
+            {navItems.map((item) => renderNavItem(item))}
+          </nav>
+          
+          {/* Bottom Navigation Section */}
+          <div className="mt-auto px-3 py-4 border-t border-gray-200">
+            {bottomNavItems.map((item) => renderNavItem(item))}
+          </div>
+          
+          {/* Bottom SVG Illustration */}
+          {(!sidebarCollapsed || isMobileView || isTabletView) && (
+            <div className="px-4 pb-4">
+              <div className="bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl p-4 text-center">
+                {/* We'll use an inline SVG instead of an Image component */}
+                <div className="mx-auto mb-2 -mt-6 h-24 w-full flex justify-center">
+                  <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 87.5C70.7107 87.5 87.5 70.7107 87.5 50C87.5 29.2893 70.7107 12.5 50 12.5C29.2893 12.5 12.5 29.2893 12.5 50C12.5 70.7107 29.2893 87.5 50 87.5Z" fill="#E6F7F1"/>
+                    <path d="M65 35H35C33.619 35 32.5 36.119 32.5 37.5V62.5C32.5 63.881 33.619 65 35 65H65C66.381 65 67.5 63.881 67.5 62.5V37.5C67.5 36.119 66.381 35 65 35Z" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M57.5 27.5V32.5" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M42.5 27.5V32.5" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M32.5 42.5H67.5" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M45 50H40V55H45V50Z" fill="#047857"/>
+                    <path d="M55 50H50V55H55V50Z" fill="#047857"/>
+                    <path d="M45 57.5H40V62.5H45V57.5Z" fill="#047857"/>
+                    <path d="M55 57.5H50V62.5H55V57.5Z" fill="#047857"/>
+                    <path d="M65 50H60V55H65V50Z" fill="#047857"/>
+                  </svg>
+                </div>
+                <p className="text-xs text-emerald-800 font-medium">Academic excellence</p>
+                <p className="text-xs text-emerald-600 mt-1">Track your courses</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </>
   );
 };
 
-export default lecturerSidebar;
+export default LecturerSidebar;

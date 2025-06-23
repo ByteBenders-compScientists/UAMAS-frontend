@@ -7,30 +7,8 @@ import AdminSidebar from "@/components/AdminSidebar"
 import Header from "@/components/Header"
 import EmptyState from "@/components/EmptyState"
 import AddLecturerModal from "@/components/admin/AddLecturerModal"
+import AssignUnitsModal from "@/components/admin/AssignUnitsModal"
 import { UserCheck, Plus, Search, Filter, Edit, Trash2, Eye, Mail, BookOpen, MoreVertical } from "lucide-react"
-
-// Mock data
-const mockLecturers = [
-  {
-    id: "1",
-    firstname: "John",
-    surname: "Doe",
-    othernames: "Kibet",
-    email: "john.doe@dekut.edu",
-    units: [
-      { unit_code: "CS 4102", unit_name: "Machine Learning" },
-      { unit_code: "CS 3208", unit_name: "Multimedia Systems" },
-    ],
-  },
-  {
-    id: "2",
-    firstname: "Jane",
-    surname: "Smith",
-    othernames: "Wanjiku",
-    email: "jane.smith@dekut.edu",
-    units: [{ unit_code: "IT 2101", unit_name: "Database Systems" }],
-  },
-]
 
 type Lecturer = {
   id: string
@@ -148,13 +126,25 @@ export default function LecturersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedLecturer, setSelectedLecturer] = useState<Lecturer | null>(null)
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [selectedLecturerForUnits, setSelectedLecturerForUnits] = useState<Lecturer | null>(null)
+  const [selectedLecturerUnitIds, setSelectedLecturerUnitIds] = useState<string[]>([])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLecturers(mockLecturers)
+    const fetchLecturers = async () => {
+      setIsLoading(true)
+      const res = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+      const data = await res.json()
+      setLecturers(data)
       setIsLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
+    }
+    fetchLecturers()
   }, [])
 
   const filteredLecturers = lecturers.filter(
@@ -164,18 +154,121 @@ export default function LecturersPage() {
       lecturer.email.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleAddLecturer = (lecturerData: any) => {
-    console.log("Adding lecturer:", lecturerData)
-    setShowAddModal(false)
+  const handleAddLecturer = async (lecturerData: any) => {
+    try {
+      if (selectedLecturer) {
+        // Update existing lecturer
+        const response = await fetch(`http://localhost:8080/api/v1/admin/lecturers/${selectedLecturer.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(lecturerData),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to update lecturer")
+        }
+      } else {
+        // Add new lecturer
+        const response = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(lecturerData),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to add lecturer")
+        }
+      }
+
+      // Reload the lecturers list
+      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const lecturersData = await lecturersResponse.json()
+      setLecturers(lecturersData)
+
+      setShowAddModal(false)
+      setSelectedLecturer(null)
+    } catch (error) {
+      console.error("Error saving lecturer:", error)
+      // Reload the lecturers list even if there was an error
+      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const lecturersData = await lecturersResponse.json()
+      setLecturers(lecturersData)
+    }
   }
 
-  const handleEditLecturer = (lecturer: Lecturer) => {
+  const handleEditLecturer = async (lecturer: Lecturer) => {
     setSelectedLecturer(lecturer)
     setShowAddModal(true)
   }
 
-  const handleDeleteLecturer = (id: string) => {
-    console.log("Deleting lecturer:", id)
+  const handleDeleteLecturer = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this lecturer? This will also remove all unit assignments.")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/admin/lecturers/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "Failed to delete lecturer")
+      }
+
+      // Reload the lecturers list
+      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const lecturersData = await lecturersResponse.json()
+      setLecturers(lecturersData)
+    } catch (error) {
+      console.error("Error deleting lecturer:", error)
+      // Reload the lecturers list even if there was an error
+      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      const lecturersData = await lecturersResponse.json()
+      setLecturers(lecturersData)
+    }
   }
 
   const handleViewLecturer = (lecturer: Lecturer) => {
@@ -183,7 +276,23 @@ export default function LecturersPage() {
   }
 
   const handleAssignUnits = (lecturer: Lecturer) => {
-    console.log("Assigning units to lecturer:", lecturer)
+    setSelectedLecturerForUnits(lecturer)
+    setSelectedLecturerUnitIds(lecturer.units.map(u => u.unit_code))
+    setShowAssignModal(true)
+  }
+
+  const handleUnitsAssigned = async (unitIds: string[]) => {
+    // Reload the lecturers list to show updated unit assignments
+    const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    })
+
+    const lecturersData = await lecturersResponse.json()
+    setLecturers(lecturersData)
   }
 
   return (
@@ -259,33 +368,62 @@ export default function LecturersPage() {
                     ? "No lecturers match your search criteria."
                     : "Start by adding your first lecturer to the system."
                 }
-                actionLabel="Add Lecturer"
+                actionText="Add Lecturer"
                 onAction={() => setShowAddModal(true)}
               />
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {filteredLecturers.map((lecturer, index) => (
-                  <motion.div
-                    key={lecturer.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.1 * index }}
-                  >
-                    <LecturerCard
-                      lecturer={lecturer}
-                      onEdit={handleEditLecturer}
-                      onDelete={handleDeleteLecturer}
-                      onView={handleViewLecturer}
-                      onAssignUnits={handleAssignUnits}
-                    />
-                  </motion.div>
-                ))}
-              </motion.div>
+              <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lecturer</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assigned Units</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {filteredLecturers.map((lecturer) => (
+                      <tr key={lecturer.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-gray-800">{lecturer.firstname} {lecturer.surname}</div>
+                          <div className="text-xs text-gray-500">{lecturer.othernames}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="font-medium text-gray-800">{lecturer.units.length} units</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {lecturer.units.map((unit) => (
+                              <span key={unit.unit_code} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-medium">
+                                {unit.unit_code}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {lecturer.units.length > 0 ? (
+                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-semibold">Active</span>
+                          ) : (
+                            <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-xs font-semibold">Unassigned</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex space-x-2">
+                            <button onClick={() => handleAssignUnits(lecturer)} className="hover:bg-gray-100 p-1 rounded" title="Assign Units">
+                              <BookOpen size={16} className="text-green-600" />
+                            </button>
+                            <button onClick={() => handleEditLecturer(lecturer)} className="hover:bg-gray-100 p-1 rounded" title="Edit">
+                              <Edit size={16} className="text-blue-600" />
+                            </button>
+                            <button onClick={() => handleDeleteLecturer(lecturer.id)} className="hover:bg-gray-100 p-1 rounded" title="Delete">
+                              <Trash2 size={16} className="text-red-600" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </main>
@@ -300,6 +438,20 @@ export default function LecturersPage() {
             setSelectedLecturer(null)
           }}
           onSubmit={handleAddLecturer}
+        />
+      )}
+
+      {/* Assign Units Modal */}
+      {showAssignModal && selectedLecturerForUnits && (
+        <AssignUnitsModal
+          lecturerId={selectedLecturerForUnits.id}
+          assignedUnitIds={selectedLecturerUnitIds}
+          onClose={() => {
+            setShowAssignModal(false)
+            setSelectedLecturerForUnits(null)
+            setSelectedLecturerUnitIds([])
+          }}
+          onAssign={handleUnitsAssigned}
         />
       )}
     </div>

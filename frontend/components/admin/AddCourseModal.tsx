@@ -69,14 +69,48 @@ export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseM
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!validateForm()) return
-
+    
+    if (!validateForm()) {
+      return
+    }
+    
     setIsLoading(true)
+
     try {
-      await onSubmit(formData)
+      const courseData = {
+        name: formData.name,
+        code: formData.code,
+        department: formData.department,
+        school: formData.school,
+      }
+
+      const url = course
+        ? `http://localhost:8080/api/v1/admin/courses/${course.id}`
+        : "http://localhost:8080/api/v1/admin/courses"
+
+      const response = await fetch(url, {
+        method: course ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(courseData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to save course")
+      }
+
+      const data = await response.json()
+      onSubmit(data)
+      onClose()
     } catch (error) {
       console.error("Error submitting form:", error)
+      setErrors((prev) => ({
+        ...prev,
+        submit: error instanceof Error ? error.message : "Failed to save course",
+      }))
     } finally {
       setIsLoading(false)
     }
@@ -92,7 +126,7 @@ export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseM
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm bg-black/30">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
