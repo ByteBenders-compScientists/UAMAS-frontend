@@ -159,11 +159,16 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
         {/* Header Section */}
         <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
           <div className="flex items-center">
-            <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-white font-extrabold text-lg">E</span>
-            </div>
             {(!sidebarCollapsed || isMobileView || isTabletView) && (
-              <span className="ml-3 font-semibold text-lg tracking-wide text-gray-800">EduPortal</span>
+              <span className="ml-3 font-semibold text-lg tracking-wide text-gray-800">
+                 <Image
+                src="/assets/logo.png"
+                alt="logo"
+                width={180}
+                height={160}
+                quality={100}
+                />
+              </span>
             )}
           </div>
           
