@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import Image from "next/image"
 
 const menuItems = [
   {
@@ -78,13 +79,15 @@ export default function AdminSidebar() {
           transition={{ duration: 0.2 }}
           className="flex items-center space-x-3"
         >
-          <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-            <Shield size={20} className="text-white" />
-          </div>
           {(!sidebarCollapsed || isMobileView) && (
             <div>
-              <h2 className="font-bold text-gray-800">Admin Panel</h2>
-              <p className="text-xs text-gray-500">University Management</p>
+            <Image
+                src="/assets/logo.png"
+                alt="logo"
+                width={180}
+                height={160}
+                quality={100}
+                />
             </div>
           )}
         </motion.div>
