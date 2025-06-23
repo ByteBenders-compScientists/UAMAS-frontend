@@ -141,12 +141,13 @@ export default function EduAISuite() {
                 whileHover={{ scale: 1.05 }}
                 className="flex items-center space-x-2"
               >
-                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-2 rounded-xl">
-                  <BrainCircuit className="text-white h-6 w-6" />
-                </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                  EduAI Suite
-                </span>
+                 <Image
+                src="/assets/logo.png"
+                alt="logo"
+                width={180}
+                height={160}
+                quality={100}
+                />
               </motion.div>
 
               {/* Desktop Navigation */}
