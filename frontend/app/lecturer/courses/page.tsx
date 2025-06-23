@@ -156,34 +156,27 @@ const SidebarHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
 );
 
 const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle }) => (
-  <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-gray-200 shadow-sm">
-    <div className="flex items-center space-x-4">
+  <header className="flex items-center justify-between px-4 py-4 lg:py-6 bg-white border-b border-gray-200 shadow-sm lg:shadow-none">
+    <div className="flex items-center space-x-3">
       <button
-        className="lg:hidden text-gray-600 hover:text-rose-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+        className="lg:hidden text-rose-600 hover:text-emerald-800 transition-colors"
         onClick={onSidebarToggle}
         aria-label="Open sidebar"
       >
-        <Menu className="w-5 h-5" />
+        <Menu className="w-6 h-6" />
       </button>
-      <div className="hidden lg:block">
-        <h1 className="text-xl font-semibold text-gray-800">Course Management</h1>
-      </div>
+      <span className="text-xl font-bold text-emerald-600">EduPortal</span>
     </div>
-    
     <div className="flex items-center space-x-4">
-      <button className="relative text-gray-500 hover:text-rose-600 transition-colors p-2 hover:bg-gray-100 rounded-lg">
-        <Bell className="w-5 h-5" />
-        <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-medium">3</span>
+      <button className="relative text-gray-500 hover:text-emerald-600 transition-colors">
+        <Bell className="w-6 h-6" />
+        <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs rounded-full px-1.5 py-0.5">3</span>
       </button>
-      
-      <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
-        <div className="w-8 h-8 bg-gradient-to-br from-rose-400 to-rose-600 rounded-full flex items-center justify-center">
-          <User className="w-4 h-4 text-white" />
+      <div className="flex items-center space-x-2">
+        <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-emerald-600" />
         </div>
-        <div className="hidden sm:block">
-          <div className="text-sm font-semibold text-gray-800">Dr. Alex Kimani</div>
-          <div className="text-xs text-gray-500">Senior Lecturer</div>
-        </div>
+        <span className="text-sm font-semibold text-gray-700 hidden md:inline">Dr. Alex Kimani</span>
       </div>
     </div>
   </header>
@@ -349,7 +342,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete, onVie
       <div className="flex space-x-2">
         <button
           onClick={() => onView(course)}
-          className="flex-1 bg-rose-500 text-white py-2.5 px-4 rounded-lg hover:bg-rose-600 transition-colors flex items-center justify-center text-sm font-medium shadow-sm"
+          className="flex-1 bg-emerald-500 text-white py-2.5 px-4 rounded-lg hover:bg-rose-600 transition-colors flex items-center justify-center text-sm font-medium shadow-sm"
         >
           <Eye className="w-4 h-4 mr-2" />
           View Course
@@ -517,7 +510,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ course, onSubmit, onCancel }) =
         <div className="flex space-x-3 pt-6 border-t border-gray-200">
           <button
             type="submit"
-            className="bg-rose-500 text-white px-6 py-3 rounded-lg hover:bg-rose-600 transition-colors font-medium shadow-sm"
+            className="bg-emerald-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors font-medium shadow-sm"
           >
             {course ? 'Update Course' : 'Create Course'}
           </button>
@@ -706,7 +699,7 @@ const page: React.FC = () => {
               
               <button
                 onClick={handleCreateCourse}
-                className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors flex items-center"
+                className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Create Course
