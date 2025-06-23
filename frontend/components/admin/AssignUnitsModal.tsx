@@ -22,9 +22,10 @@ type AssignUnitsModalProps = {
   lecturerId: string
   onClose: () => void
   onAssign: (unitIds: string[]) => void
+  assignedUnitIds?: string[]
 }
 
-export default function AssignUnitsModal({ lecturerId, onClose, onAssign }: AssignUnitsModalProps) {
+export default function AssignUnitsModal({ lecturerId, onClose, onAssign, assignedUnitIds }: AssignUnitsModalProps) {
   const [units, setUnits] = useState<Unit[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [selectedUnits, setSelectedUnits] = useState<string[]>([])
@@ -80,6 +81,12 @@ export default function AssignUnitsModal({ lecturerId, onClose, onAssign }: Assi
 
     fetchData()
   }, [])
+
+  useEffect(() => {
+    if (assignedUnitIds) {
+      setSelectedUnits(assignedUnitIds)
+    }
+  }, [assignedUnitIds])
 
   const filteredUnits = units.filter((unit) => {
     const matchesSearch = unit.unit_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
