@@ -205,34 +205,27 @@ const SidebarHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
 );
 
 const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle }) => (
-  <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-gray-200 shadow-sm">
-    <div className="flex items-center space-x-4">
+  <header className="flex items-center justify-between px-4 py-4 lg:py-6 bg-white border-b border-gray-200 shadow-sm lg:shadow-none">
+    <div className="flex items-center space-x-3">
       <button
-        className="lg:hidden text-gray-600 hover:text-rose-600 transition-colors p-2"
+        className="lg:hidden text-rose-600 hover:text-emerald-800 transition-colors"
         onClick={onSidebarToggle}
         aria-label="Open sidebar"
       >
-        <Menu className="w-5 h-5" />
+        <Menu className="w-6 h-6" />
       </button>
-      <div className="hidden lg:block">
-        <h1 className="text-lg font-semibold text-gray-900">Grades Management</h1>
-        <p className="text-sm text-gray-500">Track and manage student grades</p>
-      </div>
+      <span className="text-xl font-bold text-emerald-600">EduPortal</span>
     </div>
-    
     <div className="flex items-center space-x-4">
-      <button className="relative text-gray-500 hover:text-rose-600 transition-colors p-2">
-        <Bell className="w-5 h-5" />
-        <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+      <button className="relative text-gray-500 hover:text-emerald-600 transition-colors">
+        <Bell className="w-6 h-6" />
+        <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs rounded-full px-1.5 py-0.5">3</span>
       </button>
-      <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 bg-gradient-to-r from-rose-500 to-pink-500 rounded-full flex items-center justify-center">
-          <User className="w-4 h-4 text-white" />
+      <div className="flex items-center space-x-2">
+        <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-emerald-600" />
         </div>
-        <div className="hidden md:block">
-          <div className="text-sm font-semibold text-gray-900">Dr. Alex Kimani</div>
-          <div className="text-xs text-gray-500">Senior Lecturer</div>
-        </div>
+        <span className="text-sm font-semibold text-gray-700 hidden md:inline">Dr. Alex Kimani</span>
       </div>
     </div>
   </header>

@@ -246,27 +246,27 @@ const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle 
   <header className="flex items-center justify-between px-4 py-4 lg:py-6 bg-white border-b border-gray-200 shadow-sm lg:shadow-none">
     <div className="flex items-center space-x-3">
       <button
-        className="lg:hidden text-rose-600 hover:text-rose-800 transition-colors"
+        className="lg:hidden text-rose-600 hover:text-emerald-800 transition-colors"
         onClick={onSidebarToggle}
         aria-label="Open sidebar"
       >
         <Menu className="w-6 h-6" />
       </button>
-      <span className="text-xl font-bold text-rose-600 hidden lg:inline">EduPortal</span>
+      <span className="text-xl font-bold text-emerald-600">EduPortal</span>
     </div>
     <div className="flex items-center space-x-4">
-      <button className="relative text-gray-500 hover:text-rose-600 transition-colors">
+      <button className="relative text-gray-500 hover:text-emerald-600 transition-colors">
         <Bell className="w-6 h-6" />
-        <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full px-1.5 py-0.5">3</span>
+        <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs rounded-full px-1.5 py-0.5">3</span>
       </button>
       <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-rose-200 rounded-full flex items-center justify-center">
-          <User className="w-4 h-4 text-rose-600" />
+        <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-emerald-600" />
         </div>
         <span className="text-sm font-semibold text-gray-700 hidden md:inline">Dr. Alex Kimani</span>
       </div>
     </div>
-  </header>
+  </header> 
 );
 
 const UserProfile: React.FC = () => (
@@ -563,7 +563,7 @@ const CreateForumModal: React.FC<CreateForumModalProps> = ({
         <div className="flex space-x-3 mt-6">
           <button
             onClick={handleSubmit}
-            className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors flex-1"
+            className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex-1"
           >
             Create Forum
           </button>
@@ -711,7 +711,7 @@ const page: React.FC = () => {
             </select>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors"
+              className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
             >
               Create Forum
             </button>
