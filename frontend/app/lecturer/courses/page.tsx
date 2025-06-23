@@ -1,12 +1,12 @@
 
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
+import { useLayout } from '@/components/LayoutController';
+import Sidebar from '@/components/lecturerSidebar';
 import { 
-  BookMarked, BarChart3, Clock, Monitor, Loader, Plus, Star, User, 
+  BookMarked, Monitor, Plus, User, 
   Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp, GraduationCap,
-  FileText, MessageSquare, Library, Settings, Upload, Image, Calendar,
-  File, CheckCircle, AlertCircle, BookOpen, ChevronRight, Download,
-  MessageCircle, Book, Edit, Trash2, Eye, UserPlus, Settings2, Search
+  FileText, BookOpen, Edit, Trash2, Eye
 } from 'lucide-react';
 
 // ===== TYPES =====
@@ -156,34 +156,27 @@ const SidebarHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
 );
 
 const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle }) => (
-  <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-gray-200 shadow-sm">
-    <div className="flex items-center space-x-4">
+  <header className="flex items-center justify-between px-4 py-4 lg:py-6 bg-white border-b border-gray-200 shadow-sm lg:shadow-none">
+    <div className="flex items-center space-x-3">
       <button
-        className="lg:hidden text-gray-600 hover:text-rose-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+        className="lg:hidden text-rose-600 hover:text-emerald-800 transition-colors"
         onClick={onSidebarToggle}
         aria-label="Open sidebar"
       >
-        <Menu className="w-5 h-5" />
+        <Menu className="w-6 h-6" />
       </button>
-      <div className="hidden lg:block">
-        <h1 className="text-xl font-semibold text-gray-800">Course Management</h1>
-      </div>
+      <span className="text-xl font-bold text-emerald-600">EduPortal</span>
     </div>
-    
     <div className="flex items-center space-x-4">
-      <button className="relative text-gray-500 hover:text-rose-600 transition-colors p-2 hover:bg-gray-100 rounded-lg">
-        <Bell className="w-5 h-5" />
-        <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-medium">3</span>
+      <button className="relative text-gray-500 hover:text-emerald-600 transition-colors">
+        <Bell className="w-6 h-6" />
+        <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs rounded-full px-1.5 py-0.5">3</span>
       </button>
-      
-      <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
-        <div className="w-8 h-8 bg-gradient-to-br from-rose-400 to-rose-600 rounded-full flex items-center justify-center">
-          <User className="w-4 h-4 text-white" />
+      <div className="flex items-center space-x-2">
+        <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-emerald-600" />
         </div>
-        <div className="hidden sm:block">
-          <div className="text-sm font-semibold text-gray-800">Dr. Alex Kimani</div>
-          <div className="text-xs text-gray-500">Senior Lecturer</div>
-        </div>
+        <span className="text-sm font-semibold text-gray-700 hidden md:inline">Dr. Alex Kimani</span>
       </div>
     </div>
   </header>
@@ -297,65 +290,11 @@ interface SidebarProps {
   onNavigationClick: (path: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
-  isOpen,
-  onClose,
-  navigationItems,
-  isCreateDropdownOpen,
-  onCreateDropdownToggle,
-  onDropdownItemClick,
-  onNavigationClick
-}) => {
-  const [dropdownOpenIndex, setDropdownOpenIndex] = useState<number | null>(null);
 
-  const handleDropdownToggle = (index: number) => {
-    setDropdownOpenIndex(dropdownOpenIndex === index ? null : index);
-  };
 
-  return (
-    <>
-      {/* Mobile Overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
-          onClick={onClose}
-        />
-      )}
-      
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-rose-600 to-rose-700 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        aria-label="Sidebar"
-      >
-        <div className="flex flex-col h-full">
-          <SidebarHeader onClose={onClose} />
-          <UserProfile />
-          
-          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-            {navigationItems.map((item, idx) => (
-              <NavigationItemComponent
-                key={item.label}
-                item={item}
-                isDropdownOpen={dropdownOpenIndex === idx || (item.label === 'Create' && isCreateDropdownOpen)}
-                onDropdownToggle={() => {
-                  if (item.label === 'Create') {
-                    onCreateDropdownToggle();
-                  } else {
-                    handleDropdownToggle(idx);
-                  }
-                }}
-                onDropdownItemClick={onDropdownItemClick}
-                onClick={() => item.path && onNavigationClick(item.path)}
-              />
-            ))}
-          </nav>
-        </div>
-      </aside>
-    </>
-  );
-};
+  
+
+
 
 interface CourseCardProps {
   course: Course;
@@ -403,7 +342,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete, onVie
       <div className="flex space-x-2">
         <button
           onClick={() => onView(course)}
-          className="flex-1 bg-rose-500 text-white py-2.5 px-4 rounded-lg hover:bg-rose-600 transition-colors flex items-center justify-center text-sm font-medium shadow-sm"
+          className="flex-1 bg-emerald-500 text-white py-2.5 px-4 rounded-lg hover:bg-rose-600 transition-colors flex items-center justify-center text-sm font-medium shadow-sm"
         >
           <Eye className="w-4 h-4 mr-2" />
           View Course
@@ -571,7 +510,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ course, onSubmit, onCancel }) =
         <div className="flex space-x-3 pt-6 border-t border-gray-200">
           <button
             type="submit"
-            className="bg-rose-500 text-white px-6 py-3 rounded-lg hover:bg-rose-600 transition-colors font-medium shadow-sm"
+            className="bg-emerald-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors font-medium shadow-sm"
           >
             {course ? 'Update Course' : 'Create Course'}
           </button>
@@ -589,7 +528,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ course, onSubmit, onCancel }) =
 };
 
 const page: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout(); 
   const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>(SAMPLE_COURSES);
   const [showForm, setShowForm] = useState(false);
@@ -610,16 +549,9 @@ const page: React.FC = () => {
         { label: 'New CAT', path: '/lecturer/cat/create', icon: BookMarked }
       ] 
     },
-    { icon: FileText, label: 'Assignment', count: 8, path: '/lecturer/assignment' },
-    { icon: BookMarked, label: 'CATs', path: '/lecturer/cats' },
-    { icon: MessageCircle, label: 'Forums', path: '/lecturer/forums' },
-    { icon: BarChart3, label: 'Grades', path: '/lecturer/grades' },
-    { icon: Book, label: 'Library', path: '/lecturer/library' },
-    { icon: User, label: 'Profile', path: '/lecturer/profile' },
-    { icon: Settings, label: 'Settings', path: '/lecturer/settings' }
   ];
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+ 
   const toggleCreateDropdown = () => setCreateDropdownOpen(!createDropdownOpen);
 
   const handleCreateCourse = () => {
@@ -678,7 +610,7 @@ const page: React.FC = () => {
 
   const handleNavigationClick = (path: string) => {
     console.log('Navigating to:', path);
-    setSidebarOpen(false); // Close mobile sidebar on navigation
+    // Close mobile sidebar on navigation
   };
 
   const filteredCourses = courses.filter(course => {
@@ -696,17 +628,11 @@ const page: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar 
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        navigationItems={navigationItems}
-        isCreateDropdownOpen={createDropdownOpen}
-        onCreateDropdownToggle={toggleCreateDropdown}
-        onDropdownItemClick={handleDropdownItemClick}
-        onNavigationClick={handleNavigationClick}
+     
       />
       
       <div className="flex-1 flex flex-col lg:ml-64">
-        <TopHeader onSidebarToggle={toggleSidebar} />
+        <TopHeader onSidebarToggle={toggleCreateDropdown} /> 
         
         <main className="flex-1 p-6 max-w-7xl mx-auto w-ful">
           <div className="mb-6">
@@ -773,7 +699,7 @@ const page: React.FC = () => {
               
               <button
                 onClick={handleCreateCourse}
-                className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors flex items-center"
+                className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Create Course

@@ -13,10 +13,18 @@ type Student = {
   surname: string
   othernames: string
   year_of_study: number
+  email: string
   course: {
+    id: string
     name: string
     code: string
   }
+}
+
+type Course = {
+  id: string
+  name: string
+  code: string
 }
 
 type AddStudentModalProps = {
@@ -25,34 +33,72 @@ type AddStudentModalProps = {
   onSubmit: (data: any) => void
 }
 
-// Mock courses data
-const mockCourses = [
-  { id: "1", name: "BSc. Computer Science", code: "CS" },
-  { id: "2", name: "BSc. Information Technology", code: "IT" },
-  { id: "3", name: "BSc. Software Engineering", code: "SE" },
-]
-
 export default function AddStudentModal({ student, onClose, onSubmit }: AddStudentModalProps) {
   const [formData, setFormData] = useState({
-    reg_number: "",
-    firstname: "",
-    surname: "",
-    othernames: "",
-    year_of_study: 1,
-    course_id: "",
+    reg_number: student?.reg_number || "",
+    firstname: student?.firstname || "",
+    surname: student?.surname || "",
+    othernames: student?.othernames || "",
+    year_of_study: student?.year_of_study || 1,
+    course_id: student?.course?.id || "",
+    email: student?.email || "",
   })
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [courses, setCourses] = useState<Course[]>([])
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true)
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/v1/admin/courses", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch courses")
+        }
+
+        const data = await response.json()
+        setCourses(data)
+      } catch (error) {
+        console.error("Error fetching courses:", error)
+        setErrors((prev) => ({
+          ...prev,
+          courses: "Failed to load courses. Please try again.",
+        }))
+      } finally {
+        setIsLoadingCourses(false)
+      }
+    }
+
+    fetchCourses()
+  }, [])
 
   useEffect(() => {
     if (student) {
       setFormData({
-        reg_number: student.reg_number,
-        firstname: student.firstname,
-        surname: student.surname,
-        othernames: student.othernames,
-        year_of_study: student.year_of_study,
-        course_id: "1", // This should be the actual course ID
+        reg_number: student.reg_number || "",
+        firstname: student.firstname || "",
+        surname: student.surname || "",
+        othernames: student.othernames || "",
+        year_of_study: student.year_of_study || 1,
+        course_id: student.course?.id || "",
+        email: student.email || "",
+      })
+    } else {
+      setFormData({
+        reg_number: "",
+        firstname: "",
+        surname: "",
+        othernames: "",
+        year_of_study: 1,
+        course_id: "",
+        email: "",
       })
     }
   }, [student])
@@ -60,13 +106,13 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.reg_number.trim()) {
+    if (!formData.reg_number?.trim()) {
       newErrors.reg_number = "Registration number is required"
     }
-    if (!formData.firstname.trim()) {
+    if (!formData.firstname?.trim()) {
       newErrors.firstname = "First name is required"
     }
-    if (!formData.surname.trim()) {
+    if (!formData.surname?.trim()) {
       newErrors.surname = "Surname is required"
     }
     if (!formData.course_id) {
@@ -74,6 +120,11 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
     }
     if (formData.year_of_study < 1 || formData.year_of_study > 6) {
       newErrors.year_of_study = "Year of study must be between 1 and 6"
+    }
+    if (!formData.email?.trim()) {
+      newErrors.email = "Email is required"
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address"
     }
 
     setErrors(newErrors)
@@ -90,6 +141,10 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
       await onSubmit(formData)
     } catch (error) {
       console.error("Error submitting form:", error)
+      setErrors((prev) => ({
+        ...prev,
+        submit: error instanceof Error ? error.message : "Failed to save student",
+      }))
     } finally {
       setIsLoading(false)
     }
@@ -109,7 +164,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm bg-black/30">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -194,6 +249,38 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
             />
           </div>
 
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+            <div className="relative">
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter email address"
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
+                  errors.email ? "border-red-300" : "border-gray-200"
+                }`}
+              />
+            </div>
+            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+          </div>
+
           {/* Course */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Course *</label>
@@ -203,12 +290,13 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
                 name="course_id"
                 value={formData.course_id}
                 onChange={handleChange}
+                disabled={isLoadingCourses}
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
                   errors.course_id ? "border-red-300" : "border-gray-200"
-                }`}
+                } ${isLoadingCourses ? "bg-gray-50 cursor-not-allowed" : ""}`}
               >
                 <option value="">Select a course</option>
-                {mockCourses.map((course) => (
+                {courses.map((course) => (
                   <option key={course.id} value={course.id}>
                     {course.name} ({course.code})
                   </option>
@@ -216,6 +304,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
               </select>
             </div>
             {errors.course_id && <p className="mt-1 text-sm text-red-600">{errors.course_id}</p>}
+            {errors.courses && <p className="mt-1 text-sm text-red-600">{errors.courses}</p>}
           </div>
 
           {/* Year of Study */}

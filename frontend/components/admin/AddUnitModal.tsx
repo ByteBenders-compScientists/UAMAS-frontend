@@ -6,13 +6,23 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { X, BookOpen, Hash, GraduationCap, Calendar } from "lucide-react"
 
+type Course = {
+  id: string
+  code: string
+  name: string
+  department: string
+  school: string
+}
+
 type Unit = {
   id: string
   unit_code: string
   unit_name: string
   level: number
   semester: number
+  course_id: string
   course: {
+    id: string
     name: string
     code: string
   }
@@ -24,13 +34,6 @@ type AddUnitModalProps = {
   onSubmit: (data: any) => void
 }
 
-// Mock courses data
-const mockCourses = [
-  { id: "1", name: "BSc. Computer Science", code: "CS" },
-  { id: "2", name: "BSc. Information Technology", code: "IT" },
-  { id: "3", name: "BSc. Software Engineering", code: "SE" },
-]
-
 export default function AddUnitModal({ unit, onClose, onSubmit }: AddUnitModalProps) {
   const [formData, setFormData] = useState({
     unit_code: "",
@@ -41,6 +44,39 @@ export default function AddUnitModal({ unit, onClose, onSubmit }: AddUnitModalPr
   })
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [courses, setCourses] = useState<Course[]>([])
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true)
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/v1/admin/courses", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch courses")
+        }
+
+        const data = await response.json()
+        setCourses(data)
+      } catch (error) {
+        console.error("Error fetching courses:", error)
+        setErrors((prev) => ({
+          ...prev,
+          courses: "Failed to load courses. Please try again.",
+        }))
+      } finally {
+        setIsLoadingCourses(false)
+      }
+    }
+
+    fetchCourses()
+  }, [])
 
   useEffect(() => {
     if (unit) {
@@ -49,7 +85,7 @@ export default function AddUnitModal({ unit, onClose, onSubmit }: AddUnitModalPr
         unit_name: unit.unit_name,
         level: unit.level,
         semester: unit.semester,
-        course_id: "1", // This should be the actual course ID
+        course_id: unit.course_id,
       })
     }
   }, [unit])
@@ -84,9 +120,33 @@ export default function AddUnitModal({ unit, onClose, onSubmit }: AddUnitModalPr
 
     setIsLoading(true)
     try {
-      await onSubmit(formData)
+      const url = unit
+        ? `http://localhost:8080/api/v1/admin/units/${unit.id}`
+        : "http://localhost:8080/api/v1/admin/units"
+
+      const response = await fetch(url, {
+        method: unit ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save unit")
+      }
+
+      onSubmit(data)
+      onClose()
     } catch (error) {
       console.error("Error submitting form:", error)
+      setErrors((prev) => ({
+        ...prev,
+        submit: error instanceof Error ? error.message : "Failed to save unit",
+      }))
     } finally {
       setIsLoading(false)
     }
@@ -105,7 +165,7 @@ export default function AddUnitModal({ unit, onClose, onSubmit }: AddUnitModalPr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm bg-black/30">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -121,6 +181,12 @@ export default function AddUnitModal({ unit, onClose, onSubmit }: AddUnitModalPr
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {errors.submit && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+              {errors.submit}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Unit Code *</label>
             <div className="relative">
@@ -165,12 +231,13 @@ export default function AddUnitModal({ unit, onClose, onSubmit }: AddUnitModalPr
                 name="course_id"
                 value={formData.course_id}
                 onChange={handleChange}
+                disabled={isLoadingCourses}
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
                   errors.course_id ? "border-red-300" : "border-gray-200"
-                }`}
+                } ${isLoadingCourses ? "bg-gray-50 cursor-not-allowed" : ""}`}
               >
                 <option value="">Select a course</option>
-                {mockCourses.map((course) => (
+                {courses.map((course) => (
                   <option key={course.id} value={course.id}>
                     {course.name} ({course.code})
                   </option>
@@ -178,6 +245,7 @@ export default function AddUnitModal({ unit, onClose, onSubmit }: AddUnitModalPr
               </select>
             </div>
             {errors.course_id && <p className="mt-1 text-sm text-red-600">{errors.course_id}</p>}
+            {errors.courses && <p className="mt-1 text-sm text-red-600">{errors.courses}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -230,7 +298,7 @@ export default function AddUnitModal({ unit, onClose, onSubmit }: AddUnitModalPr
             </button>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isLoadingCourses}
               className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? "Saving..." : unit ? "Update Unit" : "Add Unit"}

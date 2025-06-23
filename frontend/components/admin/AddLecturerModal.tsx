@@ -26,10 +26,10 @@ type AddLecturerModalProps = {
 
 export default function AddLecturerModal({ lecturer, onClose, onSubmit }: AddLecturerModalProps) {
   const [formData, setFormData] = useState({
-    firstname: "",
-    surname: "",
-    othernames: "",
-    email: "",
+    firstname: lecturer?.firstname || "",
+    surname: lecturer?.surname || "",
+    othernames: lecturer?.othernames || "",
+    email: lecturer?.email || "",
   })
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -37,10 +37,17 @@ export default function AddLecturerModal({ lecturer, onClose, onSubmit }: AddLec
   useEffect(() => {
     if (lecturer) {
       setFormData({
-        firstname: lecturer.firstname,
-        surname: lecturer.surname,
-        othernames: lecturer.othernames,
-        email: lecturer.email,
+        firstname: lecturer.firstname || "",
+        surname: lecturer.surname || "",
+        othernames: lecturer.othernames || "",
+        email: lecturer.email || "",
+      })
+    } else {
+      setFormData({
+        firstname: "",
+        surname: "",
+        othernames: "",
+        email: "",
       })
     }
   }, [lecturer])
@@ -48,13 +55,13 @@ export default function AddLecturerModal({ lecturer, onClose, onSubmit }: AddLec
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.firstname.trim()) {
+    if (!formData.firstname?.trim()) {
       newErrors.firstname = "First name is required"
     }
-    if (!formData.surname.trim()) {
+    if (!formData.surname?.trim()) {
       newErrors.surname = "Surname is required"
     }
-    if (!formData.email.trim()) {
+    if (!formData.email?.trim()) {
       newErrors.email = "Email is required"
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address"
@@ -74,6 +81,10 @@ export default function AddLecturerModal({ lecturer, onClose, onSubmit }: AddLec
       await onSubmit(formData)
     } catch (error) {
       console.error("Error submitting form:", error)
+      setErrors((prev) => ({
+        ...prev,
+        submit: error instanceof Error ? error.message : "Failed to save lecturer",
+      }))
     } finally {
       setIsLoading(false)
     }
@@ -89,7 +100,7 @@ export default function AddLecturerModal({ lecturer, onClose, onSubmit }: AddLec
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm bg-black/30">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
