@@ -185,15 +185,18 @@ export default function AuthPage() {
         setTimeout(() => {
           const user = JSON.parse(localStorage.getItem("userData") || "{}")
           switch ((user.role || "").toLowerCase()) {
-            case "student":
-              window.location.href = "/dashboard"
-              break
-            case "lecturer":
-            case "teacher":
-              window.location.href = "/lecturer/dashboard"
-              break
-            default:
-              window.location.href = "/dashboard"
+            case 'student':
+            window.location.href = '/hobby';
+            break;
+          case 'lecturer':
+          case 'teacher':
+            window.location.href = '/lecturer/dashboard';
+            break;
+          case 'admin':
+            window.location.href = '/admin/dashboard';
+            break;
+          default:
+            window.location.href = '/hobby';
           }
         }, 2000)
       } else {
