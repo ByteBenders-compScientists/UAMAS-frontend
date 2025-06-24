@@ -46,9 +46,21 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   } = useLayout();
   
   const [mounted, setMounted] = useState(false);
+  const [profile, setProfile] = useState<{ name: string; surname: string; reg_number: string } | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    // Fetch student profile
+    fetch('http://localhost:8080/api/v1/auth/me', {
+      credentials: 'include',
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.name && data.surname && data.reg_number) {
+          setProfile({ name: data.name, surname: data.surname, reg_number: data.reg_number });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   if (!mounted) return null;
@@ -64,7 +76,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     { name: 'My CATs', icon: <BookOpen size={20} />, path: '/student/cats' },
     { name: 'Assignments', icon: <ClipboardList size={20} />, path: '/student/assignments', badge: 3 },
     { name: 'Grades', icon: <GraduationCap size={20} />, path: '/student/grades' },
-    { name: 'My Courses', icon: <Calendar size={20} />, path: '/student/courses' },
+    { name: 'My Units', icon: <Calendar size={20} />, path: '/student/units' },
     { name: 'Library', icon: <Library size={20} />, path: '/student/library' },
     { name: 'Forums', icon: <MessageSquare size={20} />, path: '/student/forums', badge: 'New' },
   ];
@@ -194,11 +206,11 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center">
               <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-medium text-sm shadow-sm">
-                JO
+                {profile ? (profile.name[0] + (profile.surname ? profile.surname[0] : '')) : 'JO'}
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-800">John Opondo</p>
-                <p className="text-xs text-gray-500">Student ID: 2028061</p>
+                <p className="text-sm font-medium text-gray-800">{profile ? `${profile.name} ${profile.surname}` : 'John Opondo'}</p>
+                <p className="text-xs text-gray-500">Student ID: {profile ? profile.reg_number : '2028061'}</p>
               </div>
             </div>
           </div>
