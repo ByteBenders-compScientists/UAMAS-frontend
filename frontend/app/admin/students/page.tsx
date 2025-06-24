@@ -165,9 +165,9 @@ export default function StudentsPage() {
       (selectedCourse === "" || student.course.id === selectedCourse) &&
       (selectedYear === "" || String(student.year_of_study) === selectedYear) &&
       (
-        student.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.reg_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.reg_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.course.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
   )
@@ -437,7 +437,7 @@ export default function StudentsPage() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                ))}
                   </tbody>
                 </table>
               </div>

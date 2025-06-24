@@ -420,7 +420,7 @@ export default function LecturersPage() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                ))}
                   </tbody>
                 </table>
               </div>
