@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from "react"
 import { motion } from "framer-motion"
 import { useLayout } from "@/components/LayoutController"
-import AdminSidebar from "@/components/AdminSidebar"
+import AdminSidebar from "@/components/lecturerSidebar"
 import Header from "@/components/Header"
 import EmptyState from "@/components/EmptyState"
 import AddStudentModal from "@/components/admin/AddStudentModal"
