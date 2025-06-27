@@ -61,9 +61,11 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/lecturer/dashboard' },
     { name: 'Assessments', icon: <ClipboardList size={20} />, path: '/lecturer/assessments', badge: 3 },
     { name: 'Grades', icon: <GraduationCap size={20} />, path: '/lecturer/grades' },
-    { name: 'My Courses', icon: <Calendar size={20} />, path: '/lecturer/courses' },
+    { name:'Students',icon: <User size={20} />, path: '/lecturer/students', badge: 5 },
+    { name:'Course',icon:<GraduationCap size={20} />, path: '/lecturer/course', badge: 2 },
     { name: 'Library', icon: <Library size={20} />, path: '/lecturer/library' },
     { name: 'Forums', icon: <MessageSquare size={20} />, path: '/lecturer/forums', badge: 'New' },
+   
   ];
 
   const bottomNavItems: NavItemType[] = [
