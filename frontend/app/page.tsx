@@ -324,7 +324,7 @@ export default function EduAISuite() {
                 <div className="relative bg-white rounded-2xl shadow-2xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-500">
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-2xl"></div>
                   <Image
-                    src="/assets/students2.jpg"
+                    src="/assets/backgroundimage.jpeg"
                     alt="Students and lecturer using EduAI Suite"
                     className="w-full h-64 object-cover rounded-lg relative z-10"
                     width={400}
