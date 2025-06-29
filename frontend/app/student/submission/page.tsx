@@ -20,11 +20,12 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Sparkles,
-  Info
+  Info,
+  FileText
 } from 'lucide-react';
 
 // Mock data
-const mockGrades = [
+const mockSubmissions = [
   {
     id: 1,
     course: 'Computer Science 301',
@@ -109,7 +110,7 @@ const mockGrades = [
   }
 ];
 
-export default function GradesPage() {
+export default function SubmissionPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const [loading, setLoading] = useState(true);
   const [hasContent, setHasContent] = useState(false);
@@ -120,7 +121,7 @@ export default function GradesPage() {
     // Simulate loading data
     const timer = setTimeout(() => {
       setLoading(false);
-      setHasContent(mockGrades.length > 0);
+      setHasContent(mockSubmissions.length > 0);
     }, 1500);
     
     return () => clearTimeout(timer);
@@ -132,8 +133,8 @@ export default function GradesPage() {
     );
   };
 
-  const overallGPA = mockGrades.reduce((acc, grade) => acc + grade.gpa, 0) / mockGrades.length;
-  const totalCredits = mockGrades.reduce((acc, grade) => acc + grade.credits, 0);
+  const overallGPA = mockSubmissions.reduce((acc, submission) => acc + submission.gpa, 0) / mockSubmissions.length;
+  const totalCredits = mockSubmissions.reduce((acc, submission) => acc + submission.credits, 0);
   
   const getGradeColor = (grade: string) => {
     if (grade.startsWith('A')) return 'text-green-600 bg-green-50';
@@ -167,7 +168,7 @@ export default function GradesPage() {
           transition={{ duration: 0.3 }}
           className="flex-1 overflow-auto"
         >
-          <Header title="Grades" showWeekSelector={false} />
+          <Header title="Submission" showWeekSelector={false} />
           
           <main className="p-4 md:p-6">
             <div className="max-w-6xl mx-auto">
@@ -225,15 +226,15 @@ export default function GradesPage() {
         transition={{ duration: 0.3 }}
         className="flex-1 overflow-auto"
       >
-        <Header title="Grades" showWeekSelector={hasContent} />
+        <Header title="Submission" showWeekSelector={hasContent} />
         
         <main className="p-4 md:p-6">
           {!hasContent ? (
             <div className="max-w-4xl mx-auto">
               <EmptyState
-                title="No Grades Available"
-                description="Your grades and academic performance will be displayed here once your lecturers input them. Check back after assessments are graded."
-                icon={<GraduationCap size={48} />}
+                title="No Submissions Available"
+                description="Your submissions and coursework will be displayed here once your lecturers input them. Check back after assessments are graded."
+                icon={<FileText size={48} />}
               />
             </div>
           ) : (
@@ -291,7 +292,7 @@ export default function GradesPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Courses</p>
-                      <p className="text-2xl font-bold text-purple-600">{mockGrades.length}</p>
+                      <p className="text-2xl font-bold text-purple-600">{mockSubmissions.length}</p>
                     </div>
                     <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
                       <Target size={24} className="text-purple-600" />
@@ -299,7 +300,7 @@ export default function GradesPage() {
                   </div>
                   
                   <div className="mt-2 text-xs text-gray-500">
-                    {mockGrades.filter(g => g.currentGrade.startsWith('A')).length} courses with A grades
+                    {mockSubmissions.filter(s => s.currentGrade.startsWith('A')).length} courses with A grades
                   </div>
                 </motion.div>
 
@@ -313,7 +314,7 @@ export default function GradesPage() {
                     <div>
                       <p className="text-sm font-medium text-gray-600">Average</p>
                       <p className="text-2xl font-bold text-indigo-600">
-                        {(mockGrades.reduce((acc, grade) => acc + grade.percentage, 0) / mockGrades.length).toFixed(1)}%
+                        {(mockSubmissions.reduce((acc, submission) => acc + submission.percentage, 0) / mockSubmissions.length).toFixed(1)}%
                       </p>
                     </div>
                     <div className="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center">
@@ -322,7 +323,7 @@ export default function GradesPage() {
                   </div>
                   
                   <div className="mt-2 text-xs text-gray-500">
-                    Top course: {mockGrades.reduce((max, grade) => grade.percentage > max.percentage ? grade : max).courseName}
+                    Top course: {mockSubmissions.reduce((max, submission) => submission.percentage > max.percentage ? submission : max).courseName}
                   </div>
                 </motion.div>
               </div>
@@ -355,9 +356,9 @@ export default function GradesPage() {
                 </div>
               </motion.div>
 
-              {/* Course Grades */}
+              {/* Course Submissions */}
               <div className="space-y-4">
-                {mockGrades.map((course, index) => (
+                {mockSubmissions.map((course, index) => (
                   <motion.div
                     key={course.id}
                     initial={{ opacity: 0, y: 20 }}

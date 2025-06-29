@@ -20,38 +20,32 @@ import {
   LucideIcon
 } from 'lucide-react';
 import { getCurrentWeek } from '@/utils/WeekSelector';
+import Link from 'next/link';
 
-// Mock data - replace with real data
-const mockData = {
-  hasContent: false, // Set to true when lecturer adds content
-  currentWeek: getCurrentWeek(),
-  student: {
-    name: 'John Opondo',
-    id: '2028061',
-    semester: 'Spring 2025',
-    program: 'Computer Science'
-  }
-};
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"
 
 type QuickLinkProps = {
   icon: React.ReactNode;
   title: string;
   description: string;
   color: string;
+  href: string;
 };
 
-const QuickLink = ({ icon, title, description, color }: QuickLinkProps) => (
-  <div className={`bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group`}>
-    <div className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-      {icon}
+const QuickLink = ({ icon, title, description, color, href }: QuickLinkProps) => (
+  <Link href={href} className="block">
+    <div className={`bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group`}>
+      <div className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+        {icon}
+      </div>
+      <h3 className="font-semibold text-gray-800 mb-1">{title}</h3>
+      <p className="text-sm text-gray-500">{description}</p>
+      <div className="flex items-center mt-3 text-sm font-medium text-emerald-600 group-hover:translate-x-1 transition-transform duration-300">
+        <span>Explore</span>
+        <ArrowRight size={14} className="ml-1" />
+      </div>
     </div>
-    <h3 className="font-semibold text-gray-800 mb-1">{title}</h3>
-    <p className="text-sm text-gray-500">{description}</p>
-    <div className="flex items-center mt-3 text-sm font-medium text-emerald-600 group-hover:translate-x-1 transition-transform duration-300">
-      <span>Explore</span>
-      <ArrowRight size={14} className="ml-1" />
-    </div>
-  </div>
+  </Link>
 );
 
 export default function Dashboard() {
@@ -61,7 +55,7 @@ export default function Dashboard() {
     isTabletView 
   } = useLayout();
 
-  const [hasContent, setHasContent] = useState(mockData.hasContent);
+  const [hasContent, setHasContent] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<{ name: string; surname: string; reg_number: string } | null>(null);
 
@@ -75,7 +69,7 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/v1/auth/me', {
+    fetch(`${apiBaseUrl}/auth/me`, {
       credentials: 'include',
     })
       .then(res => res.ok ? res.json() : null)
@@ -92,25 +86,29 @@ export default function Dashboard() {
       icon: <BookOpen size={24} className="text-white" />,
       title: "Learning Materials",
       description: "Access lecture notes, slides, and readings",
-      color: "bg-emerald-500"
+      color: "bg-emerald-500",
+      href: "/student/library"
     },
     {
       icon: <ClipboardList size={24} className="text-white" />,
       title: "Assignments",
       description: "View and submit your assignments",
-      color: "bg-amber-500"
+      color: "bg-amber-500",
+      href: "/student/assignments"
     },
     {
-      icon: <Calendar size={24} className="text-white" />,
-      title: "Schedule",
-      description: "Check your timetable and important dates",
-      color: "bg-violet-500"
+      icon: <Award size={24} className="text-white" />,
+      title: "CATS",
+      description: "View and attempt your CATS (Continuous Assessment Tests)",
+      color: "bg-violet-500",
+      href: "/student/cats"
     },
     {
-      icon: <GraduationCap size={24} className="text-white" />,
-      title: "Grades",
-      description: "Track your academic performance",
-      color: "bg-blue-500"
+      icon: <FileText size={24} className="text-white" />,
+      title: "Submission",
+      description: "Submit your coursework and projects",
+      color: "bg-blue-500",
+      href: "/student/submission"
     }
   ];
 
@@ -166,7 +164,7 @@ export default function Dashboard() {
                       Welcome back, {profile ? `${profile.name} ${profile.surname}` : 'John Opondo'}!
                     </h2>
                     <p className="text-emerald-50">
-                      {mockData.student.program} • {mockData.student.semester} • Week {mockData.currentWeek}
+                      {/* Remove all references to mockData */}
                     </p>
                     
                     <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 max-w-md">
