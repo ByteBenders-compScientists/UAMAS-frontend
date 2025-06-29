@@ -26,30 +26,15 @@ const menuItems = [
     href: "/admin/dashboard",
     color: "text-gray-600 hover:text-emerald-600",
   },
-  {
-    icon: Users,
-    label: "Students",
-    href: "/admin/students",
-    color: "text-gray-600 hover:text-blue-600",
-  },
+ 
   {
     icon: UserCheck,
     label: "Lecturers",
     href: "/admin/lecturers",
     color: "text-gray-600 hover:text-emerald-600",
   },
-  {
-    icon: GraduationCap,
-    label: "Courses",
-    href: "/admin/courses",
-    color: "text-gray-600 hover:text-violet-600",
-  },
-  {
-    icon: BookOpen,
-    label: "Units",
-    href: "/admin/units",
-    color: "text-gray-600 hover:text-amber-600",
-  },
+ 
+
   {
     icon: Settings,
     label: "Settings",

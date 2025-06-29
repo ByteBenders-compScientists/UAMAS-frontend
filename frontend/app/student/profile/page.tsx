@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLayout } from '@/components/LayoutController';
 import Sidebar from '@/components/Sidebar';
@@ -74,6 +74,27 @@ export default function ProfilePage() {
   const [newHobby, setNewHobby] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/v1/auth/me', {
+      credentials: 'include',
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.name && data.surname && data.reg_number) {
+          setProfile(prev => ({
+            ...prev,
+            name: `${data.name} ${data.surname}`,
+            studentId: data.reg_number,
+            email: data.email || prev.email,
+            year: data.year_of_study || prev.year,
+            semester: data.semester || prev.semester,
+            faculty: data.course_name || prev.faculty,
+          }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleProfileUpdate = () => {
     setIsLoading(true);
