@@ -82,6 +82,8 @@ const stats = [
   { icon: HiTrendingUp, value: "98%", label: "Satisfaction", delay: 0.4 },
 ]
 
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"
+
 export default function AuthPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -166,7 +168,7 @@ export default function AuthPage() {
     setError("")
 
     try {
-      const response = await fetch("http://localhost:8080/api/v1/auth/login", {
+      const response = await fetch(`${apiBaseUrl}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -183,9 +185,9 @@ export default function AuthPage() {
 
         // Delay redirect to show success animation
         setTimeout(() => {
-          const user = JSON.parse(localStorage.getItem("userData") || "{}")
+          const user = data
           switch ((user.role || "").toLowerCase()) {
-            case 'student':
+          case 'student':
             window.location.href = '/hobby';
             break;
           case 'lecturer':
@@ -212,7 +214,7 @@ export default function AuthPage() {
 
   const fetchUserInfo = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/v1/auth/me", {
+      const response = await fetch(`${apiBaseUrl}/auth/me`, {
         method: "GET",
         credentials: "include",
       })
