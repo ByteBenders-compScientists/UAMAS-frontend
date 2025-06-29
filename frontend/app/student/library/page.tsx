@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useLayout } from '@/components/LayoutController';
 import Sidebar from '@/components/Sidebar';
@@ -21,98 +21,54 @@ import {
   Clock
 } from 'lucide-react';
 
-// Mock data
-const mockResources = [
-  {
-    id: 1,
-    title: 'Database Design Fundamentals',
-    type: 'PDF',
-    course: 'Database Systems',
-    author: 'Dr. Smith',
-    uploadDate: '2025-01-15',
-    size: '2.4 MB',
-    downloads: 156,
-    rating: 4.8,
-    description: 'Comprehensive guide to database design principles and normalization.',
-    tags: ['Database', 'Design', 'SQL']
-  },
-  {
-    id: 2,
-    title: 'Algorithm Complexity Analysis',
-    type: 'Video',
-    course: 'Algorithms',
-    author: 'Prof. Wilson',
-    uploadDate: '2025-01-20',
-    size: '45 min',
-    downloads: 89,
-    rating: 4.6,
-    description: 'Video lecture on Big O notation and algorithm analysis.',
-    tags: ['Algorithms', 'Complexity', 'Analysis']
-  },
-  {
-    id: 3,
-    title: 'Statistics Formula Sheet',
-    type: 'PDF',
-    course: 'Statistics',
-    author: 'Prof. Johnson',
-    uploadDate: '2025-01-18',
-    size: '1.2 MB',
-    downloads: 203,
-    rating: 4.9,
-    description: 'Quick reference for statistical formulas and distributions.',
-    tags: ['Statistics', 'Formulas', 'Reference']
-  },
-  {
-    id: 4,
-    title: 'Programming Best Practices',
-    type: 'Audio',
-    course: 'Software Engineering',
-    author: 'Dr. Brown',
-    uploadDate: '2025-01-22',
-    size: '30 min',
-    downloads: 67,
-    rating: 4.5,
-    description: 'Audio discussion on coding standards and best practices.',
-    tags: ['Programming', 'Best Practices', 'Software']
-  }
-];
-
-const resourceTypes = ['All', 'PDF', 'Video', 'Audio', 'Image'];
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"
 
 export default function LibraryPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
-  const [hasContent] = useState(mockResources.length > 0);
+  const [resources, setResources] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('All');
   const [sortBy, setSortBy] = useState('recent');
+  const resourcesGridRef = useRef<HTMLDivElement>(null);
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'PDF': return <FileText size={20} className="text-red-500" />;
-      case 'Video': return <Video size={20} className="text-blue-500" />;
-      case 'Audio': return <Headphones size={20} className="text-green-500" />;
-      case 'Image': return <Image size={20} className="text-purple-500" />;
-      default: return <FileText size={20} className="text-gray-500" />;
-    }
-  };
+  useEffect(() => {
+    fetch(`${apiBaseUrl}/bd/student/notes`, {
+      credentials: 'include',
+    })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        if (Array.isArray(data)) setResources(data);
+      })
+      .catch(() => {});
+  }, []);
 
-  const filteredResources = mockResources
+  const resourceTypes = ['All', ...Array.from(new Set(resources.map(r => r.file_type?.toUpperCase()))).filter(Boolean)];
+
+  const filteredResources = resources
     .filter(resource => {
-      const matchesSearch = resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           resource.course.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           resource.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesType = selectedType === 'All' || resource.type === selectedType;
+      const matchesSearch = resource.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           resource.unit_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           resource.course_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = selectedType === 'All' || resource.file_type?.toUpperCase() === selectedType;
       return matchesSearch && matchesType;
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case 'recent': return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
-        case 'popular': return b.downloads - a.downloads;
-        case 'rating': return b.rating - a.rating;
+        case 'recent': return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case 'title': return a.title.localeCompare(b.title);
         default: return 0;
       }
     });
+
+  const getTypeIcon = (type: string) => {
+    if (!type) return <FileText size={20} className="text-gray-500" />;
+    const t = type.toLowerCase();
+    if (t === 'pdf') return <FileText size={20} className="text-red-500" />;
+    if (t === 'video' || t === 'mp4') return <Video size={20} className="text-blue-500" />;
+    if (t === 'audio' || t === 'mp3') return <Headphones size={20} className="text-green-500" />;
+    if (t === 'image' || t === 'jpg' || t === 'jpeg' || t === 'png') return <Image size={20} className="text-purple-500" />;
+    return <FileText size={20} className="text-gray-500" />;
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -128,10 +84,10 @@ export default function LibraryPage() {
         transition={{ duration: 0.3 }}
         className="flex-1 overflow-auto"
       >
-        <Header title="Library" showWeekSelector={hasContent} />
+        <Header title="Library" showWeekSelector={resources.length > 0} />
         
         <main className="p-4 md:p-6">
-          {!hasContent ? (
+          {resources.length === 0 ? (
             <div className="max-w-4xl mx-auto">
               <EmptyState
                 title="Library is Empty"
@@ -148,7 +104,7 @@ export default function LibraryPage() {
                   <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search resources, courses, or topics..."
+                    placeholder="Search resources, units, or courses..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -185,8 +141,6 @@ export default function LibraryPage() {
                       className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="recent">Most Recent</option>
-                      <option value="popular">Most Downloaded</option>
-                      <option value="rating">Highest Rated</option>
                       <option value="title">Alphabetical</option>
                     </select>
                   </div>
@@ -194,84 +148,83 @@ export default function LibraryPage() {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Total Resources</p>
-                      <p className="text-2xl font-bold text-blue-600">{mockResources.length}</p>
-                    </div>
-                    <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                      <Library size={24} className="text-blue-600" />
-                    </div>
+              {(() => {
+                const fileTypes = [
+                  { type: 'PDF', color: 'text-red-600', bg: 'bg-red-50', Icon: FileText },
+                  { type: 'DOCX', color: 'text-indigo-600', bg: 'bg-indigo-50', Icon: FileText },
+                  { type: 'PPT', color: 'text-orange-600', bg: 'bg-orange-50', Icon: FileText },
+                  { type: 'VIDEO', color: 'text-blue-600', bg: 'bg-blue-50', Icon: Video },
+                  { type: 'AUDIO', color: 'text-green-600', bg: 'bg-green-50', Icon: Headphones },
+                  { type: 'IMAGE', color: 'text-purple-600', bg: 'bg-purple-50', Icon: Image },
+                ];
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
+                      onClick={() => {
+                        setSelectedType('All');
+                        resourcesGridRef.current?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Total Resources</p>
+                          <p className="text-2xl font-bold text-blue-600">{resources.length}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                          <Library size={24} className="text-blue-600" />
+                        </div>
+                      </div>
+                    </motion.div>
+                    {fileTypes.map(({ type, color, bg, Icon }, idx) => (
+                      <motion.div
+                        key={type}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + idx * 0.1 }}
+                        className={`bg-white rounded-xl p-6 shadow-sm border border-gray-200`}
+                        onClick={() => {
+                          setSelectedType(type);
+                          resourcesGridRef.current?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">{type}</p>
+                            <p className={`text-2xl font-bold ${color}`}>{resources.filter(r => {
+                              const t = r.file_type?.toUpperCase();
+                              if (type === 'IMAGE') {
+                                return t === 'JPG' || t === 'JPEG' || t === 'PNG' || t === 'IMAGE';
+                              }
+                              if (type === 'VIDEO') {
+                                return t === 'VIDEO' || t === 'MP4' || t === 'AVI' || t === 'MOV' || t === 'WMV' || t === 'FLV' || t === 'WEBM' || t === 'MPEG';
+                              }
+                              if (type === 'AUDIO') {
+                                return t === 'AUDIO' || t === 'MP3' || t === 'WAV' || t === 'AAC' || t === 'OGG' || t === 'FLAC';
+                              }
+                              if (type === 'PPT') {
+                                return t === 'PPT' || t === 'PPTX';
+                              }
+                              return t === type;
+                            }).length}</p>
+                          </div>
+                          <div className={`w-12 h-12 ${bg} rounded-lg flex items-center justify-center`}>
+                            <Icon size={24} className={color} />
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
-                </motion.div>
-
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">PDFs</p>
-                      <p className="text-2xl font-bold text-red-600">
-                        {mockResources.filter(r => r.type === 'PDF').length}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
-                      <FileText size={24} className="text-red-600" />
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Videos</p>
-                      <p className="text-2xl font-bold text-blue-600">
-                        {mockResources.filter(r => r.type === 'Video').length}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                      <Video size={24} className="text-blue-600" />
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Audio</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {mockResources.filter(r => r.type === 'Audio').length}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                      <Headphones size={24} className="text-green-600" />
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
+                );
+              })()}
 
               {/* Resources Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div ref={resourcesGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredResources.map((resource, index) => (
                   <motion.div
                     key={resource.id}
@@ -283,48 +236,34 @@ export default function LibraryPage() {
                     <div className="p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center">
-                          {getTypeIcon(resource.type)}
-                          <span className="ml-2 text-sm font-medium text-gray-600">{resource.type}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Star size={14} className="text-yellow-400 mr-1" />
-                          <span className="text-sm text-gray-600">{resource.rating}</span>
+                          {getTypeIcon(resource.file_type)}
+                          <span className="ml-2 text-sm font-medium text-gray-600">{resource.file_type?.toUpperCase()}</span>
                         </div>
                       </div>
 
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">{resource.title}</h3>
-                      <p className="text-sm text-gray-600 mb-3">{resource.course}</p>
-                      <p className="text-sm text-gray-700 mb-4 line-clamp-2">{resource.description}</p>
+                      <p className="text-sm text-gray-600 mb-1">{resource.unit_name}</p>
+                      <p className="text-xs text-gray-500 mb-2">{resource.course_name}</p>
 
                       <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                         <div className="flex items-center">
                           <Clock size={14} className="mr-1" />
-                          <span>{new Date(resource.uploadDate).toLocaleDateString()}</span>
+                          <span>{new Date(resource.created_at).toLocaleDateString()}</span>
                         </div>
-                        <span>{resource.size}</span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1 mb-4">
-                        {resource.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
+                        <span>{(resource.file_size / 1024).toFixed(1)} KB</span>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">{resource.downloads} downloads</span>
-                        <div className="flex items-center space-x-2">
-                          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                            <Eye size={16} />
-                          </button>
-                          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                            <Download size={16} />
-                          </button>
-                        </div>
+                        <span className="text-xs text-gray-400">ID: {resource.id}</span>
+                        <a
+                          href={`${apiBaseUrl}/bd/notes/${resource.id}/download`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Download"
+                        >
+                          <Download size={16} />
+                        </a>
                       </div>
                     </div>
                   </motion.div>
