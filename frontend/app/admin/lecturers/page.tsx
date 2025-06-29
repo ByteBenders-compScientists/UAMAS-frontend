@@ -7,8 +7,7 @@ import AdminSidebar from "@/components/AdminSidebar"
 import Header from "@/components/Header"
 import EmptyState from "@/components/EmptyState"
 import AddLecturerModal from "@/components/admin/AddLecturerModal"
-import AssignUnitsModal from "@/components/admin/AssignUnitsModal"
-import { UserCheck, Plus, Search, Filter, Edit, Trash2, Eye, Mail, BookOpen, MoreVertical } from "lucide-react"
+import { UserCheck, Plus, Search, Filter, Edit, Trash2 } from "lucide-react"
 
 type Lecturer = {
   id: string
@@ -16,108 +15,9 @@ type Lecturer = {
   surname: string
   othernames: string
   email: string
-  units: Array<{
-    unit_code: string
-    unit_name: string
-  }>
 }
 
-const LecturerCard = ({
-  lecturer,
-  onEdit,
-  onDelete,
-  onView,
-  onAssignUnits,
-}: {
-  lecturer: Lecturer
-  onEdit: (lecturer: Lecturer) => void
-  onDelete: (id: string) => void
-  onView: (lecturer: Lecturer) => void
-  onAssignUnits: (lecturer: Lecturer) => void
-}) => (
-  <motion.div
-    whileHover={{ y: -2 }}
-    className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
-  >
-    <div className="flex items-start justify-between mb-4">
-      <div className="flex items-center space-x-3">
-        <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-          <UserCheck size={20} className="text-emerald-600" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-gray-800">
-            {lecturer.firstname} {lecturer.surname}
-          </h3>
-          <p className="text-sm text-gray-500 flex items-center">
-            <Mail size={14} className="mr-1" />
-            {lecturer.email}
-          </p>
-        </div>
-      </div>
-
-      <div className="relative group">
-        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-          <MoreVertical size={16} className="text-gray-400" />
-        </button>
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-          <button
-            onClick={() => onView(lecturer)}
-            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-          >
-            <Eye size={16} />
-            <span>View Details</span>
-          </button>
-          <button
-            onClick={() => onEdit(lecturer)}
-            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-          >
-            <Edit size={16} />
-            <span>Edit</span>
-          </button>
-          <button
-            onClick={() => onAssignUnits(lecturer)}
-            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-          >
-            <BookOpen size={16} />
-            <span>Assign Units</span>
-          </button>
-          <button
-            onClick={() => onDelete(lecturer.id)}
-            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
-          >
-            <Trash2 size={16} />
-            <span>Delete</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div className="space-y-3">
-      <div className="flex justify-between text-sm">
-        <span className="text-gray-500">Other Names:</span>
-        <span className="font-medium text-gray-800">{lecturer.othernames}</span>
-      </div>
-
-      <div>
-        <span className="text-sm text-gray-500 mb-2 block">Assigned Units:</span>
-        {lecturer.units.length > 0 ? (
-          <div className="space-y-1">
-            {lecturer.units.slice(0, 2).map((unit, index) => (
-              <div key={index} className="text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded">
-                {unit.unit_code} - {unit.unit_name}
-              </div>
-            ))}
-            {lecturer.units.length > 2 && (
-              <div className="text-xs text-gray-500">+{lecturer.units.length - 2} more units</div>
-            )}
-          </div>
-        ) : (
-          <div className="text-xs text-gray-400 italic">No units assigned</div>
-        )}
-      </div>
-    </div>
-  </motion.div>
-)
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"
 
 export default function LecturersPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout()
@@ -126,14 +26,11 @@ export default function LecturersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedLecturer, setSelectedLecturer] = useState<Lecturer | null>(null)
-  const [showAssignModal, setShowAssignModal] = useState(false)
-  const [selectedLecturerForUnits, setSelectedLecturerForUnits] = useState<Lecturer | null>(null)
-  const [selectedLecturerUnitIds, setSelectedLecturerUnitIds] = useState<string[]>([])
 
   useEffect(() => {
     const fetchLecturers = async () => {
       setIsLoading(true)
-      const res = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+      const res = await fetch(`${apiBaseUrl}/admin/lecturers`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -154,11 +51,11 @@ export default function LecturersPage() {
       lecturer.email.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleAddLecturer = async (lecturerData: any) => {
+  const handleAddLecturer = async (lecturerData: Partial<Lecturer>) => {
     try {
       if (selectedLecturer) {
         // Update existing lecturer
-        const response = await fetch(`http://localhost:8080/api/v1/admin/lecturers/${selectedLecturer.id}`, {
+        const response = await fetch(`${apiBaseUrl}/admin/lecturers/${selectedLecturer.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -174,7 +71,8 @@ export default function LecturersPage() {
         }
       } else {
         // Add new lecturer
-        const response = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        console.log("Adding new lecturer:", lecturerData)
+        const response = await fetch(`${apiBaseUrl}/admin/lecturers`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -191,7 +89,7 @@ export default function LecturersPage() {
       }
 
       // Reload the lecturers list
-      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -207,7 +105,7 @@ export default function LecturersPage() {
     } catch (error) {
       console.error("Error saving lecturer:", error)
       // Reload the lecturers list even if there was an error
-      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -226,12 +124,12 @@ export default function LecturersPage() {
   }
 
   const handleDeleteLecturer = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this lecturer? This will also remove all unit assignments.")) {
+    if (!confirm("Are you sure you want to delete this lecturer?")) {
       return
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/admin/lecturers/${id}`, {
+      const response = await fetch(`${apiBaseUrl}/admin/lecturers/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -245,7 +143,7 @@ export default function LecturersPage() {
       }
 
       // Reload the lecturers list
-      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -258,7 +156,7 @@ export default function LecturersPage() {
     } catch (error) {
       console.error("Error deleting lecturer:", error)
       // Reload the lecturers list even if there was an error
-      const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -269,30 +167,6 @@ export default function LecturersPage() {
       const lecturersData = await lecturersResponse.json()
       setLecturers(lecturersData)
     }
-  }
-
-  const handleViewLecturer = (lecturer: Lecturer) => {
-    console.log("Viewing lecturer:", lecturer)
-  }
-
-  const handleAssignUnits = (lecturer: Lecturer) => {
-    setSelectedLecturerForUnits(lecturer)
-    setSelectedLecturerUnitIds(lecturer.units.map(u => u.unit_code))
-    setShowAssignModal(true)
-  }
-
-  const handleUnitsAssigned = async (unitIds: string[]) => {
-    // Reload the lecturers list to show updated unit assignments
-    const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-    })
-
-    const lecturersData = await lecturersResponse.json()
-    setLecturers(lecturersData)
   }
 
   return (
@@ -317,7 +191,7 @@ export default function LecturersPage() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-gray-800 mb-2">Lecturers</h1>
-                <p className="text-gray-600">Manage lecturer profiles and unit assignments</p>
+                <p className="text-gray-600">Manage lecturer profiles and information</p>
               </div>
 
               <div className="flex items-center space-x-3 mt-4 md:mt-0">
@@ -377,8 +251,7 @@ export default function LecturersPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lecturer</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assigned Units</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
                   </thead>
@@ -390,27 +263,10 @@ export default function LecturersPage() {
                           <div className="text-xs text-gray-500">{lecturer.othernames}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="font-medium text-gray-800">{lecturer.units.length} units</span>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {lecturer.units.map((unit) => (
-                              <span key={unit.unit_code} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-medium">
-                                {unit.unit_code}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {lecturer.units.length > 0 ? (
-                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-semibold">Active</span>
-                          ) : (
-                            <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-xs font-semibold">Unassigned</span>
-                          )}
+                          <span className="text-gray-800">{lecturer.email}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex space-x-2">
-                            <button onClick={() => handleAssignUnits(lecturer)} className="hover:bg-gray-100 p-1 rounded" title="Assign Units">
-                              <BookOpen size={16} className="text-green-600" />
-                            </button>
                             <button onClick={() => handleEditLecturer(lecturer)} className="hover:bg-gray-100 p-1 rounded" title="Edit">
                               <Edit size={16} className="text-blue-600" />
                             </button>
@@ -438,20 +294,6 @@ export default function LecturersPage() {
             setSelectedLecturer(null)
           }}
           onSubmit={handleAddLecturer}
-        />
-      )}
-
-      {/* Assign Units Modal */}
-      {showAssignModal && selectedLecturerForUnits && (
-        <AssignUnitsModal
-          lecturerId={selectedLecturerForUnits.id}
-          assignedUnitIds={selectedLecturerUnitIds}
-          onClose={() => {
-            setShowAssignModal(false)
-            setSelectedLecturerForUnits(null)
-            setSelectedLecturerUnitIds([])
-          }}
-          onAssign={handleUnitsAssigned}
         />
       )}
     </div>
