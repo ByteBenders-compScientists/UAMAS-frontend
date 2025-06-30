@@ -44,7 +44,7 @@ const menuItems = [
 ]
 
 export default function AdminSidebar() {
-  const { sidebarCollapsed, setSidebarCollapsed, isMobileView, isTabletView, mobileMenuOpen, setMobileMenuOpen } =
+  const { sidebarCollapsed, setSidebarCollapsed, isMobileView, isTabletView, ismobileMenuOpen, setMobileMenuOpen } =
     useLayout()
 
   const pathname = usePathname()
