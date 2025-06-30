@@ -44,9 +44,14 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   } = useLayout();
   
   const [mounted, setMounted] = useState(false);
+  const [lecturerProfile, setLecturerProfile] = useState<any>(null);
 
   useEffect(() => {
     setMounted(true);
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"}/auth/me`, { credentials: 'include' })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setLecturerProfile(data))
+      .catch(() => setLecturerProfile(null));
   }, []);
 
   if (!mounted) return null;
@@ -63,7 +68,6 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
     { name: 'Submission', icon: <GraduationCap size={20} />, path: '/lecturer/submission' },
     { name:'Students',icon: <User size={20} />, path: '/lecturer/students', badge: 5 },
     { name:'Course',icon:<GraduationCap size={20} />, path: '/lecturer/course', badge: 2 },
-    { name:'Units',icon:<BookOpen size={20} />, path: '/lecturer/units' },
     { name: 'Library', icon: <Library size={20} />, path: '/lecturer/library' },
     { name: 'Forums', icon: <MessageSquare size={20} />, path: '/lecturer/forums', badge: 'New' },
    
@@ -189,11 +193,11 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center">
               <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-medium text-sm shadow-sm">
-                JO
+                {lecturerProfile ? (lecturerProfile.name[0] + (lecturerProfile.surname ? lecturerProfile.surname[0] : '')) : '...'}
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-800">Dr Alex Kimani</p>
-                <p className="text-xs text-gray-500">Lecturer ID :10001</p>
+                <p className="text-sm font-medium text-gray-800">{lecturerProfile ? `${lecturerProfile.name} ${lecturerProfile.surname}` : '...'}</p>
+                <p className="text-xs text-gray-500">{lecturerProfile ? lecturerProfile.email : ''}</p>
               </div>
             </div>
           </div>
