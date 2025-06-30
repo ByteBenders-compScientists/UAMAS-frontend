@@ -158,27 +158,8 @@ export default function AdminDashboard() {
       time: "15 minutes ago",
       icon: <UserCheck size={16} className="text-emerald-600" />,
     },
-    {
-      type: "course",
-      action: "New course added",
-      name: "Computer Science",
-      time: "1 hour ago",
-      icon: <GraduationCap size={16} className="text-violet-600" />,
-    },
-    {
-      type: "unit",
-      action: "Unit modified",
-      name: "Data Structures",
-      time: "2 hours ago",
-      icon: <BookOpen size={16} className="text-amber-600" />,
-    },
-    {
-      type: "student",
-      action: "Student profile updated",
-      name: "Alice Johnson",
-      time: "3 hours ago",
-      icon: <Users size={16} className="text-blue-600" />,
-    },
+ 
+
   ];
 
   useEffect(() => {
@@ -197,6 +178,15 @@ export default function AdminDashboard() {
         // Fetch lecturers
         const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
 
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        // Fetch analytics
+        const analyticsResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/analytics", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
