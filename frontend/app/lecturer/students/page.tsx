@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useLayout } from "@/components/LayoutController"
 import AdminSidebar from "@/components/lecturerSidebar"
@@ -16,12 +16,28 @@ type Student = {
   surname: string
   othernames: string
   year_of_study: number
-  email: string
+  semester: number
+  email?: string
+  user_id?: string
   course: {
     id: string
     name: string
-    code: string
+    code?: string
   }
+  units?: Array<{
+    id: string
+    unit_code: string
+    unit_name: string
+    level: number
+    semester: number
+    course_id: string
+  }>
+}
+
+type Course = {
+  id: string
+  name: string
+  code?: string
 }
 
 const StudentCard = ({
@@ -92,9 +108,15 @@ const StudentCard = ({
         <span className="font-medium text-gray-800">Year {student.year_of_study}</span>
       </div>
       <div className="flex justify-between text-sm">
-        <span className="text-gray-500">Other Names:</span>
-        <span className="font-medium text-gray-800">{student.othernames}</span>
+        <span className="text-gray-500">Semester:</span>
+        <span className="font-medium text-gray-800">Semester {student.semester}</span>
       </div>
+      {student.othernames && (
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-500">Other Names:</span>
+          <span className="font-medium text-gray-800">{student.othernames}</span>
+        </div>
+      )}
     </div>
   </motion.div>
 )
@@ -106,41 +128,43 @@ export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
-  const [courses, setCourses] = useState<{ id: string; code: string; name: string }[]>([])
+  const [courses, setCourses] = useState<Course[]>([])
   const [selectedCourse, setSelectedCourse] = useState("")
   const [selectedYear, setSelectedYear] = useState("")
+  const [selectedSemester, setSelectedSemester] = useState("")
 
   // Fetch students from API
-  useEffect(() => {
-    const fetchStudents = async () => {
-      setIsLoading(true)
-      try {
-        const res = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/students", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        })
-        if (!res.ok) {
-          throw new Error("Failed to fetch students")
-        }
-        const data = await res.json()
-        setStudents(data)
-        setIsLoading(false)
-      } catch (error) {
-        setIsLoading(false)
-        setStudents([])
-        console.error("Failed to fetch students:", error)
+  const fetchStudents = async () => {
+    setIsLoading(true)
+    try {
+      const res = await fetch("http://localhost:8080/api/v1/auth/lecturer/students", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+      if (!res.ok) {
+        throw new Error("Failed to fetch students")
       }
+      const data = await res.json()
+      setStudents(data)
+    } catch (error) {
+      setStudents([])
+      console.error("Failed to fetch students:", error)
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchStudents()
   }, [])
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/courses", {
+        const res = await fetch("http://localhost:8080/api/v1/auth/lecturer/courses", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -156,19 +180,22 @@ export default function StudentsPage() {
     fetchCourses()
   }, [])
 
-  // Get unique years of study from students
+  // Get unique years of study and semesters from students
   const yearsOfStudy = Array.from(new Set(students.map(s => s.year_of_study))).sort((a, b) => a - b)
+  const semesters = Array.from(new Set(students.map(s => s.semester))).sort((a, b) => a - b)
 
-  // Filter students based on search term
+  // Filter students based on search term and filters
   const filteredStudents = students.filter(
     (student) =>
       (selectedCourse === "" || student.course.id === selectedCourse) &&
       (selectedYear === "" || String(student.year_of_study) === selectedYear) &&
+      (selectedSemester === "" || String(student.semester) === selectedSemester) &&
       (
         student.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.reg_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.course.name.toLowerCase().includes(searchTerm.toLowerCase())
+        student.course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (student.othernames && student.othernames.toLowerCase().includes(searchTerm.toLowerCase()))
       )
   )
 
@@ -176,7 +203,7 @@ export default function StudentsPage() {
     try {
       if (selectedStudent) {
         // Update existing student
-        const response = await fetch(`https://api.waltertayarg.me/api/v1/auth/lecturer/students/${selectedStudent.id}`, {
+        const response = await fetch(`http://localhost:8080/api/v1/auth/lecturer/students/${selectedStudent.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -192,7 +219,7 @@ export default function StudentsPage() {
         }
       } else {
         // Add new student
-        const response = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/students", {
+        const response = await fetch("http://localhost:8080/api/v1/auth/lecturer/students", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -209,32 +236,12 @@ export default function StudentsPage() {
       }
 
       // Reload the students list
-      const studentsResponse = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/students", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
-
-      const studentsData = await studentsResponse.json()
-      setStudents(studentsData)
-
+      await fetchStudents()
       setShowAddModal(false)
       setSelectedStudent(null)
     } catch (error) {
       console.error("Error saving student:", error)
-      // Reload the students list even if there was an error
-      const studentsResponse = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/students", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
-
-      const studentsData = await studentsResponse.json()
-      setStudents(studentsData)
+      throw error // Re-throw to be handled by the modal
     }
   }
 
@@ -249,7 +256,7 @@ export default function StudentsPage() {
     }
 
     try {
-      const response = await fetch(`https://api.waltertayarg.me/api/v1/auth/lecturer/students/${id}`, {
+      const response = await fetch(`http://localhost:8080/api/v1/auth/lecturer/students/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -263,35 +270,35 @@ export default function StudentsPage() {
       }
 
       // Reload the students list
-      const studentsResponse = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/students", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
-
-      const studentsData = await studentsResponse.json()
-      setStudents(studentsData)
+      await fetchStudents()
     } catch (error) {
       console.error("Error deleting student:", error)
-      // Reload the students list even if there was an error
-      const studentsResponse = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/students", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
-
-      const studentsData = await studentsResponse.json()
-      setStudents(studentsData)
+      alert("Failed to delete student. Please try again.")
     }
   }
 
-  const handleViewStudent = (student: Student) => {
-    // Navigate to student details page
-    console.log("Viewing student:", student)
+  const handleViewStudent = async (student: Student) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/auth/lecturer/students/${student.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch student details")
+      }
+
+      const studentDetails = await response.json()
+      console.log("Student details:", studentDetails)
+      // Here you could open a detailed view modal or navigate to a student details page
+      alert(`Student Details:\nName: ${studentDetails.firstname} ${studentDetails.surname}\nUnits: ${studentDetails.units?.length || 0}`)
+    } catch (error) {
+      console.error("Error fetching student details:", error)
+      alert("Failed to fetch student details. Please try again.")
+    }
   }
 
   return (
@@ -360,7 +367,7 @@ export default function StudentsPage() {
                   <option value="">All Courses</option>
                   {courses.map((course) => (
                     <option key={course.id} value={course.id}>
-                      {course.code} - {course.name}
+                      {course.code ? `${course.code} - ${course.name}` : course.name}
                     </option>
                   ))}
                 </select>
@@ -373,6 +380,18 @@ export default function StudentsPage() {
                   {yearsOfStudy.map((year) => (
                     <option key={year} value={String(year)}>
                       Year {year}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={selectedSemester}
+                  onChange={(e) => setSelectedSemester(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                >
+                  <option value="">All Semesters</option>
+                  {semesters.map((semester) => (
+                    <option key={semester} value={String(semester)}>
+                      Semester {semester}
                     </option>
                   ))}
                 </select>
@@ -408,7 +427,8 @@ export default function StudentsPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registration Number</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Year of Study</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Year</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Semester</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
                   </thead>
@@ -417,7 +437,7 @@ export default function StudentsPage() {
                       <tr key={student.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="font-medium text-gray-800">{student.firstname} {student.surname}</div>
-                          <div className="text-xs text-gray-500">{student.othernames}</div>
+                          {student.othernames && <div className="text-xs text-gray-500">{student.othernames}</div>}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">{student.reg_number}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{student.course.name}</td>
@@ -427,11 +447,31 @@ export default function StudentsPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">
+                            Sem {student.semester}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex space-x-2">
-                            <button onClick={() => handleEditStudent(student)} className="hover:bg-gray-100 p-1 rounded">
+                            <button 
+                              onClick={() => handleViewStudent(student)} 
+                              className="hover:bg-gray-100 p-1 rounded"
+                              title="View Details"
+                            >
+                              <Eye size={16} className="text-gray-600" />
+                            </button>
+                            <button 
+                              onClick={() => handleEditStudent(student)} 
+                              className="hover:bg-gray-100 p-1 rounded"
+                              title="Edit Student"
+                            >
                               <Edit size={16} className="text-blue-600" />
                             </button>
-                            <button onClick={() => handleDeleteStudent(student.id)} className="hover:bg-gray-100 p-1 rounded">
+                            <button 
+                              onClick={() => handleDeleteStudent(student.id)} 
+                              className="hover:bg-gray-100 p-1 rounded"
+                              title="Delete Student"
+                            >
                               <Trash2 size={16} className="text-red-600" />
                             </button>
                           </div>

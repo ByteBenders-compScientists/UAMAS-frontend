@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { X, User, GraduationCap, Hash } from "lucide-react"
+import { X, User, GraduationCap, Hash, Mail } from "lucide-react"
 
 type Student = {
   id: string
@@ -13,18 +13,19 @@ type Student = {
   surname: string
   othernames: string
   year_of_study: number
+  semester: number
   email: string
   course: {
     id: string
     name: string
-    code: string
+    code?: string
   }
 }
 
 type Course = {
   id: string
   name: string
-  code: string
+  code?: string
 }
 
 type AddStudentModalProps = {
@@ -40,6 +41,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
     surname: student?.surname || "",
     othernames: student?.othernames || "",
     year_of_study: student?.year_of_study || 1,
+    semester: student?.semester || 1,
     course_id: student?.course?.id || "",
     email: student?.email || "",
   })
@@ -51,7 +53,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/v1/admin/courses", {
+        const response = await fetch("http://localhost:8080/api/v1/auth/lecturer/courses", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -87,6 +89,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
         surname: student.surname || "",
         othernames: student.othernames || "",
         year_of_study: student.year_of_study || 1,
+        semester: student.semester || 1,
         course_id: student.course?.id || "",
         email: student.email || "",
       })
@@ -97,6 +100,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
         surname: "",
         othernames: "",
         year_of_study: 1,
+        semester: 1,
         course_id: "",
         email: "",
       })
@@ -120,6 +124,9 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
     }
     if (formData.year_of_study < 1 || formData.year_of_study > 6) {
       newErrors.year_of_study = "Year of study must be between 1 and 6"
+    }
+    if (formData.semester < 1 || formData.semester > 2) {
+      newErrors.semester = "Semester must be 1 or 2"
     }
     if (!formData.email?.trim()) {
       newErrors.email = "Email is required"
@@ -154,7 +161,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "year_of_study" ? Number.parseInt(value) : value,
+      [name]: name === "year_of_study" || name === "semester" ? Number.parseInt(value) : value,
     }))
 
     // Clear error when user starts typing
@@ -170,7 +177,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className="w-full max-w-md bg-white rounded-xl shadow-xl"
+        className="w-full max-w-md bg-white rounded-xl shadow-xl max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
@@ -199,6 +206,25 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
               />
             </div>
             {errors.reg_number && <p className="mt-1 text-sm text-red-600">{errors.reg_number}</p>}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+            <div className="relative">
+              <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter email address"
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
+                  errors.email ? "border-red-300" : "border-gray-200"
+                }`}
+              />
+            </div>
+            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
           </div>
 
           {/* First Name */}
@@ -244,41 +270,9 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
               name="othernames"
               value={formData.othernames}
               onChange={handleChange}
-              placeholder="Enter other names"
+              placeholder="Enter other names (optional)"
               className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-            <div className="relative">
-              <svg
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter email address"
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  errors.email ? "border-red-300" : "border-gray-200"
-                }`}
-              />
-            </div>
-            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
           </div>
 
           {/* Course */}
@@ -298,7 +292,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
                 <option value="">Select a course</option>
                 {courses.map((course) => (
                   <option key={course.id} value={course.id}>
-                    {course.name} ({course.code})
+                    {course.name} {course.code ? `(${course.code})` : ''}
                   </option>
                 ))}
               </select>
@@ -307,25 +301,50 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
             {errors.courses && <p className="mt-1 text-sm text-red-600">{errors.courses}</p>}
           </div>
 
-          {/* Year of Study */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Year of Study *</label>
-            <select
-              name="year_of_study"
-              value={formData.year_of_study}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                errors.year_of_study ? "border-red-300" : "border-gray-200"
-              }`}
-            >
-              {[1, 2, 3, 4, 5, 6].map((year) => (
-                <option key={year} value={year}>
-                  Year {year}
-                </option>
-              ))}
-            </select>
-            {errors.year_of_study && <p className="mt-1 text-sm text-red-600">{errors.year_of_study}</p>}
+          {/* Year of Study and Semester */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Year of Study *</label>
+              <select
+                name="year_of_study"
+                value={formData.year_of_study}
+                onChange={handleChange}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
+                  errors.year_of_study ? "border-red-300" : "border-gray-200"
+                }`}
+              >
+                {[1, 2, 3, 4, 5, 6].map((year) => (
+                  <option key={year} value={year}>
+                    Year {year}
+                  </option>
+                ))}
+              </select>
+              {errors.year_of_study && <p className="mt-1 text-sm text-red-600">{errors.year_of_study}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Semester *</label>
+              <select
+                name="semester"
+                value={formData.semester}
+                onChange={handleChange}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
+                  errors.semester ? "border-red-300" : "border-gray-200"
+                }`}
+              >
+                <option value={1}>Semester 1</option>
+                <option value={2}>Semester 2</option>
+              </select>
+              {errors.semester && <p className="mt-1 text-sm text-red-600">{errors.semester}</p>}
+            </div>
           </div>
+
+          {/* Submit Error */}
+          {errors.submit && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{errors.submit}</p>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center justify-end space-x-3 pt-4">
