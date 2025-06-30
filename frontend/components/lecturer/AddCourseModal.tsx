@@ -20,21 +20,29 @@ type Course = {
   }>
 }
 
+type CourseFormData = {
+  code: string
+  name: string
+  department: string
+  school: string
+}
+
 type AddCourseModalProps = {
   course?: Course | null
   onClose: () => void
-  onSubmit: (data: any) => void
+  onSubmit: (data: CourseFormData) => void
+  isLoading?: boolean
+  error?: string | null
 }
 
-export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseModalProps) {
-  const [formData, setFormData] = useState({
+export default function AddCourseModal({ course, onClose, onSubmit, isLoading = false, error }: AddCourseModalProps) {
+  const [formData, setFormData] = useState<CourseFormData>({
     code: "",
     name: "",
     department: "",
     school: "",
   })
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (course) {
@@ -63,7 +71,7 @@ export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseM
       newErrors.school = "School is required"
     }
 
-    setErrors(newErrors)
+    setFormErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
@@ -74,55 +82,15 @@ export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseM
       return
     }
     
-    setIsLoading(true)
-
-    try {
-      const courseData = {
-        name: formData.name,
-        code: formData.code,
-        department: formData.department,
-        school: formData.school,
-      }
-
-      console.log(courseData)
-      const url = course
-        ? `http://localhost:8080/api/v1/auth/lecturer/courses/${course.id}`
-        : "http://localhost:8080/api/v1/auth/lecturer/courses"
-
-      const response = await fetch(url, {
-        method: course ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(courseData),
-      })
-    
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to save course")
-      }
-
-      const data = await response.json()
-      onSubmit(data)
-      onClose()
-    } catch (error) {
-      console.error("Error submitting form:", error)
-      setErrors((prev) => ({
-        ...prev,
-        submit: error instanceof Error ? error.message : "Failed to save course",
-      }))
-    } finally {
-      setIsLoading(false)
-    }
+    onSubmit(formData)
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
 
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
+    if (formErrors[name]) {
+      setFormErrors((prev) => ({ ...prev, [name]: "" }))
     }
   }
 
@@ -143,6 +111,13 @@ export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseM
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Display API error */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Course Code *</label>
             <div className="relative">
@@ -154,11 +129,11 @@ export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseM
                 onChange={handleChange}
                 placeholder="e.g., CS, IT, SE"
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  errors.code ? "border-red-300" : "border-gray-200"
+                  formErrors.code ? "border-red-300" : "border-gray-200"
                 }`}
               />
             </div>
-            {errors.code && <p className="mt-1 text-sm text-red-600">{errors.code}</p>}
+            {formErrors.code && <p className="mt-1 text-sm text-red-600">{formErrors.code}</p>}
           </div>
 
           <div>
@@ -172,11 +147,11 @@ export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseM
                 onChange={handleChange}
                 placeholder="e.g., BSc. Computer Science"
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  errors.name ? "border-red-300" : "border-gray-200"
+                  formErrors.name ? "border-red-300" : "border-gray-200"
                 }`}
               />
             </div>
-            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+            {formErrors.name && <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>}
           </div>
 
           <div>
@@ -190,11 +165,11 @@ export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseM
                 onChange={handleChange}
                 placeholder="e.g., Computer Science"
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  errors.department ? "border-red-300" : "border-gray-200"
+                  formErrors.department ? "border-red-300" : "border-gray-200"
                 }`}
               />
             </div>
-            {errors.department && <p className="mt-1 text-sm text-red-600">{errors.department}</p>}
+            {formErrors.department && <p className="mt-1 text-sm text-red-600">{formErrors.department}</p>}
           </div>
 
           <div>
@@ -208,11 +183,11 @@ export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseM
                 onChange={handleChange}
                 placeholder="e.g., CS & IT"
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  errors.school ? "border-red-300" : "border-gray-200"
+                  formErrors.school ? "border-red-300" : "border-gray-200"
                 }`}
               />
             </div>
-            {errors.school && <p className="mt-1 text-sm text-red-600">{errors.school}</p>}
+            {formErrors.school && <p className="mt-1 text-sm text-red-600">{formErrors.school}</p>}
           </div>
 
           <div className="flex items-center justify-end space-x-3 pt-4">
