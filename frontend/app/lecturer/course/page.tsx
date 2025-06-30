@@ -5,8 +5,9 @@ import { motion } from "framer-motion"
 import { useLayout } from "@/components/LayoutController"
 import AdminSidebar from "@/components/lecturerSidebar"
 import Header from "@/components/Header"
-import EmptyState from "@/components/EmptyState"
-import AddCourseModal from "@/components/admin/AddCourseModal"
+import EmptyState from "@/components/EmptyState" 
+import AddCourseModal from "@/components/AddCourseModal"
+
 import { GraduationCap, Plus, Search, Filter, Edit, Trash2, Eye, Building, MoreVertical } from "lucide-react"
 
 type Course = {
@@ -130,21 +131,44 @@ export default function CoursesPage() {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      setIsLoading(true)
-      const res = await fetch("http://localhost:8080/api/v1/admin/courses", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
+      try {
+    const res = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/courses", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    })
 
-      const data = await res.json()
-      setCourses(data)
-      setIsLoading(false)
+    if (!res.ok) {
+      if (res.status === 401) {
+        console.error("Unauthorized - Please login as a lecturer")
+        setCourses([])
+        return
+      }
+      throw new Error(`HTTP ${res.status}: Failed to fetch courses`)
     }
 
-    fetchCourses()
+    const data = await res.json()
+    console.log("API Response:", data) // Debug log
+    
+    if (Array.isArray(data)) {
+      setCourses(data)
+      console.log("Set courses:", data.length, "items") // Debug log
+    } else {
+      console.error("Unexpected response format:", data)
+      setCourses([])
+    }
+    
+  } catch (error) {
+    console.error("Error fetching courses:", error)
+    setCourses([]) // Only set empty array on error
+  } finally {
+    setIsLoading(false)
+  }
+}
+
+fetchCourses()
   }, [])
 
   const filteredCourses = courses.filter(
@@ -166,7 +190,7 @@ export default function CoursesPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/admin/courses/${id}`, {
+      const response = await fetch(`https://api.waltertayarg.me/api/v1/auth/lecturer/courses/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -180,7 +204,7 @@ export default function CoursesPage() {
       }
 
       // Reload the courses list
-      const coursesResponse = await fetch("http://localhost:8080/api/v1/admin/courses", {
+      const coursesResponse = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/courses", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -193,7 +217,7 @@ export default function CoursesPage() {
     } catch (error) {
       console.error("Error deleting course:", error)
       // Reload the courses list even if there was an error
-      const coursesResponse = await fetch("http://localhost:8080/api/v1/admin/courses", {
+      const coursesResponse = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/courses", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -210,7 +234,7 @@ export default function CoursesPage() {
     try {
       if (selectedCourse) {
         // Update existing course
-        const response = await fetch(`http://localhost:8080/api/v1/admin/courses/${selectedCourse.id}`, {
+        const response = await fetch(`https://api.waltertayarg.me/api/v1/auth/lecturer/courses/${selectedCourse.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -226,7 +250,7 @@ export default function CoursesPage() {
         // }
       } else {
         // Add new course
-        const response = await fetch("http://localhost:8080/api/v1/admin/courses", {
+        const response = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/courses", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -243,7 +267,7 @@ export default function CoursesPage() {
       }
 
       // Reload the courses list
-      const coursesResponse = await fetch("http://localhost:8080/api/v1/admin/courses", {
+      const coursesResponse = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/courses", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -259,7 +283,7 @@ export default function CoursesPage() {
     } catch (error) {
       console.error("Error saving course:", error)
       // Reload the courses list even if there was an error
-      const coursesResponse = await fetch("http://localhost:8080/api/v1/admin/courses", {
+      const coursesResponse = await fetch("https://api.waltertayarg.me/api/v1/auth/lecturer/courses", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

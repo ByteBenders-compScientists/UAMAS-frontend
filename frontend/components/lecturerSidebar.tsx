@@ -63,6 +63,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
     { name: 'Grades', icon: <GraduationCap size={20} />, path: '/lecturer/grades' },
     { name:'Students',icon: <User size={20} />, path: '/lecturer/students', badge: 5 },
     { name:'Course',icon:<GraduationCap size={20} />, path: '/lecturer/course', badge: 2 },
+    { name:'Units',icon:<BookOpen size={20} />, path: '/lecturer/units' },
     { name: 'Library', icon: <Library size={20} />, path: '/lecturer/library' },
     { name: 'Forums', icon: <MessageSquare size={20} />, path: '/lecturer/forums', badge: 'New' },
    

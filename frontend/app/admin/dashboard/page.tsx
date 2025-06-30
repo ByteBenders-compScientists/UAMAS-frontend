@@ -150,7 +150,7 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       try {
         // Fetch students
-        const studentsResponse = await fetch("http://localhost:8080/api/v1/admin/students", {
+        const studentsResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/students", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
         const studentsData = await studentsResponse.json()
 
         // Fetch lecturers
-        const lecturersResponse = await fetch("http://localhost:8080/api/v1/admin/lecturers", {
+        const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
         const lecturersData = await lecturersResponse.json()
 
         // Fetch courses
-        const coursesResponse = await fetch("http://localhost:8080/api/v1/admin/courses", {
+        const coursesResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/courses", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
