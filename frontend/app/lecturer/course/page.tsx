@@ -40,12 +40,16 @@ const CourseCard = ({
   onDelete,
   onView,
   onAddUnit,
+  onEditUnit,
+  onDeleteUnit,
 }: {
   course: Course
   onEdit: (course: Course) => void
   onDelete: (id: string) => void
   onView: (course: Course) => void
   onAddUnit: (course: Course) => void
+  onEditUnit: (unit: Unit) => void
+  onDeleteUnit: (unitId: string) => void
 }) => (
   <motion.div
     whileHover={{ y: -2 }}
@@ -127,28 +131,26 @@ const CourseCard = ({
                   <span className="text-violet-500">
                     L{unit.level}S{unit.semester}
                   </span>
-                  <div className="hidden group-hover:flex items-center space-x-1 ml-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleEditUnit(unit)
-                      }}
-                      className="p-1 hover:bg-violet-200 rounded text-violet-600"
-                      title="Edit unit"
-                    >
-                      <Edit size={10} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeleteUnit(unit.id)
-                      }}
-                      className="p-1 hover:bg-red-200 rounded text-red-600"
-                      title="Delete unit"
-                    >
-                      <Trash2 size={10} />
-                    </button>
-                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEditUnit(unit)
+                    }}
+                    className="p-1 hover:bg-violet-200 rounded text-violet-600"
+                    title="Edit unit"
+                  >
+                    <Edit size={10} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDeleteUnit(unit.id)
+                    }}
+                    className="p-1 hover:bg-red-200 rounded text-red-600"
+                    title="Delete unit"
+                  >
+                    <Trash2 size={10} />
+                  </button>
                 </div>
               </div>
             ))}
@@ -559,18 +561,15 @@ export default function CoursesPage() {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
               >
                 {filteredCourses.map((course, index) => (
-                  <motion.div
-                    key={course.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.1 * index }}
-                  >
+                  <motion.div key={course.id}>
                     <CourseCard
                       course={course}
                       onEdit={handleEditCourse}
                       onDelete={handleDeleteCourse}
                       onView={handleViewCourse}
                       onAddUnit={handleAddUnit}
+                      onEditUnit={handleEditUnit}
+                      onDeleteUnit={handleDeleteUnit}
                     />
                   </motion.div>
                 ))}
