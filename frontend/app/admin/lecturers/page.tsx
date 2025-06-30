@@ -188,11 +188,11 @@ export default function LecturersPage() {
     console.log("Viewing lecturer:", lecturer)
   }
 
-  const handleAssignUnits = (lecturer: Lecturer) => {
-    setSelectedLecturerForUnits(lecturer)
-    setSelectedLecturerUnitIds(lecturer.units.map(u => u.unit_code))
-    setShowAssignModal(true)
-  }
+  // const handleAssignUnits = (lecturer: Lecturer) => {
+  //   setSelectedLecturer(lecturer)
+  //   setSelectedLecturer(lecturer.units.map(u => u.unit_code))
+  //   setShowAddModal(true)
+  // }
 
   const handleUnitsAssigned = async (unitIds: string[]) => {
     // Reload the lecturers list to show updated unit assignments
