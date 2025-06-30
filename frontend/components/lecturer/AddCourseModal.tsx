@@ -84,9 +84,10 @@ export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseM
         school: formData.school,
       }
 
+      console.log(courseData)
       const url = course
-        ? `http://localhost:8080/api/v1/admin/courses/${course.id}`
-        : "http://localhost:8080/api/v1/admin/courses"
+        ? `http://localhost:8080/api/v1/auth/lecturer/courses/${course.id}`
+        : "http://localhost:8080/api/v1/auth/lecturer/courses"
 
       const response = await fetch(url, {
         method: course ? "PUT" : "POST",
@@ -96,7 +97,7 @@ export default function AddCourseModal({ course, onClose, onSubmit }: AddCourseM
         credentials: "include",
         body: JSON.stringify(courseData),
       })
-
+    
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.message || "Failed to save course")
