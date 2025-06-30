@@ -6,7 +6,7 @@ import { useLayout } from "@/components/LayoutController"
 import AdminSidebar from "@/components/lecturerSidebar"
 import Header from "@/components/Header"
 import EmptyState from "@/components/EmptyState"
-import AddStudentModal from "@/components/admin/AddStudentModal"
+import AddStudentModal from "@/components/lecturer/AddStudentModal"
 import { Users, Plus, Search, Filter, Edit, Trash2, Eye, Download, Upload, MoreVertical } from "lucide-react"
 
 type Student = {
