@@ -21,6 +21,7 @@ import {
   Play,
   Pause,
 } from "lucide-react";
+import Disclaimer from "@/components/Disclaimer";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
@@ -47,6 +48,7 @@ interface Question {
   type: string;
   choices?: string[];
   marks: number;
+  status?: 'answered' | 'not answered';
 }
 
 export default function AssignmentsPage() {
@@ -56,6 +58,7 @@ export default function AssignmentsPage() {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [activeAssignment, setActiveAssignment] = useState<string | null>(null);
   const [isTakingAssignment, setIsTakingAssignment] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
@@ -68,6 +71,9 @@ export default function AssignmentsPage() {
   const [openEndedImages, setOpenEndedImages] = useState<(File | null)[]>([]);
   const [questionsType, setQuestionsType] = useState<string>("");
   const [closeEndedType, setCloseEndedType] = useState<string>("");
+  const [openEndedInputModes, setOpenEndedInputModes] = useState<
+    ("text" | "image" | null)[]
+  >([]);
 
   // Fetch Assignments from unified API
   useEffect(() => {
@@ -177,6 +183,14 @@ export default function AssignmentsPage() {
     if (!assignment) return;
 
     setActiveAssignment(assignmentId);
+    setShowDisclaimer(true);
+  };
+
+  const proceedToAssignment = () => {
+    const assignment = assignments.find((a) => a.id === activeAssignment);
+    if (!assignment) return;
+
+    setShowDisclaimer(false);
     setIsTakingAssignment(true);
     setCurrentQuestion(0);
 
@@ -190,10 +204,13 @@ export default function AssignmentsPage() {
       if (assignment.questions_type === "open-ended") {
         setOpenEndedAnswers(Array(questions.length).fill(""));
         setOpenEndedImages(Array(questions.length).fill(null));
+        setOpenEndedInputModes(Array(questions.length).fill(null));
         setSelectedAnswers([]);
         setMultipleAnswers([]);
       } else {
-        if (assignment.close_ended_type === "multiple") {
+        if (
+          assignment.close_ended_type === "multiple choice with multiple answers"
+        ) {
           setMultipleAnswers(Array(questions.length).fill([]));
           setSelectedAnswers([]);
         } else {
@@ -212,7 +229,7 @@ export default function AssignmentsPage() {
   };
 
   const handleAnswerSelect = (questionIndex: number, optionIndex: number) => {
-    if (closeEndedType === "multiple") {
+    if (closeEndedType === "multiple choice with multiple answers") {
       const newAnswers = [...multipleAnswers];
       if (!newAnswers[questionIndex]) {
         newAnswers[questionIndex] = [];
@@ -240,15 +257,27 @@ export default function AssignmentsPage() {
       .padStart(2, "0")}`;
   };
 
-  const handleSubmitAssignment = () => {
+  const handleSubmitAssignment = async () => {
     setIsSubmitting(true);
-    // Simulate submission delay
-    setTimeout(() => {
-      setIsTakingAssignment(false);
+    try {
+      // Send final submission request
+      if (activeAssignment) {
+        await fetch(`${apiBaseUrl}/bd/student/assessments/${activeAssignment}/submit`, {
+          method: "GET",
+          credentials: "include",
+        });
+      }
+      // Simulate submission delay
+      setTimeout(() => {
+        setIsTakingAssignment(false);
+        setIsSubmitting(false);
+        setShowConfirmSubmit(false);
+        // In a real app, you would send the answers to the server
+      }, 1500);
+    } catch (err) {
       setIsSubmitting(false);
-      setShowConfirmSubmit(false);
-      // In a real app, you would send the answers to the server
-    }, 1500);
+      // Optionally handle error
+    }
   };
 
   const currentAssignment = assignments.find(
@@ -257,58 +286,128 @@ export default function AssignmentsPage() {
 
   const getAnsweredCount = () => {
     if (questionsType === "close-ended") {
-      if (closeEndedType === "multiple") {
+      if (closeEndedType === "multiple choice with multiple answers") {
         return multipleAnswers.filter((a) => a && a.length > 0).length;
       } else {
         return selectedAnswers.filter((a) => a !== -1).length;
       }
     } else if (questionsType === "open-ended") {
-      return openEndedAnswers.filter((a) => a && a.trim() !== "").length;
+      return questions.reduce((count, _, index) => {
+        const textAnswer = openEndedAnswers[index]?.trim();
+        const imageAnswer = openEndedImages[index];
+        if (textAnswer || imageAnswer) {
+          return count + 1;
+        }
+        return count;
+      }, 0);
     }
     return 0;
+  };
+
+  const isCurrentQuestionAnswered = () => {
+    if (questions.length === 0) return false;
+
+    if (questionsType === "open-ended") {
+      const textAnswer = openEndedAnswers[currentQuestion]?.trim();
+      const imageAnswer = openEndedImages[currentQuestion];
+      return !!textAnswer || !!imageAnswer;
+    } else {
+      // 'close-ended'
+      if (closeEndedType === "multiple choice with multiple answers") {
+        return (
+          multipleAnswers[currentQuestion] &&
+          multipleAnswers[currentQuestion].length > 0
+        );
+      } else {
+        return selectedAnswers[currentQuestion] !== -1;
+      }
+    }
   };
 
   // Question rendering component
   const renderQuestion = (question: Question, index: number) => {
     if (questionsType === "open-ended") {
+      const handleInputModeChange = (mode: "text" | "image") => {
+        const newModes = [...openEndedInputModes];
+        newModes[index] = mode;
+        setOpenEndedInputModes(newModes);
+      };
+
+      const inputMode = openEndedInputModes[index];
+
+      if (!inputMode) {
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Question {index + 1}: {question.text}
+            </h3>
+            <p className="text-gray-600">
+              Please choose how you would like to answer this question. This
+              choice cannot be changed.
+            </p>
+            <div className="flex space-x-4 pt-2">
+              <button
+                onClick={() => handleInputModeChange("text")}
+                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+              >
+                Answer with Text
+              </button>
+              <button
+                onClick={() => handleInputModeChange("image")}
+                className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
+              >
+                Upload an Image
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Question {index + 1}: {question.text}
-            </label>
-            <textarea
-              rows={6}
-              value={openEndedAnswers[index] || ""}
-              onChange={(e) => {
-                const newAnswers = [...openEndedAnswers];
-                newAnswers[index] = e.target.value;
-                setOpenEndedAnswers(newAnswers);
-              }}
-              placeholder="Type your answer here..."
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="image-upload"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Upload Image (Optional)
-            </label>
-            <input
-              id="image-upload"
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const newImages = [...openEndedImages];
-                newImages[index] = e.target.files?.[0] || null;
-                setOpenEndedImages(newImages);
-              }}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              title="Upload an image file"
-            />
-          </div>
+          <h3 className="text-lg font-medium text-gray-900">
+            Question {index + 1}: {question.text}
+          </h3>
+          {inputMode === "text" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Your Answer
+              </label>
+              <textarea
+                rows={6}
+                value={openEndedAnswers[index] || ""}
+                onChange={(e) => {
+                  const newAnswers = [...openEndedAnswers];
+                  newAnswers[index] = e.target.value;
+                  setOpenEndedAnswers(newAnswers);
+                }}
+                placeholder="Type your answer here..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          )}
+          {inputMode === "image" && (
+            <div>
+              <label
+                htmlFor="image-upload"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Upload Image
+              </label>
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const newImages = [...openEndedImages];
+                  newImages[index] = e.target.files?.[0] || null;
+                  setOpenEndedImages(newImages);
+                }}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                title="Upload an image file"
+              />
+            </div>
+          )}
         </div>
       );
     } else {
@@ -326,14 +425,18 @@ export default function AssignmentsPage() {
                 className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
               >
                 <input
-                  type={closeEndedType === "multiple" ? "checkbox" : "radio"}
+                  type={
+                    closeEndedType === "multiple choice with multiple answers"
+                      ? "checkbox"
+                      : "radio"
+                  }
                   name={
-                    closeEndedType === "multiple"
+                    closeEndedType === "multiple choice with multiple answers"
                       ? undefined
                       : `question-${index}`
                   }
                   checked={
-                    closeEndedType === "multiple"
+                    closeEndedType === "multiple choice with multiple answers"
                       ? multipleAnswers[index]?.includes(choiceIndex) || false
                       : selectedAnswers[index] === choiceIndex
                   }
@@ -346,6 +449,57 @@ export default function AssignmentsPage() {
           </div>
         </div>
       );
+    }
+  };
+
+  // Submit answer for the current question
+  const submitCurrentAnswer = async (questionIndex: number) => {
+    const question = questions[questionIndex];
+    if (!question) return;
+    const formData = new FormData();
+    let answerType = "text";
+    let textAnswer = "";
+    let imageFile = null;
+
+    if (questionsType === "close-ended") {
+      if (closeEndedType === "multiple choice with multiple answers") {
+        // Multiple answers as comma-separated string
+        textAnswer = (multipleAnswers[questionIndex] || [])
+          .map((idx) => question.choices?.[idx] || "")
+          .filter(Boolean)
+          .join(",");
+      } else {
+        // Single answer
+        textAnswer = question.choices?.[selectedAnswers[questionIndex]] || "";
+      }
+      formData.append("answer_type", "text");
+      formData.append("text_answer", textAnswer);
+    } else if (questionsType === "open-ended") {
+      const inputMode = openEndedInputModes[questionIndex];
+      if (inputMode === "text") {
+        answerType = "text";
+        textAnswer = openEndedAnswers[questionIndex] || "";
+        formData.append("answer_type", "text");
+        formData.append("text_answer", textAnswer);
+      } else if (inputMode === "image") {
+        answerType = "image";
+        imageFile = openEndedImages[questionIndex];
+        if (imageFile) {
+          formData.append("answer_type", "image");
+          formData.append("image", imageFile);
+        }
+      }
+    }
+
+    try {
+      await fetch(`${apiBaseUrl}/bd/student/questions/${question.id}/answer`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+    } catch (err) {
+      // Optionally handle error (e.g., show notification)
+      console.error("Failed to submit answer", err);
     }
   };
 
@@ -368,6 +522,18 @@ export default function AssignmentsPage() {
         <Header title="My Assignments" showWeekSelector={hasContent} />
 
         <main className="p-4 md:p-6">
+          {showDisclaimer && currentAssignment && (
+            <Disclaimer
+              title={currentAssignment.title}
+              numberOfQuestions={currentAssignment.number_of_questions}
+              duration={currentAssignment.duration}
+              onAgree={proceedToAssignment}
+              onCancel={() => {
+                setShowDisclaimer(false);
+                setActiveAssignment(null);
+              }}
+            />
+          )}
           {!hasContent ? (
             <div className="max-w-4xl mx-auto">
               <EmptyState
@@ -407,7 +573,8 @@ export default function AssignmentsPage() {
 
                       <button
                         onClick={() => setShowConfirmSubmit(true)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        disabled={currentQuestion !== questions.length - 1}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                       >
                         Submit
                       </button>
@@ -424,34 +591,38 @@ export default function AssignmentsPage() {
                       )}
 
                       <div className="flex justify-between items-center mt-6">
-                        <button
-                          onClick={() =>
-                            setCurrentQuestion(Math.max(0, currentQuestion - 1))
-                          }
-                          disabled={currentQuestion === 0}
-                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-                        >
-                          <ChevronLeft size={16} className="mr-1" />
-                          Previous
-                        </button>
-
                         <div className="text-sm text-gray-600">
                           Question {currentQuestion + 1} of {questions.length}
                         </div>
 
                         <button
-                          onClick={() =>
-                            setCurrentQuestion(
-                              Math.min(
-                                questions.length - 1,
-                                currentQuestion + 1
-                              )
-                            )
+                          onClick={async () => {
+                            if (questions[currentQuestion]?.status === "answered") {
+                              setCurrentQuestion(
+                                Math.min(
+                                  questions.length - 1,
+                                  currentQuestion + 1
+                                )
+                              );
+                            } else {
+                              await submitCurrentAnswer(currentQuestion);
+                              setCurrentQuestion(
+                                Math.min(
+                                  questions.length - 1,
+                                  currentQuestion + 1
+                                )
+                              );
+                            }
+                          }}
+                          disabled={
+                            currentQuestion === questions.length - 1 ||
+                            (questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered())
                           }
-                          disabled={currentQuestion === questions.length - 1}
                           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                         >
-                          Next
+                          {questions[currentQuestion]?.status === "answered"
+                            ? "Answered, Next"
+                            : "Next"}
                           <ChevronRight size={16} className="ml-1" />
                         </button>
                       </div>

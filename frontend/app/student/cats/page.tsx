@@ -26,6 +26,7 @@ import {
   Pause,
 } from "lucide-react";
 import CatQuestions from "@/components/CatQuestions";
+import Disclaimer from "@/components/Disclaimer";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
@@ -37,6 +38,7 @@ export default function CatsPage() {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [isTakingCat, setIsTakingCat] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [questions, setQuestions] = useState<any[]>([]);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
@@ -48,6 +50,11 @@ export default function CatsPage() {
   const [openEndedAnswers, setOpenEndedAnswers] = useState<string[]>([]);
   const [openEndedImages, setOpenEndedImages] = useState<(File | null)[]>([]);
   const [questionsType, setQuestionsType] = useState<string>("");
+  const [closeEndedType, setCloseEndedType] = useState<string>("");
+  const [multipleAnswers, setMultipleAnswers] = useState<number[][]>([]);
+  const [openEndedInputModes, setOpenEndedInputModes] = useState<
+    ("text" | "image" | null)[]
+  >([]);
 
   // Fetch CATs from unified API
   useEffect(() => {
@@ -75,6 +82,23 @@ export default function CatsPage() {
     };
     fetchCats();
   }, []);
+
+  // Timer for CATs with duration
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isTakingCat && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            handleSubmitCat();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isTakingCat, timeLeft]);
 
   const hasContent = cats.length > 0;
 
@@ -134,6 +158,14 @@ export default function CatsPage() {
     if (!cat) return;
 
     setActiveCat(catId);
+    setShowDisclaimer(true);
+  };
+
+  const proceedToCat = () => {
+    const cat = cats.find((c) => c.id === activeCat);
+    if (!cat) return;
+
+    setShowDisclaimer(false);
     setIsTakingCat(true);
     setCurrentQuestion(0);
 
@@ -142,13 +174,22 @@ export default function CatsPage() {
       const questions = cat.questions || [];
       setQuestions(questions);
       setQuestionsType(cat.questions_type);
+      setCloseEndedType(cat.close_ended_type || "");
 
       if (cat.questions_type === "open-ended") {
         setOpenEndedAnswers(Array(questions.length).fill(""));
         setOpenEndedImages(Array(questions.length).fill(null));
+        setOpenEndedInputModes(Array(questions.length).fill(null));
         setSelectedAnswers([]);
+        setMultipleAnswers([]);
       } else {
-        setSelectedAnswers(Array(questions.length).fill(-1));
+        if (cat.close_ended_type === "multiple choice with multiple answers") {
+          setMultipleAnswers(Array(questions.length).fill([]));
+          setSelectedAnswers([]);
+        } else {
+          setSelectedAnswers(Array(questions.length).fill(-1));
+          setMultipleAnswers([]);
+        }
         setOpenEndedAnswers([]);
         setOpenEndedImages([]);
       }
@@ -157,13 +198,29 @@ export default function CatsPage() {
     } catch (err) {
       setQuestions([]);
       setQuestionsType("");
+      setCloseEndedType("");
     }
   };
 
   const handleAnswerSelect = (questionIndex: number, optionIndex: number) => {
-    const newAnswers = [...selectedAnswers];
-    newAnswers[questionIndex] = optionIndex;
-    setSelectedAnswers(newAnswers);
+    if (closeEndedType === "multiple choice with multiple answers") {
+      const newAnswers = [...multipleAnswers];
+      if (!newAnswers[questionIndex]) {
+        newAnswers[questionIndex] = [];
+      }
+      if (newAnswers[questionIndex].includes(optionIndex)) {
+        newAnswers[questionIndex] = newAnswers[questionIndex].filter(
+          (idx) => idx !== optionIndex
+        );
+      } else {
+        newAnswers[questionIndex] = [...newAnswers[questionIndex], optionIndex];
+      }
+      setMultipleAnswers(newAnswers);
+    } else {
+      const newAnswers = [...selectedAnswers];
+      newAnswers[questionIndex] = optionIndex;
+      setSelectedAnswers(newAnswers);
+    }
   };
 
   const toggleFlagQuestion = (index: number) => {
@@ -182,64 +239,150 @@ export default function CatsPage() {
       .padStart(2, "0")}`;
   };
 
-  const handleSubmitCat = () => {
+  const handleSubmitCat = async () => {
     setIsSubmitting(true);
-    // Simulate submission delay
-    setTimeout(() => {
-      setIsTakingCat(false);
+    try {
+      // Send final submission request
+      if (activeCat) {
+        await fetch(`${apiBaseUrl}/bd/student/assessments/${activeCat}/submit`, {
+          method: "GET",
+          credentials: "include",
+        });
+      }
+      // Simulate submission delay
+      setTimeout(() => {
+        setIsTakingCat(false);
+        setIsSubmitting(false);
+        setShowConfirmSubmit(false);
+        // In a real app, you would send the answers to the server
+      }, 1500);
+    } catch (err) {
       setIsSubmitting(false);
-      setShowConfirmSubmit(false);
-      // In a real app, you would send the answers to the server
-    }, 1500);
+      // Optionally handle error
+    }
   };
 
   const currentCat = cats.find((cat) => cat.id === activeCat);
 
   const getAnsweredCount = () => {
     if (questionsType === "close-ended") {
-      return selectedAnswers.filter((a) => a !== -1).length;
+      if (closeEndedType === "multiple choice with multiple answers") {
+        return multipleAnswers.filter((a) => a && a.length > 0).length;
+      } else {
+        return selectedAnswers.filter((a) => a !== -1).length;
+      }
     } else if (questionsType === "open-ended") {
-      return openEndedAnswers.filter((a) => a && a.trim() !== "").length;
+      return questions.reduce((count, _, index) => {
+        const textAnswer = openEndedAnswers[index]?.trim();
+        const imageAnswer = openEndedImages[index];
+        if (textAnswer || imageAnswer) {
+          return count + 1;
+        }
+        return count;
+      }, 0);
     }
     return 0;
+  };
+
+  const isCurrentQuestionAnswered = () => {
+    if (questions.length === 0) return false;
+
+    if (questionsType === "open-ended") {
+      const textAnswer = openEndedAnswers[currentQuestion]?.trim();
+      const imageAnswer = openEndedImages[currentQuestion];
+      return !!textAnswer || !!imageAnswer;
+    } else {
+      // 'close-ended'
+      if (closeEndedType === "multiple choice with multiple answers") {
+        return (
+          multipleAnswers[currentQuestion] &&
+          multipleAnswers[currentQuestion].length > 0
+        );
+      } else {
+        return selectedAnswers[currentQuestion] !== -1;
+      }
+    }
   };
 
   // Question rendering component
   const renderQuestion = (question: any, index: number) => {
     if (questionsType === "open-ended") {
+      const handleInputModeChange = (mode: "text" | "image") => {
+        const newModes = [...openEndedInputModes];
+        newModes[index] = mode;
+        setOpenEndedInputModes(newModes);
+      };
+
+      const inputMode = openEndedInputModes[index];
+
+      if (!inputMode) {
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Question {index + 1}: {question.text}
+            </h3>
+            <p className="text-gray-600">
+              Please choose how you would like to answer this question. This
+              choice cannot be changed.
+            </p>
+            <div className="flex space-x-4 pt-2">
+              <button
+                onClick={() => handleInputModeChange("text")}
+                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+              >
+                Answer with Text
+              </button>
+              <button
+                onClick={() => handleInputModeChange("image")}
+                className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
+              >
+                Upload an Image
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Question {index + 1}: {question.text}
-            </label>
-            <textarea
-              rows={6}
-              value={openEndedAnswers[index] || ""}
-              onChange={(e) => {
-                const newAnswers = [...openEndedAnswers];
-                newAnswers[index] = e.target.value;
-                setOpenEndedAnswers(newAnswers);
-              }}
-              placeholder="Type your answer here..."
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Upload Image (Optional)
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const newImages = [...openEndedImages];
-                newImages[index] = e.target.files?.[0] || null;
-                setOpenEndedImages(newImages);
-              }}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+          <h3 className="text-lg font-medium text-gray-900">
+            Question {index + 1}: {question.text}
+          </h3>
+          {inputMode === "text" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Your Answer
+              </label>
+              <textarea
+                rows={6}
+                value={openEndedAnswers[index] || ""}
+                onChange={(e) => {
+                  const newAnswers = [...openEndedAnswers];
+                  newAnswers[index] = e.target.value;
+                  setOpenEndedAnswers(newAnswers);
+                }}
+                placeholder="Type your answer here..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          )}
+          {inputMode === "image" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Upload Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const newImages = [...openEndedImages];
+                  newImages[index] = e.target.files?.[0] || null;
+                  setOpenEndedImages(newImages);
+                }}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          )}
         </div>
       );
     } else {
@@ -257,9 +400,21 @@ export default function CatsPage() {
                 className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
               >
                 <input
-                  type="radio"
-                  name={`question-${index}`}
-                  checked={selectedAnswers[index] === choiceIndex}
+                  type={
+                    closeEndedType === "multiple choice with multiple answers"
+                      ? "checkbox"
+                      : "radio"
+                  }
+                  name={
+                    closeEndedType === "multiple choice with multiple answers"
+                      ? undefined
+                      : `question-${index}`
+                  }
+                  checked={
+                    closeEndedType === "multiple choice with multiple answers"
+                      ? multipleAnswers[index]?.includes(choiceIndex) || false
+                      : selectedAnswers[index] === choiceIndex
+                  }
                   onChange={() => handleAnswerSelect(index, choiceIndex)}
                   className="mr-3"
                 />
@@ -269,6 +424,57 @@ export default function CatsPage() {
           </div>
         </div>
       );
+    }
+  };
+
+  // Submit answer for the current question
+  const submitCurrentAnswer = async (questionIndex: number) => {
+    const question = questions[questionIndex];
+    if (!question) return;
+    const formData = new FormData();
+    let answerType = "text";
+    let textAnswer = "";
+    let imageFile = null;
+
+    if (questionsType === "close-ended") {
+      if (closeEndedType === "multiple choice with multiple answers") {
+        // Multiple answers as comma-separated string
+        textAnswer = (multipleAnswers[questionIndex] || [])
+          .map((idx) => question.choices?.[idx] || "")
+          .filter(Boolean)
+          .join(",");
+      } else {
+        // Single answer
+        textAnswer = question.choices?.[selectedAnswers[questionIndex]] || "";
+      }
+      formData.append("answer_type", "text");
+      formData.append("text_answer", textAnswer);
+    } else if (questionsType === "open-ended") {
+      const inputMode = openEndedInputModes[questionIndex];
+      if (inputMode === "text") {
+        answerType = "text";
+        textAnswer = openEndedAnswers[questionIndex] || "";
+        formData.append("answer_type", "text");
+        formData.append("text_answer", textAnswer);
+      } else if (inputMode === "image") {
+        answerType = "image";
+        imageFile = openEndedImages[questionIndex];
+        if (imageFile) {
+          formData.append("answer_type", "image");
+          formData.append("image", imageFile);
+        }
+      }
+    }
+
+    try {
+      await fetch(`${apiBaseUrl}/bd/student/questions/${question.id}/answer`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+    } catch (err) {
+      // Optionally handle error (e.g., show notification)
+      console.error("Failed to submit answer", err);
     }
   };
 
@@ -291,6 +497,18 @@ export default function CatsPage() {
         <Header title="My CATs" showWeekSelector={hasContent} />
 
         <main className="p-4 md:p-6">
+          {showDisclaimer && currentCat && (
+            <Disclaimer
+              title={currentCat.title}
+              numberOfQuestions={currentCat.number_of_questions}
+              duration={currentCat.duration}
+              onAgree={proceedToCat}
+              onCancel={() => {
+                setShowDisclaimer(false);
+                setActiveCat(null);
+              }}
+            />
+          )}
           {!hasContent ? (
             <div className="max-w-4xl mx-auto">
               <EmptyState
@@ -328,7 +546,8 @@ export default function CatsPage() {
 
                       <button
                         onClick={() => setShowConfirmSubmit(true)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        disabled={currentQuestion !== questions.length - 1}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                       >
                         Submit
                       </button>
@@ -342,25 +561,28 @@ export default function CatsPage() {
                       {renderQuestion(questions[currentQuestion], currentQuestion)}
                       
                       <div className="flex justify-between items-center mt-6">
-                        <button
-                          onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
-                          disabled={currentQuestion === 0}
-                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-                        >
-                          <ChevronLeft size={16} className="mr-1" />
-                          Previous
-                        </button>
-                        
                         <div className="text-sm text-gray-600">
                           Question {currentQuestion + 1} of {questions.length}
                         </div>
                         
                         <button
-                          onClick={() => setCurrentQuestion(Math.min(questions.length - 1, currentQuestion + 1))}
-                          disabled={currentQuestion === questions.length - 1}
+                          onClick={async () => {
+                            if (questions[currentQuestion]?.status === "answered") {
+                              setCurrentQuestion(Math.min(questions.length - 1, currentQuestion + 1));
+                            } else {
+                              await submitCurrentAnswer(currentQuestion);
+                              setCurrentQuestion(Math.min(questions.length - 1, currentQuestion + 1));
+                            }
+                          }}
+                          disabled={
+                            currentQuestion === questions.length - 1 ||
+                            (questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered())
+                          }
                           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                         >
-                          Next
+                          {questions[currentQuestion]?.status === "answered"
+                            ? "Answered, Next"
+                            : "Next"}
                           <ChevronRight size={16} className="ml-1" />
                         </button>
                       </div>
