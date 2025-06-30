@@ -169,7 +169,7 @@ export default function AuthPage() {
 
     try {
 
-      const response = await fetch("https://api.waltertayarg.me/api/v1/auth/login", {
+      const response = await fetch(`${apiBaseUrl}/auth/login`, {
 
         method: "POST",
         headers: {
@@ -217,7 +217,7 @@ export default function AuthPage() {
   const fetchUserInfo = async () => {
     try {
 
-      const response = await fetch("https://api.waltertayarg.me/api/v1/auth/me", {
+      const response = await fetch(`${apiBaseUrl}/auth/me`, {
 
         method: "GET",
         credentials: "include",
