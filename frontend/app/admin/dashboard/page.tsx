@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import Link from "next/link"
-import { useLayout } from "@/components/LayoutController"
-import AdminSidebar from "@/components/AdminSidebar"
-import Header from "@/components/Header"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { useLayout } from "@/components/LayoutController";
+import AdminSidebar from "@/components/AdminSidebar";
+import Header from "@/components/Header";
 import {
   Users,
   GraduationCap,
@@ -18,56 +18,89 @@ import {
   ArrowRight,
   BarChart3,
   Activity,
-} from "lucide-react"
+  Shield,
+  User,
+} from "lucide-react";
 
 type Stats = {
-  totalStudents: number
-  totalLecturers: number
-  totalCourses: number
-  totalUnits: number
+  totalUsers: number;
+  totalAdmins: number;
+  totalStudents: number;
+  totalLecturers: number;
+  totalCourses: number;
+  totalUnits: number;
   recentActivity: Array<{
-    type: string
-    action: string
-    name: string
-    time: string
-  }>
-}
+    type: string;
+    action: string;
+    name: string;
+    time: string;
+  }>;
+};
 
 type StatCardProps = {
-  icon: React.ReactNode
-  title: string
-  value: string | number
-  change: string
-  color: string
-  trend: "up" | "down"
-}
+  icon: React.ReactNode;
+  title: string;
+  value: string | number;
+  change: string;
+  color: string;
+  trend: "up" | "down";
+};
 
-const StatCard = ({ icon, title, value, change, color, trend }: StatCardProps) => (
+const apiBaseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+
+const StatCard = ({
+  icon,
+  title,
+  value,
+  change,
+  color,
+  trend,
+}: StatCardProps) => (
   <motion.div
     whileHover={{ y: -2 }}
     className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
   >
     <div className="flex items-center justify-between mb-4">
-      <div className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center`}>{icon}</div>
-      <div className={`flex items-center text-sm font-medium ${trend === "up" ? "text-emerald-600" : "text-red-500"}`}>
-        <TrendingUp size={16} className={`mr-1 ${trend === "down" ? "rotate-180" : ""}`} />
+      <div
+        className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center`}
+      >
+        {icon}
+      </div>
+      <div
+        className={`flex items-center text-sm font-medium ${
+          trend === "up" ? "text-emerald-600" : "text-red-500"
+        }`}
+      >
+        <TrendingUp
+          size={16}
+          className={`mr-1 ${trend === "down" ? "rotate-180" : ""}`}
+        />
         {change}
       </div>
     </div>
-    <h3 className="text-2xl font-bold text-gray-800 mb-1">{value.toLocaleString()}</h3>
+    <h3 className="text-2xl font-bold text-gray-800 mb-1">
+      {value.toLocaleString()}
+    </h3>
     <p className="text-sm text-gray-500">{title}</p>
   </motion.div>
-)
+);
 
 type QuickActionProps = {
-  icon: React.ReactNode
-  title: string
-  description: string
-  color: string
-  href: string
-}
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  color: string;
+  href: string;
+};
 
-const QuickAction = ({ icon, title, description, color, href }: QuickActionProps) => (
+const QuickAction = ({
+  icon,
+  title,
+  description,
+  color,
+  href,
+}: QuickActionProps) => (
   <Link href={href} className="block">
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -86,26 +119,28 @@ const QuickAction = ({ icon, title, description, color, href }: QuickActionProps
       </div>
     </motion.div>
   </Link>
-)
+);
 
 type Activity = {
-  type: "student" | "lecturer" | "course" | "unit"
-  action: string
-  name: string
-  time: string
-  icon: React.ReactNode
-}
+  type: "student" | "lecturer" | "course" | "unit";
+  action: string;
+  name: string;
+  time: string;
+  icon: React.ReactNode;
+};
 
 export default function AdminDashboard() {
-  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout()
-  const [isLoading, setIsLoading] = useState(true)
+  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<Stats>({
+    totalUsers: 0,
+    totalAdmins: 0,
     totalStudents: 0,
     totalLecturers: 0,
     totalCourses: 0,
     totalUnits: 0,
     recentActivity: [],
-  })
+  });
 
   // Dummy recent activities
   const recentActivities: Activity[] = [
@@ -144,7 +179,7 @@ export default function AdminDashboard() {
       time: "3 hours ago",
       icon: <Users size={16} className="text-blue-600" />,
     },
-  ]
+  ];
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -161,13 +196,15 @@ export default function AdminDashboard() {
 
         // Fetch lecturers
         const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+
           method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
           credentials: "include",
-        })
-        const lecturersData = await lecturersResponse.json()
+        });
+        const analyticsData = await analyticsResponse.json();
+
 
         // Fetch courses
         const coursesResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/courses", {
@@ -179,46 +216,68 @@ export default function AdminDashboard() {
         })
         const coursesData = await coursesResponse.json()
 
-        // Calculate total units from courses
-        const totalUnits = coursesData.reduce((acc: number, course: any) => acc + (course.units?.length || 0), 0)
+
+        // Calculate total users
+        const totalUsers =
+          analyticsData.user_counts.admins +
+          analyticsData.user_counts.lecturers +
+          analyticsData.user_counts.students;
 
         setStats({
-          totalStudents: studentsData.length,
-          totalLecturers: lecturersData.length,
-          totalCourses: coursesData.length,
-          totalUnits,
+          totalUsers,
+          totalAdmins: analyticsData.user_counts.admins,
+          totalStudents: analyticsData.user_counts.students,
+          totalLecturers: analyticsData.user_counts.lecturers,
+          totalCourses: analyticsData.course_counts.courses,
+          totalUnits: analyticsData.course_counts.units,
           recentActivity: [], // We can implement this later if needed
-        })
+        });
       } catch (error) {
-        console.error("Error fetching stats:", error)
+        console.error("Error fetching stats:", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchStats()
-  }, [])
+    fetchStats();
+  }, []);
 
   const statCards = [
     {
       icon: <Users size={24} className="text-white" />,
-      title: "Total Students",
-      value: stats.totalStudents,
-      change: "+12%",
-      color: "bg-blue-500",
+      title: "Total Users",
+      value: stats.totalUsers,
+      change: "+8%",
+      color: "bg-gray-500",
+      trend: "up" as const,
+    },
+    {
+      icon: <Shield size={24} className="text-white" />,
+      title: "Admins",
+      value: stats.totalAdmins,
+      change: "0%",
+      color: "bg-red-500",
       trend: "up" as const,
     },
     {
       icon: <UserCheck size={24} className="text-white" />,
-      title: "Total Lecturers",
+      title: "Registered Lecturers",
       value: stats.totalLecturers,
       change: "+5%",
       color: "bg-emerald-500",
       trend: "up" as const,
     },
     {
+      icon: <User size={24} className="text-white" />,
+      title: "Registered Students",
+      value: stats.totalStudents,
+      change: "+12%",
+      color: "bg-blue-500",
+      trend: "up" as const,
+    },
+    {
       icon: <GraduationCap size={24} className="text-white" />,
-      title: "Total Courses",
+      title: "Courses Registered",
       value: stats.totalCourses,
       change: "+2%",
       color: "bg-violet-500",
@@ -226,13 +285,13 @@ export default function AdminDashboard() {
     },
     {
       icon: <BookOpen size={24} className="text-white" />,
-      title: "Total Units",
+      title: "Units Registered",
       value: stats.totalUnits,
       change: "+8%",
       color: "bg-amber-500",
       trend: "up" as const,
     },
-  ]
+  ];
 
   const quickActions = [
     {
@@ -263,7 +322,7 @@ export default function AdminDashboard() {
       color: "bg-amber-500",
       href: "/admin/units",
     },
-  ]
+  ];
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -271,10 +330,12 @@ export default function AdminDashboard() {
 
       <motion.div
         initial={{
-          marginLeft: !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
+          marginLeft:
+            !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
         }}
         animate={{
-          marginLeft: !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
+          marginLeft:
+            !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
         }}
         transition={{ duration: 0.3 }}
         className="flex-1 overflow-auto"
@@ -286,8 +347,8 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto">
               <div className="animate-pulse space-y-8">
                 <div className="h-32 bg-gray-200 rounded-xl"></div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {[...Array(4)].map((_, i) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(6)].map((_, i) => (
                     <div key={i} className="h-32 bg-gray-200 rounded-xl"></div>
                   ))}
                 </div>
@@ -311,12 +372,18 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="relative z-10">
-                  <h1 className="text-3xl md:text-4xl font-bold mb-2">Admin Dashboard</h1>
-                  <p className="text-gray-200 mb-4">Manage your university&apos;s academic system efficiently</p>
+                  <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                    Admin Dashboard
+                  </h1>
+                  <p className="text-gray-200 mb-4">
+                    Manage your university&apos;s academic system efficiently
+                  </p>
 
                   <div className="flex items-center bg-white/20 backdrop-blur-sm rounded-lg p-4 max-w-md">
                     <Bell size={18} className="text-white mr-3 flex-shrink-0" />
-                    <p className="text-sm text-white">System running smoothly. All services operational.</p>
+                    <p className="text-sm text-white">
+                      System running smoothly. All services operational.
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -329,8 +396,10 @@ export default function AdminDashboard() {
                   transition={{ duration: 0.5, delay: 0.2 }}
                   className="lg:col-span-2"
                 >
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4">System Overview</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                    System Overview
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {statCards.map((stat, index) => (
                       <motion.div
                         key={index}
@@ -351,7 +420,9 @@ export default function AdminDashboard() {
                   transition={{ duration: 0.5, delay: 0.4 }}
                   className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
                 >
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                    Recent Activity
+                  </h2>
                   <div className="space-y-4">
                     {recentActivities.map((activity, index) => (
                       <motion.div
@@ -375,9 +446,15 @@ export default function AdminDashboard() {
                           {activity.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800">{activity.action}</p>
-                          <p className="text-sm text-gray-500">{activity.name}</p>
-                          <p className="text-xs text-gray-400">{activity.time}</p>
+                          <p className="text-sm font-medium text-gray-800">
+                            {activity.action}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {activity.name}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {activity.time}
+                          </p>
                         </div>
                       </motion.div>
                     ))}
@@ -409,42 +486,93 @@ export default function AdminDashboard() {
         {/* System Overview Section (Bottom) */}
         <div className="max-w-7xl mx-auto mt-10">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-6">System Overview</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-6">
+              System Overview
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
               {/* Current Semester */}
               <div>
                 <div className="flex justify-center mb-3">
                   <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-8 w-8 text-blue-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
                   </div>
                 </div>
-                <div className="font-semibold text-gray-900 text-lg mb-1">Current Semester</div>
-                <div className="text-gray-500 text-sm">Semester 2, 2024/2025</div>
+                <div className="font-semibold text-gray-900 text-lg mb-1">
+                  Current Semester
+                </div>
+                <div className="text-gray-500 text-sm">
+                  Semester 2, 2024/2025
+                </div>
               </div>
               {/* Active Users */}
               <div>
                 <div className="flex justify-center mb-3">
                   <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-4a4 4 0 11-8 0 4 4 0 018 0zm6 4v2a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2a2 2 0 012-2h4a2 2 0 012 2z" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-8 w-8 text-green-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-4a4 4 0 11-8 0 4 4 0 018 0zm6 4v2a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2a2 2 0 012-2h4a2 2 0 012 2z"
+                      />
+                    </svg>
                   </div>
                 </div>
-                <div className="font-semibold text-gray-900 text-lg mb-1">Active Users</div>
+                <div className="font-semibold text-gray-900 text-lg mb-1">
+                  Active Users
+                </div>
                 <div className="text-gray-500 text-sm">1,336 total users</div>
               </div>
               {/* System Health */}
               <div>
                 <div className="flex justify-center mb-3">
                   <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 018 0v2m-4-4V7m0 0V3m0 4a4 4 0 00-4 4v4a4 4 0 004 4" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-8 w-8 text-purple-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 17v-2a4 4 0 018 0v2m-4-4V7m0 0V3m0 4a4 4 0 00-4 4v4a4 4 0 004 4"
+                      />
+                    </svg>
                   </div>
                 </div>
-                <div className="font-semibold text-gray-900 text-lg mb-1">System Health</div>
-                <div className="text-green-600 text-sm">All systems operational</div>
+                <div className="font-semibold text-gray-900 text-lg mb-1">
+                  System Health
+                </div>
+                <div className="text-green-600 text-sm">
+                  All systems operational
+                </div>
               </div>
             </div>
           </div>
         </div>
       </motion.div>
     </div>
-  )
+  );
 }

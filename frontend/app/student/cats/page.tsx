@@ -22,8 +22,12 @@ import {
   ChevronLeft,
   Loader2,
   X,
+  Play,
+  Pause,
 } from "lucide-react";
 import CatQuestions from "@/components/CatQuestions";
+
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
 export default function CatsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
@@ -45,61 +49,24 @@ export default function CatsPage() {
   const [openEndedImages, setOpenEndedImages] = useState<(File | null)[]>([]);
   const [questionsType, setQuestionsType] = useState<string>("");
 
-  // Fetch CATs from API
+  // Fetch CATs from unified API
   useEffect(() => {
-    if (hasFetched.current) return; // Prevent double/triple fetch in dev
+    if (hasFetched.current) return;
     hasFetched.current = true;
 
     const fetchCats = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        // 1. Fetch student profile
-        const profileRes = await fetch("http://localhost:8080/api/v1/auth/me", {
+        const res = await fetch(`${apiBaseUrl}/bd/student/assessments`, {
           credentials: "include",
         });
-        if (!profileRes.ok) throw new Error("Failed to fetch student profile");
-        const profile = await profileRes.json();
-        const { units, semester } = profile;
-        if (!units || !Array.isArray(units))
-          throw new Error("No units found in profile");
-        // 2. Fetch CATs for each unit
-        const year = units[0]?.level || 1;
-        const semesterNum = units[0]?.semester || semester || 1;
-        const catsArr: any[] = [];
-        await Promise.all(
-          units.map(async (unit: any) => {
-            const courseId = unit.course_id;
-            if (!courseId) return;
-            const url = `http://localhost:8080/api/v1/bd/student/${courseId}/assessments?year=${year}&semester=${semesterNum}`;
-            const res = await fetch(url, { credentials: "include" });
-            if (!res.ok) return;
-            const data = await res.json();
-            // console.log(data);
-            if (Array.isArray(data)) {
-              // Only process CATs
-              const catsOnly = data.filter((a: any) => a.type === "CAT");
-              catsOnly.forEach((cat: any) => {
-                catsArr.push({
-                  id: cat.id,
-                  title: cat.title,
-                  course: unit.unit_name || unit.unit_code || "",
-                  dueDate: cat.deadline,
-                  status: cat.status === "completed" ? "completed" : "pending",
-                  duration: cat.duration,
-                  totalMarks: cat.total_marks,
-                  type: cat.questions_type,
-                  // Add more fields as needed
-                });
-              });
-            }
-          })
-        );
-        // Remove duplicates by CAT id
-        const uniqueCats = Array.from(
-          new Map(catsArr.map((cat) => [cat.id, cat])).values()
-        );
-        setCats(uniqueCats);
+        if (!res.ok) throw new Error("Failed to fetch assessments");
+        const data = await res.json();
+        
+        // Filter only CATs
+        const catsOnly = (Array.isArray(data) ? data : []).filter((assessment: any) => assessment.type === "CAT");
+        setCats(catsOnly);
       } catch (err: any) {
         setError(err.message || "Failed to load CATs");
       } finally {
@@ -116,8 +83,8 @@ export default function CatsPage() {
       case "completed":
         return "text-green-600 bg-green-50 border-green-200";
       case "start":
+        return "text-blue-600 bg-blue-50 border-blue-200";
       case "in-progress":
-      case "pending":
         return "text-amber-600 bg-amber-50 border-amber-200";
       default:
         return "text-gray-600 bg-gray-50 border-gray-200";
@@ -129,11 +96,24 @@ export default function CatsPage() {
       case "completed":
         return <CheckCircle size={16} />;
       case "start":
+        return <Play size={16} />;
       case "in-progress":
-      case "pending":
-        return <Clock size={16} />;
+        return <Pause size={16} />;
       default:
         return <FileText size={16} />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "Completed";
+      case "start":
+        return "Start";
+      case "in-progress":
+        return "In Progress";
+      default:
+        return "Unknown";
     }
   };
 
@@ -158,34 +138,22 @@ export default function CatsPage() {
     setCurrentQuestion(0);
 
     try {
-      const res = await fetch(
-        `http://localhost:8080/api/v1/bd/assessments/${catId}/questions`,
-        { credentials: "include" }
-      );
-      if (!res.ok) throw new Error("Failed to fetch questions");
-      const data = await res.json();
+      // Use the questions from the assessment data
+      const questions = cat.questions || [];
+      setQuestions(questions);
+      setQuestionsType(cat.questions_type);
 
-      // Transform questions to match what CatQuestions expects
-      const transformedQuestions = (data.questions || data).map((q: any) => ({
-        ...q,
-        question: q.text, // map 'text' to 'question'
-        options: q.choices, // map 'choices' to 'options'
-      }));
-
-      setQuestions(transformedQuestions);
-      setQuestionsType(cat.type); // use the assessment's questions_type
-
-      if (cat.type === "open-ended") {
-        setOpenEndedAnswers(Array(transformedQuestions.length).fill(""));
-        setOpenEndedImages(Array(transformedQuestions.length).fill(null));
-        setSelectedAnswers([]); // not used
+      if (cat.questions_type === "open-ended") {
+        setOpenEndedAnswers(Array(questions.length).fill(""));
+        setOpenEndedImages(Array(questions.length).fill(null));
+        setSelectedAnswers([]);
       } else {
-        setSelectedAnswers(Array(transformedQuestions.length).fill(-1));
+        setSelectedAnswers(Array(questions.length).fill(-1));
         setOpenEndedAnswers([]);
         setOpenEndedImages([]);
       }
       setFlaggedQuestions([]);
-      setTimeLeft(cat.duration * 60);
+      setTimeLeft((cat.duration || 60) * 60);
     } catch (err) {
       setQuestions([]);
       setQuestionsType("");
@@ -236,6 +204,74 @@ export default function CatsPage() {
     return 0;
   };
 
+  // Question rendering component
+  const renderQuestion = (question: any, index: number) => {
+    if (questionsType === "open-ended") {
+      return (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Question {index + 1}: {question.text}
+            </label>
+            <textarea
+              rows={6}
+              value={openEndedAnswers[index] || ""}
+              onChange={(e) => {
+                const newAnswers = [...openEndedAnswers];
+                newAnswers[index] = e.target.value;
+                setOpenEndedAnswers(newAnswers);
+              }}
+              placeholder="Type your answer here..."
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Upload Image (Optional)
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const newImages = [...openEndedImages];
+                newImages[index] = e.target.files?.[0] || null;
+                setOpenEndedImages(newImages);
+              }}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+      );
+    } else {
+      // Close-ended questions
+      const choices = question.choices || [];
+      return (
+        <div className="space-y-3">
+          <h3 className="text-lg font-medium text-gray-900">
+            Question {index + 1}: {question.text}
+          </h3>
+          <div className="space-y-2">
+            {choices.map((choice: string, choiceIndex: number) => (
+              <label
+                key={choiceIndex}
+                className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  name={`question-${index}`}
+                  checked={selectedAnswers[index] === choiceIndex}
+                  onChange={() => handleAnswerSelect(index, choiceIndex)}
+                  className="mr-3"
+                />
+                <span className="text-gray-700">{choice}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -274,7 +310,7 @@ export default function CatsPage() {
                         {currentCat?.title}
                       </h2>
                       <p className="text-sm text-gray-600">
-                        {currentCat?.course}
+                        {currentCat?.topic}
                       </p>
                     </div>
 
@@ -300,34 +336,51 @@ export default function CatsPage() {
                   </div>
                 </div>
 
-                {isTakingCat && questions.length > 0 && (
-                  <CatQuestions
-                    questions={questions}
-                    currentQuestion={currentQuestion}
-                    selectedAnswers={selectedAnswers}
-                    flaggedQuestions={flaggedQuestions}
-                    handleAnswerSelect={handleAnswerSelect}
-                    toggleFlagQuestion={toggleFlagQuestion}
-                    setCurrentQuestion={setCurrentQuestion}
-                    openEndedAnswers={openEndedAnswers}
-                    setOpenEndedAnswers={setOpenEndedAnswers}
-                    openEndedImages={openEndedImages}
-                    setOpenEndedImages={setOpenEndedImages}
-                    questionsType={questionsType}
-                  >
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div
-                        className="h-2.5 rounded-full bg-blue-600"
-                        style={{
-                          width: `${(getAnsweredCount() / questions.length) * 100}%`,
-                        }}
-                      ></div>
+                <div className="p-6">
+                  {questions.length > 0 && (
+                    <div>
+                      {renderQuestion(questions[currentQuestion], currentQuestion)}
+                      
+                      <div className="flex justify-between items-center mt-6">
+                        <button
+                          onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
+                          disabled={currentQuestion === 0}
+                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                        >
+                          <ChevronLeft size={16} className="mr-1" />
+                          Previous
+                        </button>
+                        
+                        <div className="text-sm text-gray-600">
+                          Question {currentQuestion + 1} of {questions.length}
+                        </div>
+                        
+                        <button
+                          onClick={() => setCurrentQuestion(Math.min(questions.length - 1, currentQuestion + 1))}
+                          disabled={currentQuestion === questions.length - 1}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        >
+                          Next
+                          <ChevronRight size={16} className="ml-1" />
+                        </button>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div
+                            className="h-2.5 rounded-full bg-blue-600"
+                            style={{
+                              width: `${(getAnsweredCount() / questions.length) * 100}%`,
+                            }}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {getAnsweredCount()} of {questions.length} answered
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {getAnsweredCount()} of {questions.length} answered
-                    </div>
-                  </CatQuestions>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* Confirmation Modal */}
@@ -347,23 +400,10 @@ export default function CatsPage() {
                         Submit CAT?
                       </h3>
 
-                      {currentCat?.type === "multiple_choice" && (
-                        <p className="text-gray-600 mb-6">
-                          You have answered{" "}
-                          {selectedAnswers.filter((a) => a !== -1).length} out
-                          of {questions.length} questions.
-                          {selectedAnswers.filter((a) => a === -1).length > 0 &&
-                            " Unanswered questions will be marked as incorrect."}
-                        </p>
-                      )}
-
-                      {currentCat?.type === "case_study" && (
-                        <p className="text-gray-600 mb-6">
-                          Please ensure you've completed all questions to the
-                          best of your ability. Once submitted, you won't be
-                          able to make changes.
-                        </p>
-                      )}
+                      <p className="text-gray-600 mb-6">
+                        You have answered {getAnsweredCount()} out of {questions.length} questions.
+                        {getAnsweredCount() < questions.length && " Unanswered questions will be marked as incorrect."}
+                      </p>
 
                       <div className="flex justify-center space-x-4">
                         <button
@@ -518,7 +558,7 @@ export default function CatsPage() {
                         </p>
                         <p className="text-2xl font-bold text-amber-600">
                           {
-                            cats.filter((cat) => cat.status === "pending")
+                            cats.filter((cat) => cat.status === "start")
                               .length
                           }
                         </p>
@@ -534,7 +574,7 @@ export default function CatsPage() {
               {/* Filter Tabs */}
               <div className="mb-6">
                 <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
-                  {["all", "completed", "pending"].map((filter) => (
+                  {["all", "start", "in-progress", "completed"].map((filter) => (
                     <button
                       key={filter}
                       onClick={() => setSelectedFilter(filter)}
@@ -594,15 +634,13 @@ export default function CatsPage() {
                               >
                                 {getStatusIcon(cat.status)}
                                 <span className="ml-1">
-                                  {cat.status === "completed"
-                                    ? "Completed"
-                                    : "Pending"}
+                                  {getStatusText(cat.status)}
                                 </span>
                               </span>
                             </div>
 
                             <p className="text-sm text-gray-600 mb-3">
-                              {cat.course}
+                              {cat.topic} • {cat.questions_type} • {cat.number_of_questions} questions
                             </p>
 
                             <div className="flex items-center space-x-6 text-sm text-gray-500 mb-4">
@@ -610,26 +648,26 @@ export default function CatsPage() {
                                 <Calendar size={16} className="mr-1" />
                                 <span>
                                   Due:{" "}
-                                  {cat.dueDate ? new Date(cat.dueDate).toLocaleDateString() : "Unknown"}
+                                  {cat.deadline ? new Date(cat.deadline).toLocaleDateString() : "No deadline"}
                                 </span>
                               </div>
 
-                              <div className="flex items-center">
-                                <Clock size={16} className="mr-1" />
-                                <span>Duration: {cat.duration} mins</span>
-                              </div>
-
-                              {cat.score !== null && (
+                              {cat.duration && (
                                 <div className="flex items-center">
-                                  <Award size={16} className="mr-1" />
-                                  <span>
-                                    Score: {cat.score}/{cat.totalMarks}
-                                  </span>
+                                  <Clock size={16} className="mr-1" />
+                                  <span>Duration: {cat.duration} mins</span>
                                 </div>
                               )}
+
+                              <div className="flex items-center">
+                                <Award size={16} className="mr-1" />
+                                <span>
+                                  Total Marks: {cat.total_marks}
+                                </span>
+                              </div>
                             </div>
 
-                            {cat.status === "pending" && (
+                            {cat.status === "start" && (
                               <button
                                 className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                 onClick={() => handleStartCat(cat.id)}
@@ -645,12 +683,10 @@ export default function CatsPage() {
                                 Continue CAT
                               </button>
                             )}
-
-                            {cat.feedback && (
-                              <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-                                <p className="text-sm text-blue-800">
-                                  <strong>Feedback:</strong> {cat.feedback}
-                                </p>
+                            {cat.status === "completed" && (
+                              <div className="mt-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg">
+                                <CheckCircle size={16} className="inline mr-2" />
+                                Completed
                               </div>
                             )}
                           </div>

@@ -230,17 +230,9 @@ function HobbySelectionPage() {
 
   const navigateToDashboard = () => {
     setIsNavigating(true)
-
-    // Save hobbies to localStorage
     localStorage.setItem("userHobbies", JSON.stringify(selectedHobbies))
-
-    // Navigate immediately
-    try {
-      router.push("/student/dashboard")
-    } catch (error) {
-      // Fallback navigation
-      window.location.href = "/student/dashboard"
-    }
+    console.log("Navigating to dashboard...")
+    window.location.href = "/student/dashboard"
   }
 
   const selectedHobbiesWithType = selectedHobbies.map((hobbyName) => {
