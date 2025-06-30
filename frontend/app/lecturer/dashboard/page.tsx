@@ -287,7 +287,7 @@ const LecturerDashboard: React.FC = () => {
       icon: ClipboardList,
       title: "Grade Submissions",
       description: "Review and grade student work",
-      path: "/lecturer/grades",
+      path: "/lecturer/submission",
       color: "text-orange-600",
       iconBg: "bg-orange-100",
     },

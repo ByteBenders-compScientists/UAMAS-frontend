@@ -60,7 +60,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const navItems: NavItemType[] = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/lecturer/dashboard' },
     { name: 'Assessments', icon: <ClipboardList size={20} />, path: '/lecturer/assessments', badge: 3 },
-    { name: 'Grades', icon: <GraduationCap size={20} />, path: '/lecturer/grades' },
+    { name: 'Submission', icon: <GraduationCap size={20} />, path: '/lecturer/submission' },
     { name:'Students',icon: <User size={20} />, path: '/lecturer/students', badge: 5 },
     { name:'Course',icon:<GraduationCap size={20} />, path: '/lecturer/course', badge: 2 },
     { name:'Units',icon:<BookOpen size={20} />, path: '/lecturer/units' },
