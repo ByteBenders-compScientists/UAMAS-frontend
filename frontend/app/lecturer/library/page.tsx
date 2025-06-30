@@ -85,7 +85,7 @@ interface Unit {
 // ===== API FUNCTIONS =====
 const fetchCourses = async (): Promise<Course[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bd/courses`, {
+    const response = await fetch(`${API_BASE_URL}/auth/lecturer/courses`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -107,7 +107,7 @@ const fetchCourses = async (): Promise<Course[]> => {
 
 const fetchUnits = async (): Promise<Unit[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bd/units`, {
+    const response = await fetch(`${API_BASE_URL}/auth/lecturer/units`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -133,7 +133,7 @@ const fetchNotesForCourseUnit = async (
 ): Promise<Note[]> => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/bd/courses/${courseId}/units/${unitId}/notes`,
+      `${API_BASE_URL}/bd/units/${unitId}/notes`,
       {
         method: "GET",
         headers: {
@@ -184,7 +184,7 @@ const uploadNote = async (
 ): Promise<any> => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/bd/lecturer/courses/${courseId}/units/${unitId}/notes`,
+      `${API_BASE_URL}/bd/lecturer/units/${unitId}/notes`,
       {
         method: "POST",
         credentials: "include",
@@ -238,7 +238,7 @@ const downloadNote = async (noteId: number): Promise<void> => {
 
 const deleteNote = async (noteId: number): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bd/notes/${noteId}`, {
+    const response = await fetch(`${API_BASE_URL}/bd/lecturer/notes/${noteId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
