@@ -1,38 +1,50 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { useLayout } from "@/components/LayoutController"
-import Sidebar from "@/components/lecturerSidebar"
-import Header from "@/components/Header"
-import EmptyState from "@/components/EmptyState"
-import AddCourseModal from "@/components/lecturer/AddCourseModal"
-import { GraduationCap, Plus, Search, Filter, Edit, Trash2, Eye, Building, MoreVertical, BookOpen, X } from "lucide-react"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useLayout } from "@/components/LayoutController";
+import Sidebar from "@/components/lecturerSidebar";
+import Header from "@/components/Header";
+import EmptyState from "@/components/EmptyState";
+import AddCourseModal from "@/components/lecturer/AddCourseModal";
+import {
+  GraduationCap,
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Eye,
+  Building,
+  MoreVertical,
+  BookOpen,
+  X,
+} from "lucide-react";
 
 type Course = {
-  id: string
-  code: string
-  name: string
-  department: string
-  school: string
+  id: string;
+  code: string;
+  name: string;
+  department: string;
+  school: string;
   units: Array<{
-    id: string
-    unit_code: string
-    unit_name: string
-    level: number
-    semester: number
-    course_id: string
-  }>
-}
+    id: string;
+    unit_code: string;
+    unit_name: string;
+    level: number;
+    semester: number;
+    course_id: string;
+  }>;
+};
 
 type Unit = {
-  id: string
-  unit_code: string
-  unit_name: string
-  level: number
-  semester: number
-  course_id: string
-}
+  id: string;
+  unit_code: string;
+  unit_name: string;
+  level: number;
+  semester: number;
+  course_id: string;
+};
 
 const CourseCard = ({
   course,
@@ -40,16 +52,12 @@ const CourseCard = ({
   onDelete,
   onView,
   onAddUnit,
-  onEditUnit,
-  onDeleteUnit,
 }: {
-  course: Course
-  onEdit: (course: Course) => void
-  onDelete: (id: string) => void
-  onView: (course: Course) => void
-  onAddUnit: (course: Course) => void
-  onEditUnit: (unit: Unit) => void
-  onDeleteUnit: (unitId: string) => void
+  course: Course;
+  onEdit: (course: Course) => void;
+  onDelete: (id: string) => void;
+  onView: (course: Course) => void;
+  onAddUnit: (course: Course) => void;
 }) => (
   <motion.div
     whileHover={{ y: -2 }}
@@ -114,7 +122,9 @@ const CourseCard = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-gray-500">Units:</span>
-          <span className="text-sm font-medium text-gray-800">{course.units.length} units</span>
+          <span className="text-sm font-medium text-gray-800">
+            {course.units.length} units
+          </span>
         </div>
 
         {course.units.length > 0 ? (
@@ -131,31 +141,35 @@ const CourseCard = ({
                   <span className="text-violet-500">
                     L{unit.level}S{unit.semester}
                   </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onEditUnit(unit)
-                    }}
-                    className="p-1 hover:bg-violet-200 rounded text-violet-600"
-                    title="Edit unit"
-                  >
-                    <Edit size={10} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onDeleteUnit(unit.id)
-                    }}
-                    className="p-1 hover:bg-red-200 rounded text-red-600"
-                    title="Delete unit"
-                  >
-                    <Trash2 size={10} />
-                  </button>
+                  <div className="hidden group-hover:flex items-center space-x-1 ml-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUnit(unit);
+                      }}
+                      className="p-1 hover:bg-violet-200 rounded text-violet-600"
+                      title="Edit unit"
+                    >
+                      <Edit size={10} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteUnit(unit.id);
+                      }}
+                      className="p-1 hover:bg-red-200 rounded text-red-600"
+                      title="Delete unit"
+                    >
+                      <Trash2 size={10} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
             {course.units.length > 2 && (
-              <div className="text-xs text-gray-500">+{course.units.length - 2} more units</div>
+              <div className="text-xs text-gray-500">
+                +{course.units.length - 2} more units
+              </div>
             )}
           </div>
         ) : (
@@ -164,301 +178,331 @@ const CourseCard = ({
       </div>
     </div>
   </motion.div>
-)
+);
 
 export default function CoursesPage() {
-  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout()
-  const [isLoading, setIsLoading] = useState(true)
-  const [courses, setCourses] = useState<Course[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [showUnitModal, setShowUnitModal] = useState(false)
-  const [selectedCourseForUnit, setSelectedCourseForUnit] = useState<Course | null>(null)
-  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
+  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const [isLoading, setIsLoading] = useState(true);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [showUnitModal, setShowUnitModal] = useState(false);
+  const [selectedCourseForUnit, setSelectedCourseForUnit] =
+    useState<Course | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Fetch all courses created by the lecturer
   const fetchCourses = async () => {
     try {
-      setIsLoading(true)
-      setError(null)
-      
-      const res = await fetch("http://localhost:8080/api/v1/auth/lecturer/courses", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
+      setIsLoading(true);
+      setError(null);
+
+      const res = await fetch(
+        "http://localhost:8080/api/v1/auth/lecturer/courses",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
+      );
 
       if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Failed to fetch courses")
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to fetch courses");
       }
 
-      const data = await res.json()
-      setCourses(data)
+      const data = await res.json();
+      setCourses(data);
     } catch (error) {
-      console.error("Error fetching courses:", error)
-      setError(error instanceof Error ? error.message : "Failed to fetch courses")
-      setCourses([])
+      console.error("Error fetching courses:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch courses"
+      );
+      setCourses([]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchCourses()
-  }, [])
+    fetchCourses();
+  }, []);
 
   const filteredCourses = courses.filter(
     (course) =>
       course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.school.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      course.school.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleEditCourse = (course: Course) => {
-    setSelectedCourse(course)
-    setShowAddModal(true)
-  }
+    setSelectedCourse(course);
+    setShowAddModal(true);
+  };
 
   const handleDeleteCourse = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this course? This will also delete all related units.")) {
-      return
+    if (
+      !confirm(
+        "Are you sure you want to delete this course? This will also delete all related units."
+      )
+    ) {
+      return;
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/auth/lecturer/courses/${id}`, {
-        method: "DELETE",
+      const response = await fetch(
+        `http://localhost:8080/api/v1/auth/lecturer/courses/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to delete course");
+      }
+
+      // Show success message
+      const result = await response.json();
+      console.log(result.message);
+
+      // Reload the courses list
+      await fetchCourses();
+    } catch (error) {
+      console.error("Error deleting course:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to delete course"
+      );
+      // Still try to reload the courses list
+      await fetchCourses();
+    }
+  };
+
+  const handleAddCourse = async (courseData: {
+    code: string;
+    name: string;
+    department: string;
+    school: string;
+  }) => {
+    try {
+      setModalLoading(true);
+      setModalError(null);
+
+      const url = selectedCourse
+        ? `http://localhost:8080/api/v1/auth/lecturer/courses/${selectedCourse.id}`
+        : "http://localhost:8080/api/v1/auth/lecturer/courses";
+
+      const response = await fetch(url, {
+        method: selectedCourse ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      })
+        body: JSON.stringify(courseData),
+      });
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || "Failed to delete course")
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to save course");
       }
 
-      // Show success message
-      const result = await response.json()
-      console.log(result.message)
+      const result = await response.json();
+      console.log(
+        selectedCourse
+          ? "Course updated successfully:"
+          : "Course created successfully:",
+        result
+      );
 
       // Reload the courses list
-      await fetchCourses()
+      await fetchCourses();
+
+      // Close modal and reset state
+      setShowAddModal(false);
+      setSelectedCourse(null);
+      setModalError(null);
     } catch (error) {
-      console.error("Error deleting course:", error)
-      setError(error instanceof Error ? error.message : "Failed to delete course")
-      // Still try to reload the courses list
-      await fetchCourses()
+      console.error("Error saving course:", error);
+      setModalError(
+        error instanceof Error ? error.message : "Failed to save course"
+      );
+    } finally {
+      setModalLoading(false);
     }
-  }
-
-  const handleAddCourse = async (courseData: any) => {
-    try {
-      setError(null)
-      
-      if (selectedCourse) {
-        // Update existing course
-        const response = await fetch(`http://localhost:8080/api/v1/auth/lecturer/courses/${selectedCourse.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            name: courseData.name,
-            code: courseData.code,
-            department: courseData.department,
-            school: courseData.school,
-          }),
-        })
-
-        if (!response.ok) {
-          const data = await response.json()
-          throw new Error(data.message || "Failed to update course")
-        }
-
-        const result = await response.json()
-        console.log("Course updated successfully:", result)
-      } else {
-        // Add new course
-        const response = await fetch("http://localhost:8080/api/v1/auth/lecturer/courses", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            name: courseData.name,
-            code: courseData.code,
-            department: courseData.department,
-            school: courseData.school,
-          }),
-        })
-
-        if (!response.ok) {
-          const data = await response.json()
-          throw new Error(data.message || "Failed to add course")
-        }
-
-        const result = await response.json()
-        console.log("Course created successfully:", result.message, "ID:", result.course_id)
-      }
-
-      // Reload the courses list
-      await fetchCourses()
-
-      setShowAddModal(false)
-      setSelectedCourse(null)
-    } catch (error) {
-      console.error("Error saving course:", error)
-      setError(error instanceof Error ? error.message : "Failed to save course")
-    }
-  }
+  };
 
   const handleViewCourse = async (course: Course) => {
     try {
       // Fetch detailed course information
-      const response = await fetch(`http://localhost:8080/api/v1/auth/lecturer/courses/${course.id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
+      const response = await fetch(
+        `http://localhost:8080/api/v1/auth/lecturer/courses/${course.id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || "Failed to fetch course details")
+        const data = await response.json();
+        throw new Error(data.message || "Failed to fetch course details");
       }
 
-      const courseDetails = await response.json()
-      console.log("Course details:", courseDetails)
-      
+      const courseDetails = await response.json();
+      console.log("Course details:", courseDetails);
+
       // You can implement a detailed view modal here
       // For now, just log the details
     } catch (error) {
-      console.error("Error fetching course details:", error)
-      setError(error instanceof Error ? error.message : "Failed to fetch course details")
+      console.error("Error fetching course details:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch course details"
+      );
     }
-  }
+  };
 
   const handleAddUnit = (course: Course) => {
-    setSelectedCourseForUnit(course)
-    setSelectedUnit(null)
-    setShowUnitModal(true)
-  }
+    setSelectedCourseForUnit(course);
+    setSelectedUnit(null);
+    setShowUnitModal(true);
+  };
 
   const handleEditUnit = (unit: Unit) => {
-    const course = courses.find(c => c.id === unit.course_id)
+    const course = courses.find((c) => c.id === unit.course_id);
     if (course) {
-      setSelectedCourseForUnit(course)
-      setSelectedUnit(unit)
-      setShowUnitModal(true)
+      setSelectedCourseForUnit(course);
+      setSelectedUnit(unit);
+      setShowUnitModal(true);
     }
-  }
+  };
 
   const handleDeleteUnit = async (unitId: string) => {
     if (!confirm("Are you sure you want to delete this unit?")) {
-      return
+      return;
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/auth/lecturer/units/${unitId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
+      const response = await fetch(
+        `http://localhost:8080/api/v1/auth/lecturer/units/${unitId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || "Failed to delete unit")
+        const data = await response.json();
+        throw new Error(data.message || "Failed to delete unit");
       }
 
-      const result = await response.json()
-      console.log(result.message)
+      const result = await response.json();
+      console.log(result.message);
 
       // Reload the courses list to update units
-      await fetchCourses()
+      await fetchCourses();
     } catch (error) {
-      console.error("Error deleting unit:", error)
-      setError(error instanceof Error ? error.message : "Failed to delete unit")
+      console.error("Error deleting unit:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to delete unit"
+      );
     }
-  }
+  };
 
   const handleSubmitUnit = async (unitData: {
-    unit_code: string
-    unit_name: string
-    level: number
-    semester: number
+    unit_code: string;
+    unit_name: string;
+    level: number;
+    semester: number;
   }) => {
-    if (!selectedCourseForUnit) return
+    if (!selectedCourseForUnit) return;
 
     try {
-      setError(null)
-      
+      setError(null);
+
       if (selectedUnit) {
         // Update existing unit
-        const response = await fetch(`http://localhost:8080/api/v1/auth/lecturer/units/${selectedUnit.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            ...unitData,
-            course_id: selectedCourseForUnit.id,
-          }),
-        })
+        const response = await fetch(
+          `http://localhost:8080/api/v1/auth/lecturer/units/${selectedUnit.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              ...unitData,
+              course_id: selectedCourseForUnit.id,
+            }),
+          }
+        );
 
         if (!response.ok) {
-          const data = await response.json()
-          throw new Error(data.message || "Failed to update unit")
+          const data = await response.json();
+          throw new Error(data.message || "Failed to update unit");
         }
 
-        const result = await response.json()
-        console.log("Unit updated successfully:", result)
+        const result = await response.json();
+        console.log("Unit updated successfully:", result);
       } else {
         // Add new unit
-        const response = await fetch("http://localhost:8080/api/v1/auth/lecturer/units", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            ...unitData,
-            course_id: selectedCourseForUnit.id,
-          }),
-        })
+        const response = await fetch(
+          "http://localhost:8080/api/v1/auth/lecturer/units",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              ...unitData,
+              course_id: selectedCourseForUnit.id,
+            }),
+          }
+        );
 
         if (!response.ok) {
-          const data = await response.json()
-          throw new Error(data.message || "Failed to add unit")
+          const data = await response.json();
+          throw new Error(data.message || "Failed to add unit");
         }
 
-        const result = await response.json()
-        console.log("Unit created successfully:", result.message, "ID:", result.unit_id)
+        const result = await response.json();
+        console.log(
+          "Unit created successfully:",
+          result.message,
+          "ID:",
+          result.unit_id
+        );
       }
 
       // Reload the courses list to update units
-      await fetchCourses()
+      await fetchCourses();
 
-      setShowUnitModal(false)
-      setSelectedCourseForUnit(null)
-      setSelectedUnit(null)
+      setShowUnitModal(false);
+      setSelectedCourseForUnit(null);
+      setSelectedUnit(null);
     } catch (error) {
-      console.error("Error saving unit:", error)
-      setError(error instanceof Error ? error.message : "Failed to save unit")
+      console.error("Error saving unit:", error);
+      setError(error instanceof Error ? error.message : "Failed to save unit");
     }
-  }
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -466,10 +510,12 @@ export default function CoursesPage() {
 
       <motion.div
         initial={{
-          marginLeft: !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
+          marginLeft:
+            !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
         }}
         animate={{
-          marginLeft: !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
+          marginLeft:
+            !isMobileView && !isTabletView ? (sidebarCollapsed ? 80 : 240) : 0,
         }}
         transition={{ duration: 0.3 }}
         className="flex-1 overflow-auto"
@@ -485,7 +531,7 @@ export default function CoursesPage() {
                   <div className="text-red-800">
                     <strong>Error:</strong> {error}
                   </div>
-                  <button 
+                  <button
                     onClick={() => setError(null)}
                     className="ml-auto text-red-600 hover:text-red-800"
                   >
@@ -498,8 +544,12 @@ export default function CoursesPage() {
             {/* Header Actions */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
               <div>
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">My Courses</h1>
-                <p className="text-gray-600">Manage your academic programs and course structures</p>
+                <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                  My Courses
+                </h1>
+                <p className="text-gray-600">
+                  Manage your academic programs and course structures
+                </p>
               </div>
 
               <div className="flex items-center space-x-3 mt-4 md:mt-0">
@@ -516,7 +566,10 @@ export default function CoursesPage() {
             {/* Search and Filters */}
             <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4 mb-6">
               <div className="relative flex-1 max-w-md">
-                <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Search
+                  size={20}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   placeholder="Search courses..."
@@ -561,15 +614,18 @@ export default function CoursesPage() {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
               >
                 {filteredCourses.map((course, index) => (
-                  <motion.div key={course.id}>
+                  <motion.div
+                    key={course.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 * index }}
+                  >
                     <CourseCard
                       course={course}
                       onEdit={handleEditCourse}
                       onDelete={handleDeleteCourse}
                       onView={handleViewCourse}
                       onAddUnit={handleAddUnit}
-                      onEditUnit={handleEditUnit}
-                      onDeleteUnit={handleDeleteUnit}
                     />
                   </motion.div>
                 ))}
@@ -584,10 +640,13 @@ export default function CoursesPage() {
         <AddCourseModal
           course={selectedCourse}
           onClose={() => {
-            setShowAddModal(false)
-            setSelectedCourse(null)
+            setShowAddModal(false);
+            setSelectedCourse(null);
+            setModalError(null);
           }}
           onSubmit={handleAddCourse}
+          isLoading={modalLoading}
+          error={modalError}
         />
       )}
 
@@ -597,15 +656,15 @@ export default function CoursesPage() {
           course={selectedCourseForUnit}
           unit={selectedUnit}
           onClose={() => {
-            setShowUnitModal(false)
-            setSelectedCourseForUnit(null)
-            setSelectedUnit(null)
+            setShowUnitModal(false);
+            setSelectedCourseForUnit(null);
+            setSelectedUnit(null);
           }}
           onSubmit={handleSubmitUnit}
         />
       )}
     </div>
-  )
+  );
 }
 
 // Unit Modal Component
@@ -615,35 +674,37 @@ const UnitModal = ({
   onClose,
   onSubmit,
 }: {
-  course: Course
-  unit: Unit | null
-  onClose: () => void
+  course: Course;
+  unit: Unit | null;
+  onClose: () => void;
   onSubmit: (unitData: {
-    unit_code: string
-    unit_name: string
-    level: number
-    semester: number
-  }) => void
+    unit_code: string;
+    unit_name: string;
+    level: number;
+    semester: number;
+  }) => void;
 }) => {
   const [formData, setFormData] = useState({
     unit_code: unit?.unit_code || "",
     unit_name: unit?.unit_name || "",
     level: unit?.level || 1,
     semester: unit?.semester || 1,
-  })
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(formData)
-  }
+    e.preventDefault();
+    onSubmit(formData);
+  };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: name === 'level' || name === 'semester' ? parseInt(value) : value
-    }))
-  }
+      [name]: name === "level" || name === "semester" ? parseInt(value) : value,
+    }));
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -654,7 +715,7 @@ const UnitModal = ({
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-800">
-            {unit ? 'Edit Unit' : 'Add Unit'} - {course.name}
+            {unit ? "Edit Unit" : "Add Unit"} - {course.name}
           </h2>
           <button
             onClick={onClose}
@@ -746,11 +807,11 @@ const UnitModal = ({
               type="submit"
               className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
             >
-              {unit ? 'Update Unit' : 'Add Unit'}
+              {unit ? "Update Unit" : "Add Unit"}
             </button>
           </div>
         </form>
       </motion.div>
     </div>
-  )
-}
+  );
+};
