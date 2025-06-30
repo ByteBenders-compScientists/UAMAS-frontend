@@ -168,7 +168,9 @@ export default function AuthPage() {
     setError("")
 
     try {
-      const response = await fetch(`${apiBaseUrl}/auth/login`, {
+
+      const response = await fetch("https://api.waltertayarg.me/api/v1/auth/login", {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -214,7 +216,9 @@ export default function AuthPage() {
 
   const fetchUserInfo = async () => {
     try {
-      const response = await fetch(`${apiBaseUrl}/auth/me`, {
+
+      const response = await fetch("https://api.waltertayarg.me/api/v1/auth/me", {
+
         method: "GET",
         credentials: "include",
       })
