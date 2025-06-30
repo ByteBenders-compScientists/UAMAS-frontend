@@ -30,7 +30,7 @@ export default function LecturersPage() {
   useEffect(() => {
     const fetchLecturers = async () => {
       setIsLoading(true)
-      const res = await fetch(`${apiBaseUrl}/admin/lecturers`, {
+      const res = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -55,7 +55,9 @@ export default function LecturersPage() {
     try {
       if (selectedLecturer) {
         // Update existing lecturer
-        const response = await fetch(`${apiBaseUrl}/admin/lecturers/${selectedLecturer.id}`, {
+
+        const response = await fetch(`https://api.waltertayarg.me//api/v1/admin/lecturers/${selectedLecturer.id}`, {
+
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -71,8 +73,9 @@ export default function LecturersPage() {
         }
       } else {
         // Add new lecturer
-        console.log("Adding new lecturer:", lecturerData)
-        const response = await fetch(`${apiBaseUrl}/admin/lecturers`, {
+
+        const response = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -89,7 +92,9 @@ export default function LecturersPage() {
       }
 
       // Reload the lecturers list
-      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
+
+      const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -105,7 +110,9 @@ export default function LecturersPage() {
     } catch (error) {
       console.error("Error saving lecturer:", error)
       // Reload the lecturers list even if there was an error
-      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
+
+      const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -129,7 +136,9 @@ export default function LecturersPage() {
     }
 
     try {
-      const response = await fetch(`${apiBaseUrl}/admin/lecturers/${id}`, {
+
+      const response = await fetch(`https://api.waltertayarg.me/api/v1/admin/lecturers/${id}`, {
+
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -143,7 +152,10 @@ export default function LecturersPage() {
       }
 
       // Reload the lecturers list
-      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
+
+      const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+
+
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -156,7 +168,9 @@ export default function LecturersPage() {
     } catch (error) {
       console.error("Error deleting lecturer:", error)
       // Reload the lecturers list even if there was an error
-      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
+
+      const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -167,6 +181,31 @@ export default function LecturersPage() {
       const lecturersData = await lecturersResponse.json()
       setLecturers(lecturersData)
     }
+  }
+
+
+  const handleViewLecturer = (lecturer: Lecturer) => {
+    console.log("Viewing lecturer:", lecturer)
+  }
+
+  const handleAssignUnits = (lecturer: Lecturer) => {
+    setSelectedLecturerForUnits(lecturer)
+    setSelectedLecturerUnitIds(lecturer.units.map(u => u.unit_code))
+    setShowAssignModal(true)
+  }
+
+  const handleUnitsAssigned = async (unitIds: string[]) => {
+    // Reload the lecturers list to show updated unit assignments
+    const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    })
+
+    const lecturersData = await lecturersResponse.json()
+    setLecturers(lecturersData)
   }
 
   return (
