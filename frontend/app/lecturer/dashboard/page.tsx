@@ -125,6 +125,7 @@ const LecturerDashboard: React.FC = () => {
   const [units, setUnits] = useState<Unit[]>([]);
   const [profile, setProfile] = useState<LecturerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lecturerProfile, setLecturerProfile] = useState<any>(null);
 
   // API Base URL
   const API_BASE =
@@ -243,6 +244,13 @@ const LecturerDashboard: React.FC = () => {
     loadData();
   }, []);
 
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"}/auth/me`, { credentials: 'include' })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setLecturerProfile(data))
+      .catch(() => setLecturerProfile(null));
+  }, []);
+
   // Calculate proper margin based on sidebar state
   const getMainContentMargin = () => {
     if (isMobileView || isTabletView) {
@@ -317,7 +325,7 @@ const LecturerDashboard: React.FC = () => {
       icon: ClipboardList,
       title: "Grade Submissions",
       description: "Review and grade student work",
-      path: "/lecturer/grades",
+      path: "/lecturer/submission",
       color: "text-orange-600",
       iconBg: "bg-orange-100",
     },
@@ -372,7 +380,9 @@ const LecturerDashboard: React.FC = () => {
           <div className="hidden sm:block">
             <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-sm text-gray-600">
-              Welcome back, {profile ? getDisplayName(profile) : "Loading..."}
+
+              Welcome back, {lecturerProfile ? `${lecturerProfile.name} ${lecturerProfile.surname}` : '...'}
+
             </p>
           </div>
         </div>
@@ -396,7 +406,9 @@ const LecturerDashboard: React.FC = () => {
               )}
             </div>
             <span className="text-sm font-semibold text-gray-700 hidden md:inline">
-              {profile ? getDisplayName(profile) : "Loading..."}
+
+              {lecturerProfile ? `${lecturerProfile.name} ${lecturerProfile.surname}` : '...'}
+
             </span>
           </div>
         </div>
@@ -408,7 +420,9 @@ const LecturerDashboard: React.FC = () => {
     <div className="bg-gradient-to-r from-emerald-900 to-gray-700 rounded-xl p-6 lg:p-8 mb-6 text-white relative overflow-hidden">
       <div className="relative z-10">
         <h1 className="text-xl lg:text-3xl font-bold mb-2">
-          Welcome back, {profile ? getDisplayName(profile) : "Loading..."}
+
+          Welcome back, {lecturerProfile ? `${lecturerProfile.name} ${lecturerProfile.surname}` : '...'}
+
         </h1>
         <p className="text-slate-200 mb-4">
           Manage your courses and engage with students efficiently

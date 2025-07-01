@@ -53,6 +53,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   } = useLayout();
 
   const [mounted, setMounted] = useState(false);
+
   const [profile, setProfile] = useState<LecturerProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -108,6 +109,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   useEffect(() => {
     setMounted(true);
     fetchProfile();
+
   }, []);
 
   if (!mounted) return null;
@@ -120,6 +122,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
     return null;
 
   const navItems: NavItemType[] = [
+
     {
       name: "Dashboard",
       icon: <LayoutDashboard size={20} />,
@@ -156,6 +159,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       path: "/lecturer/forums",
       badge: "New",
     },
+
   ];
 
   const bottomNavItems: NavItemType[] = [
@@ -345,7 +349,9 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
 
         {/* User Profile Section */}
         {(!sidebarCollapsed || isMobileView || isTabletView) && (
+
           <UserProfileSection />
+
         )}
 
         {/* Navigation Section */}
