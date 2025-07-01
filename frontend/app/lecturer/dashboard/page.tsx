@@ -1,12 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; // For Next.js routing
-// import { useNavigate } from "react-router-dom"; // For React Router (uncomment if using React Router)
+import { useRouter } from "next/navigation";
 import {
   BookMarked,
   BarChart3,
   Clock,
-  Monitor,
   Users,
   Bell,
   Menu,
@@ -14,25 +12,12 @@ import {
   GraduationCap,
   FileText,
   MessageSquare,
-  Calendar,
   CheckCircle,
-  AlertCircle,
   BookOpen,
   ChevronRight,
   TrendingUp,
-  Activity,
   PlusCircle,
   ClipboardList,
-  Star,
-  Award,
-  Upload,
-  Eye,
-  Edit,
-  Trash2,
-  Plus,
-  Download,
-  Filter,
-  Search,
   Library,
 } from "lucide-react";
 import Sidebar from "@/components/lecturerSidebar";
@@ -107,16 +92,24 @@ interface QuickActionCard {
   icon: React.ElementType;
   title: string;
   description: string;
-  path: string; // Changed from onClick to path
+  path: string;
   color: string;
   iconBg: string;
 }
 
+interface LecturerProfile {
+  name: string;
+  surname: string;
+  email?: string;
+  staff_number?: string;
+  department?: string;
+  title?: string;
+}
+
 // Main Dashboard Component with proper sidebar integration
 const LecturerDashboard: React.FC = () => {
-  const router = useRouter(); // For Next.js
-  // const navigate = useNavigate(); // For React Router (uncomment if using React Router)
-  
+  const router = useRouter();
+
   const {
     sidebarCollapsed,
     isMobileMenuOpen,
@@ -130,16 +123,52 @@ const LecturerDashboard: React.FC = () => {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [profile, setProfile] = useState<LecturerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [lecturerProfile, setLecturerProfile] = useState<any>(null);
 
   // API Base URL
-  const API_BASE = "http://localhost:8080/api/v1";
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
   // Navigation handler
   const handleNavigation = (path: string) => {
-    router.push(path); // For Next.js
-    // navigate(path); // For React Router (uncomment if using React Router)
+    router.push(path);
+  };
+
+  // Get lecturer's initials for avatar
+  const getInitials = (name: string, surname: string) => {
+    return `${name.charAt(0)}${surname.charAt(0)}`.toUpperCase();
+  };
+
+  // Get full display name with title
+  const getDisplayName = (profile: LecturerProfile) => {
+    const title = profile.title || "Dr.";
+    return `${title} ${profile.name} ${profile.surname}`;
+  };
+
+  // Fetch lecturer profile
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/me`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.name && data.surname) {
+          setProfile({
+            name: data.name,
+            surname: data.surname,
+            email: data.email,
+            staff_number: data.staff_number,
+            department: data.department,
+            title: data.title,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
   };
 
   // Fetch data functions
@@ -203,6 +232,7 @@ const LecturerDashboard: React.FC = () => {
     const loadData = async () => {
       setLoading(true);
       await Promise.all([
+        fetchProfile(),
         fetchCourses(),
         fetchStudents(),
         fetchAssessments(),
@@ -224,9 +254,9 @@ const LecturerDashboard: React.FC = () => {
   // Calculate proper margin based on sidebar state
   const getMainContentMargin = () => {
     if (isMobileView || isTabletView) {
-      return "ml-0"; // No margin on mobile/tablet
+      return "ml-0";
     }
-    return sidebarCollapsed ? "ml-20" : "ml-60"; // 80px = ml-20, 240px = ml-60
+    return sidebarCollapsed ? "ml-20" : "ml-60";
   };
 
   // Calculate statistics
@@ -350,7 +380,9 @@ const LecturerDashboard: React.FC = () => {
           <div className="hidden sm:block">
             <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-sm text-gray-600">
+
               Welcome back, {lecturerProfile ? `${lecturerProfile.name} ${lecturerProfile.surname}` : '...'}
+
             </p>
           </div>
         </div>
@@ -365,10 +397,18 @@ const LecturerDashboard: React.FC = () => {
 
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-emerald-600" />
+              {profile ? (
+                <span className="text-sm font-semibold text-emerald-700">
+                  {getInitials(profile.name, profile.surname)}
+                </span>
+              ) : (
+                <User className="w-4 h-4 text-emerald-600" />
+              )}
             </div>
             <span className="text-sm font-semibold text-gray-700 hidden md:inline">
+
               {lecturerProfile ? `${lecturerProfile.name} ${lecturerProfile.surname}` : '...'}
+
             </span>
           </div>
         </div>
@@ -380,11 +420,22 @@ const LecturerDashboard: React.FC = () => {
     <div className="bg-gradient-to-r from-emerald-900 to-gray-700 rounded-xl p-6 lg:p-8 mb-6 text-white relative overflow-hidden">
       <div className="relative z-10">
         <h1 className="text-xl lg:text-3xl font-bold mb-2">
+
           Welcome back, {lecturerProfile ? `${lecturerProfile.name} ${lecturerProfile.surname}` : '...'}
+
         </h1>
         <p className="text-slate-200 mb-4">
           Manage your courses and engage with students efficiently
         </p>
+        {profile && profile.department && (
+          <div className="flex items-center space-x-2 bg-slate-700/50 px-3 py-2 rounded-lg w-fit mb-4">
+            <GraduationCap className="w-4 h-4 text-emerald-400" />
+            <span className="text-sm">
+              {profile.department}
+              {profile.staff_number && ` • Staff ID: ${profile.staff_number}`}
+            </span>
+          </div>
+        )}
         <div className="flex items-center space-x-2 bg-slate-700/50 px-3 py-2 rounded-lg w-fit">
           <CheckCircle className="w-4 h-4 text-green-400" />
           <span className="text-sm">
@@ -511,7 +562,9 @@ const LecturerDashboard: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Sidebar />
-        <div className={`${getMainContentMargin()} transition-all duration-300 ease-in-out`}>
+        <div
+          className={`${getMainContentMargin()} transition-all duration-300 ease-in-out`}
+        >
           <div className="flex items-center justify-center h-screen">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
