@@ -79,7 +79,7 @@ const navigationItems = [
   { icon: FileText, label: 'Assignment', count: 8, path: '/lecturer/assignment' },
   { icon: BookMarked, label: 'CATs', path: '/lecturer/cats' },
   { icon: MessageCircle, label: 'Forums', path: '/lecturer/forums' },
-  { icon: BarChart3, label: 'Grades', path: '/lecturer/grades' },
+  { icon: BarChart3, label: 'Submission', path: '/lecturer/submission' },
   { icon: Book, label: 'Library', path: '/lecturer/library' },
   { icon: User, label: 'Profile', active: true, path: '/lecturer/profile' },
   { icon: Settings, label: 'Settings', path: '/lecturer/settings' }
