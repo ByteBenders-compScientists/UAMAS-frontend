@@ -35,6 +35,8 @@ type NavItemType = {
   badge?: number | string;
 };
 
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+
 const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const pathname = usePathname();
   const { 
@@ -52,7 +54,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   useEffect(() => {
     setMounted(true);
     // Fetch student profile
-    fetch('http://localhost:8080/api/v1/auth/me', {
+    fetch(`${apiBaseUrl}/auth/me`, {
       credentials: 'include',
     })
       .then(res => res.ok ? res.json() : null)
