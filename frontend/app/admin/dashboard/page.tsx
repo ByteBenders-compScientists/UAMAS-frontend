@@ -164,28 +164,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch students
-        const studentsResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/students", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        })
-        const studentsData = await studentsResponse.json()
-
-        // Fetch lecturers
-        const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
-
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        });
-
-        // Fetch analytics
-        const analyticsResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/analytics", {
+        // Fetch analytics only
+        const analyticsResponse = await fetch(`${apiBaseUrl}/admin/analytics`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -193,18 +173,6 @@ export default function AdminDashboard() {
           credentials: "include",
         });
         const analyticsData = await analyticsResponse.json();
-
-
-        // Fetch courses
-        const coursesResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/courses", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        })
-        const coursesData = await coursesResponse.json()
-
 
         // Calculate total users
         const totalUsers =

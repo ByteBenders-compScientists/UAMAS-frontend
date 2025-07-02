@@ -30,7 +30,7 @@ export default function LecturersPage() {
   useEffect(() => {
     const fetchLecturers = async () => {
       setIsLoading(true)
-      const res = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+      const res = await fetch(`${apiBaseUrl}/admin/lecturers`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -56,7 +56,7 @@ export default function LecturersPage() {
       if (selectedLecturer) {
         // Update existing lecturer
 
-        const response = await fetch(`https://api.waltertayarg.me//api/v1/admin/lecturers/${selectedLecturer.id}`, {
+        const response = await fetch(`${apiBaseUrl}/admin/lecturers/${selectedLecturer.id}`, {
 
           method: "PUT",
           headers: {
@@ -74,7 +74,7 @@ export default function LecturersPage() {
       } else {
         // Add new lecturer
 
-        const response = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+        const response = await fetch(`${apiBaseUrl}/admin/lecturers`, {
 
           method: "POST",
           headers: {
@@ -93,7 +93,7 @@ export default function LecturersPage() {
 
       // Reload the lecturers list
 
-      const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
 
         method: "GET",
         headers: {
@@ -111,7 +111,7 @@ export default function LecturersPage() {
       console.error("Error saving lecturer:", error)
       // Reload the lecturers list even if there was an error
 
-      const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
 
         method: "GET",
         headers: {
@@ -137,7 +137,7 @@ export default function LecturersPage() {
 
     try {
 
-      const response = await fetch(`https://api.waltertayarg.me/api/v1/admin/lecturers/${id}`, {
+      const response = await fetch(`${apiBaseUrl}/admin/lecturers/${id}`, {
 
         method: "DELETE",
         headers: {
@@ -153,7 +153,7 @@ export default function LecturersPage() {
 
       // Reload the lecturers list
 
-      const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
 
 
         method: "GET",
@@ -169,7 +169,7 @@ export default function LecturersPage() {
       console.error("Error deleting lecturer:", error)
       // Reload the lecturers list even if there was an error
 
-      const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+      const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
 
         method: "GET",
         headers: {
@@ -196,7 +196,7 @@ export default function LecturersPage() {
 
   const handleUnitsAssigned = async (unitIds: string[]) => {
     // Reload the lecturers list to show updated unit assignments
-    const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
+    const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

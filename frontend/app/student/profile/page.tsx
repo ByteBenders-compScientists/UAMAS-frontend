@@ -65,6 +65,8 @@ const mockProfile: Profile = {
   avatar: null // Will be replaced with an actual image URL when uploaded
 };
 
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+
 export default function ProfilePage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const [profile, setProfile] = useState(mockProfile);
@@ -76,7 +78,7 @@ export default function ProfilePage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/v1/auth/me', {
+    fetch(`${apiBaseUrl}/auth/me`, {
       credentials: 'include',
     })
       .then(res => res.ok ? res.json() : null)
