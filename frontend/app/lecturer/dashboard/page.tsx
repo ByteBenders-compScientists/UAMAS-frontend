@@ -128,8 +128,7 @@ const LecturerDashboard: React.FC = () => {
   const [lecturerProfile, setLecturerProfile] = useState<any>(null);
 
   // API Base URL
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
   // Navigation handler
   const handleNavigation = (path: string) => {
@@ -245,7 +244,7 @@ const LecturerDashboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"}/auth/me`, { credentials: 'include' })
+    fetch(`${API_BASE}/auth/me`, { credentials: 'include' })
       .then(res => res.ok ? res.json() : null)
       .then(data => setLecturerProfile(data))
       .catch(() => setLecturerProfile(null));
