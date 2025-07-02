@@ -46,6 +46,8 @@ type Unit = {
   course_id: string;
 };
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+
 const CourseCard = ({
   course,
   onEdit,
@@ -202,7 +204,7 @@ export default function CoursesPage() {
       setError(null);
 
       const res = await fetch(
-        "http://localhost:8080/api/v1/auth/lecturer/courses",
+        `${API_BASE_URL}/auth/lecturer/courses`,
         {
           method: "GET",
           headers: {
@@ -258,7 +260,7 @@ export default function CoursesPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/v1/auth/lecturer/courses/${id}`,
+        `${API_BASE_URL}/auth/lecturer/courses/${id}`,
         {
           method: "DELETE",
           headers: {
@@ -300,8 +302,8 @@ export default function CoursesPage() {
       setModalError(null);
 
       const url = selectedCourse
-        ? `http://localhost:8080/api/v1/auth/lecturer/courses/${selectedCourse.id}`
-        : "http://localhost:8080/api/v1/auth/lecturer/courses";
+        ? `${API_BASE_URL}/auth/lecturer/courses/${selectedCourse.id}`
+        : `${API_BASE_URL}/auth/lecturer/courses`;
 
       const response = await fetch(url, {
         method: selectedCourse ? "PUT" : "POST",
@@ -346,7 +348,7 @@ export default function CoursesPage() {
     try {
       // Fetch detailed course information
       const response = await fetch(
-        `http://localhost:8080/api/v1/auth/lecturer/courses/${course.id}`,
+        `${API_BASE_URL}/auth/lecturer/courses/${course.id}`,
         {
           method: "GET",
           headers: {
@@ -398,7 +400,7 @@ export default function CoursesPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/v1/auth/lecturer/units/${unitId}`,
+        `${API_BASE_URL}/auth/lecturer/units/${unitId}`,
         {
           method: "DELETE",
           headers: {
@@ -440,7 +442,7 @@ export default function CoursesPage() {
       if (selectedUnit) {
         // Update existing unit
         const response = await fetch(
-          `http://localhost:8080/api/v1/auth/lecturer/units/${selectedUnit.id}`,
+          `${API_BASE_URL}/auth/lecturer/units/${selectedUnit.id}`,
           {
             method: "PUT",
             headers: {
@@ -464,7 +466,7 @@ export default function CoursesPage() {
       } else {
         // Add new unit
         const response = await fetch(
-          "http://localhost:8080/api/v1/auth/lecturer/units",
+          `${API_BASE_URL}/auth/lecturer/units`,
           {
             method: "POST",
             headers: {

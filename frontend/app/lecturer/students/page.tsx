@@ -40,6 +40,8 @@ type Course = {
   code?: string
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+
 const StudentCard = ({
   student,
   onEdit,
@@ -137,7 +139,7 @@ export default function StudentsPage() {
   const fetchStudents = async () => {
     setIsLoading(true)
     try {
-      const res = await fetch("http://localhost:8080/api/v1/auth/lecturer/students", {
+      const res = await fetch(`${API_BASE_URL}/auth/lecturer/students`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -164,7 +166,7 @@ export default function StudentsPage() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/v1/auth/lecturer/courses", {
+        const res = await fetch(`${API_BASE_URL}/auth/lecturer/courses`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -203,7 +205,7 @@ export default function StudentsPage() {
     try {
       if (selectedStudent) {
         // Update existing student
-        const response = await fetch(`http://localhost:8080/api/v1/auth/lecturer/students/${selectedStudent.id}`, {
+        const response = await fetch(`${API_BASE_URL}/auth/lecturer/students/${selectedStudent.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -219,7 +221,7 @@ export default function StudentsPage() {
         }
       } else {
         // Add new student
-        const response = await fetch("http://localhost:8080/api/v1/auth/lecturer/students", {
+        const response = await fetch(`${API_BASE_URL}/auth/lecturer/students`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -256,7 +258,7 @@ export default function StudentsPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/auth/lecturer/students/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/auth/lecturer/students/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -279,7 +281,7 @@ export default function StudentsPage() {
 
   const handleViewStudent = async (student: Student) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/auth/lecturer/students/${student.id}`, {
+      const response = await fetch(`${API_BASE_URL}/auth/lecturer/students/${student.id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

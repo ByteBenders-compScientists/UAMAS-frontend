@@ -30,6 +30,8 @@ import ViewAssessmentModal from "@/components/lecturer/ViewAssessmentModal";
 import EditAssessmentModal from "@/components/lecturer/EditAssessmentModal";
 import DeleteAssessmentModal from "@/components/lecturer/DeleteAssessmentModal";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+
 const AssessmentsDashboard: React.FC = () => {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const [selectedCourse, setSelectedCourse] = useState("");
