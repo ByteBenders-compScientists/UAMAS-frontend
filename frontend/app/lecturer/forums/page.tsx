@@ -79,6 +79,8 @@ const WEEK_OPTIONS: WeekOption[] = Array.from({ length: 15 }, (_, i) => ({
   dateRange: `Jan ${15 + i * 7} - Jan ${21 + i * 7}`
 }));
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+
 const SAMPLE_COURSES: Course[] = [
   { id: '1', name: 'Computer Science 201', code: 'CS201', color: 'bg-rose-500' },
   { id: '2', name: 'Computer Science 301', code: 'CS301', color: 'bg-blue-500' },
