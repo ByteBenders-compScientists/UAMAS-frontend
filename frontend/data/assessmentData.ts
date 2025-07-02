@@ -1,6 +1,7 @@
-import { Course, Assessment, Question } from '../types/assessment';
+import { LegacyCourse, LegacyAssessment, LegacyQuestion } from '../types/assessment';
 
-export const dummyCourses: Course[] = [
+// Fallback dummy data for development/offline mode
+export const dummyCourses: LegacyCourse[] = [
   {
     id: "1",
     name: "Computer Science 4.1",
@@ -47,7 +48,7 @@ export const dummyCourses: Course[] = [
   }
 ];
 
-export const dummyQuestions: Question[] = [
+export const dummyQuestions: LegacyQuestion[] = [
   {
     id: "q1",
     question: "What is the primary purpose of supervised learning in machine learning?",
@@ -78,7 +79,7 @@ export const dummyQuestions: Question[] = [
   }
 ];
 
-export const dummyAssessments: Assessment[] = [
+export const dummyAssessments: LegacyAssessment[] = [
   {
     id: "1",
     title: "Machine Learning Fundamentals",

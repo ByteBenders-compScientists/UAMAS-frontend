@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 // Import modularized components
-import { Assessment, Course, Message } from "../../../types/assessment";
+import { LegacyAssessment, LegacyCourse, Message } from "../../../types/assessment";
 import { dummyCourses, dummyAssessments } from "../../../data/assessmentData";
 import Modal from "@/components/ui/Modal";
 import Breadcrumb from "@/components/ui/Breadcrumb";
@@ -30,7 +30,16 @@ import ViewAssessmentModal from "@/components/lecturer/ViewAssessmentModal";
 import EditAssessmentModal from "@/components/lecturer/EditAssessmentModal";
 import DeleteAssessmentModal from "@/components/lecturer/DeleteAssessmentModal";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+// API imports
+import { courseApi, unitApi, assessmentApi } from "../../../services/api";
+import { useApi } from "../../../hooks/useApi";
+import { 
+  transformCourseToUI, 
+  transformCourseToLegacy, 
+  transformAssessmentToLegacy,
+  transformLegacyToApiAssessment,
+  groupUnitsByCourse 
+} from "../../../utils/dataTransformers";
 
 const AssessmentsDashboard: React.FC = () => {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
@@ -40,14 +49,77 @@ const AssessmentsDashboard: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isAccessMinimized, setIsAccessMinimized] = useState(false);
-  const [assessments, setAssessments] = useState<Assessment[]>(dummyAssessments);
+  const [assessments, setAssessments] = useState<LegacyAssessment[]>([]);
+  const [courses, setCourses] = useState<LegacyCourse[]>(dummyCourses);
   const [message, setMessage] = useState<Message | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   
   // Modal states
-  const [viewingAssessment, setViewingAssessment] = useState<Assessment | null>(null);
-  const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(null);
-  const [deletingAssessment, setDeletingAssessment] = useState<Assessment | null>(null);
+  const [viewingAssessment, setViewingAssessment] = useState<LegacyAssessment | null>(null);
+  const [editingAssessment, setEditingAssessment] = useState<LegacyAssessment | null>(null);
+  const [deletingAssessment, setDeletingAssessment] = useState<LegacyAssessment | null>(null);
+
+  // API hooks
+  const { 
+    data: apiCourses, 
+    loading: coursesLoading, 
+    error: coursesError,
+    refetch: refetchCourses 
+  } = useApi(() => courseApi.getCourses(), []);
+
+  const { 
+    data: apiUnits, 
+    loading: unitsLoading, 
+    error: unitsError,
+    refetch: refetchUnits 
+  } = useApi(() => unitApi.getUnits(), []);
+
+  const { 
+    data: apiAssessments, 
+    loading: assessmentsLoading, 
+    error: assessmentsError,
+    refetch: refetchAssessments 
+  } = useApi(() => assessmentApi.getAssessments(), []);
+
+  // Transform API data to UI format
+  useEffect(() => {
+    if (apiCourses && apiUnits) {
+      try {
+        const coursesWithColors = apiCourses.map((course, index) => 
+          transformCourseToUI(course, index)
+        );
+        const groupedCourses = groupUnitsByCourse(coursesWithColors, apiUnits);
+        const legacyCourses = groupedCourses.map(transformCourseToLegacy);
+        setCourses(legacyCourses);
+      } catch (error) {
+        console.error('Error transforming courses:', error);
+        showMessage('error', 'Failed to load courses. Using offline data.');
+        setCourses(dummyCourses);
+      }
+    } else if (coursesError || unitsError) {
+      console.error('API Error:', coursesError || unitsError);
+      showMessage('info', 'Using offline data. Please check your connection.');
+      setCourses(dummyCourses);
+    }
+  }, [apiCourses, apiUnits, coursesError, unitsError]);
+
+  // Transform assessments
+  useEffect(() => {
+    if (apiAssessments) {
+      try {
+        const legacyAssessments = apiAssessments.map(transformAssessmentToLegacy);
+        setAssessments(legacyAssessments);
+      } catch (error) {
+        console.error('Error transforming assessments:', error);
+        showMessage('error', 'Failed to load assessments. Using offline data.');
+        setAssessments(dummyAssessments);
+      }
+    } else if (assessmentsError) {
+      console.error('Assessments API Error:', assessmentsError);
+      showMessage('info', 'Using offline assessment data. Please check your connection.');
+      setAssessments(dummyAssessments);
+    }
+  }, [apiAssessments, assessmentsError]);
 
   // Auto-minimize side panel on mobile
   useEffect(() => {
@@ -71,7 +143,7 @@ const AssessmentsDashboard: React.FC = () => {
     ];
 
     if (selectedCourse) {
-      const course = dummyCourses.find(c => c.id === selectedCourse);
+      const course = courses.find(c => c.id === selectedCourse);
       if (course) {
         items.push({ label: course.name, icon: GraduationCap, href: "#" });
         
@@ -99,22 +171,22 @@ const AssessmentsDashboard: React.FC = () => {
   const handleCreateAssessment = async (data: any, isAI: boolean) => {
     setLoading(true);
     try {
-      // Simulate API call with longer delay for AI generation
-      await new Promise(resolve => setTimeout(resolve, isAI ? 4000 : 2000));
+      const apiData = transformLegacyToApiAssessment(data);
       
-      const newAssessment: Assessment = {
-        ...data,
-        id: Date.now().toString(),
-        verified: false,
-        created_at: new Date().toISOString(),
-        creator_id: "lecturer1",
-        questions: isAI ? [] : [] // Add dummy questions for AI generation if needed
-      };
+      let response;
+      if (isAI) {
+        response = await assessmentApi.generateAssessmentWithAI(apiData as any);
+      } else {
+        response = await assessmentApi.createAssessment(apiData as any);
+      }
       
-      setAssessments(prev => [...prev, newAssessment]);
+      // Refresh assessments from API
+      await refetchAssessments();
+      
       setShowCreateForm(false);
-      showMessage('success', `Assessment "${data.title}" ${isAI ? 'generated' : 'created'} successfully!`);
+      showMessage('success', `Assessment "${response.title}" ${isAI ? 'generated' : 'created'} successfully!`);
     } catch (error) {
+      console.error('Create assessment error:', error);
       showMessage('error', 'Failed to create assessment. Please try again.');
     } finally {
       setLoading(false);
@@ -126,8 +198,8 @@ const AssessmentsDashboard: React.FC = () => {
     
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // For now, we'll update locally since the API doesn't have an update endpoint
+      // In a real implementation, you'd call an update API endpoint here
       
       const updatedAssessment = {
         ...editingAssessment,
@@ -144,6 +216,7 @@ const AssessmentsDashboard: React.FC = () => {
       setEditingAssessment(null);
       showMessage('success', `Assessment "${data.title}" updated successfully!`);
     } catch (error) {
+      console.error('Update assessment error:', error);
       showMessage('error', 'Failed to update assessment. Please try again.');
     } finally {
       setLoading(false);
@@ -154,28 +227,31 @@ const AssessmentsDashboard: React.FC = () => {
     if (!deletingAssessment) return;
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await assessmentApi.deleteAssessment(deletingAssessment.id);
       
-      setAssessments(prev => prev.filter(a => a.id !== deletingAssessment.id));
+      // Refresh assessments from API
+      await refetchAssessments();
+      
       showMessage('success', `Assessment "${deletingAssessment.title}" deleted successfully!`);
       setDeletingAssessment(null);
     } catch (error) {
+      console.error('Delete assessment error:', error);
       showMessage('error', 'Failed to delete assessment. Please try again.');
     }
   };
 
   const handleVerifyAssessment = async (id: string) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await assessmentApi.verifyAssessment(id);
       
+      // Update local state
       setAssessments(prev => 
         prev.map(a => a.id === id ? { ...a, verified: true } : a)
       );
       
-      showMessage('success', 'Assessment verified successfully!');
+      showMessage('success', `Assessment "${response.title}" verified successfully!`);
     } catch (error) {
+      console.error('Verify assessment error:', error);
       showMessage('error', 'Failed to verify assessment. Please try again.');
     }
   };
@@ -187,6 +263,25 @@ const AssessmentsDashboard: React.FC = () => {
     if (isMobileView || isTabletView) return 0;
     return sidebarCollapsed ? 80 : 240;
   };
+
+  // Show loading state while fetching initial data
+  if (coursesLoading || unitsLoading || assessmentsLoading) {
+    return (
+      <div className="flex h-screen bg-gray-50 overflow-hidden">
+        <Sidebar />
+        <div 
+          className="flex flex-1 transition-all duration-300 items-center justify-center"
+          style={{ marginLeft: getSidebarWidth() }}
+        >
+          <AILoadingModal 
+            isOpen={true} 
+            title="Loading Dashboard" 
+            message="Fetching your courses and assessments..."
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -211,7 +306,7 @@ const AssessmentsDashboard: React.FC = () => {
           onCourseSelect={setSelectedCourse}
           onUnitSelect={setSelectedUnit}
           onWeekSelect={setSelectedWeek}
-          courses={dummyCourses}
+          courses={courses}
         />
         
         {/* Desktop Side Panel */}
@@ -222,7 +317,7 @@ const AssessmentsDashboard: React.FC = () => {
           onCourseSelect={setSelectedCourse}
           onUnitSelect={setSelectedUnit}
           onWeekSelect={setSelectedWeek}
-          courses={dummyCourses}
+          courses={courses}
           isMinimized={isAccessMinimized}
           onToggleMinimize={() => setIsAccessMinimized(!isAccessMinimized)}
         />
@@ -294,7 +389,7 @@ const AssessmentsDashboard: React.FC = () => {
                         selectedCourse={selectedCourse}
                         selectedUnit={selectedUnit}
                         selectedWeek={selectedWeek}
-                        courses={dummyCourses}
+                        courses={courses}
                         onSubmit={handleCreateAssessment}
                         onCancel={() => setShowCreateForm(false)}
                         loading={loading}
@@ -343,7 +438,7 @@ const AssessmentsDashboard: React.FC = () => {
                             <AssessmentCard
                               key={assessment.id}
                               assessment={assessment}
-                              courses={dummyCourses}
+                              courses={courses}
                               onEdit={setEditingAssessment}
                               onDelete={setDeletingAssessment}
                               onView={setViewingAssessment}
@@ -376,7 +471,7 @@ const AssessmentsDashboard: React.FC = () => {
         {viewingAssessment && (
           <ViewAssessmentModal 
             assessment={viewingAssessment} 
-            courses={dummyCourses}
+            courses={courses}
             onVerify={handleVerifyAssessment}
           />
         )}
@@ -392,7 +487,7 @@ const AssessmentsDashboard: React.FC = () => {
         {editingAssessment && (
           <EditAssessmentModal
             assessment={editingAssessment}
-            courses={dummyCourses}
+            courses={courses}
             onUpdate={handleUpdateAssessment}
             onCancel={() => setEditingAssessment(null)}
             loading={loading}
