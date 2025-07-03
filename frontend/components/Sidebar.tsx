@@ -52,7 +52,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   useEffect(() => {
     setMounted(true);
     // Fetch student profile
-    fetch('http://localhost:8080/api/v1/auth/me', {
+    fetch('https://api.waltertayarg.me/api/v1/auth/me', {
       credentials: 'include',
     })
       .then(res => res.ok ? res.json() : null)
@@ -76,7 +76,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/student/dashboard' },
     { name: 'My CATs', icon: <BookOpen size={20} />, path: '/student/cats' },
     { name: 'Assignments', icon: <ClipboardList size={20} />, path: '/student/assignments', badge: 3 },
-    { name: 'Submission', icon: <FileText size={20} />, path: '/student/submission' },
+    { name: 'Results', icon: <FileText size={20} />, path: '/student/submission' },
     { name: 'My Units', icon: <Calendar size={20} />, path: '/student/units' },
     { name: 'Library', icon: <Library size={20} />, path: '/student/library' },
     { name: 'Forums', icon: <MessageSquare size={20} />, path: '/student/forums', badge: 'New' },
