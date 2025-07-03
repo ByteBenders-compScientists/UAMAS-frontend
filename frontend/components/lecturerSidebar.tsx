@@ -151,7 +151,6 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       path: "/lecturer/course",
       badge: 2,
     },
-    { name: "Units", icon: <BookOpen size={20} />, path: "/lecturer/units" },
     { name: "Library", icon: <Library size={20} />, path: "/lecturer/library" },
     {
       name: "Forums",

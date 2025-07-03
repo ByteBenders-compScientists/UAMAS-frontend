@@ -34,6 +34,8 @@ type AddStudentModalProps = {
   onSubmit: (data: any) => void
 }
 
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api/v1';
+
 export default function AddStudentModal({ student, onClose, onSubmit }: AddStudentModalProps) {
   const [formData, setFormData] = useState({
     reg_number: student?.reg_number || "",
@@ -53,7 +55,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/v1/auth/lecturer/courses", {
+        const response = await fetch(`${apiBaseUrl}/auth/lecturer/courses`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
