@@ -135,9 +135,9 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       badge: 3,
     },
     {
-      name: "Grades",
+      name: "Submissions",
       icon: <GraduationCap size={20} />,
-      path: "/lecturer/grades",
+      path: "/lecturer/submission",
     },
     {
       name: "Students",

@@ -89,6 +89,11 @@ function HobbySelectionPage() {
       setUser(JSON.parse(storedUser))
     }
   }, [])
+  useEffect(() => {
+  return () => {
+    setIsNavigating(false);
+  };
+}, []);
 
   const predefinedHobbies: Hobby[] = [
     { name: "Reading", type: "Hobby" },
@@ -219,7 +224,7 @@ function HobbySelectionPage() {
   const handleCustomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCustomHobby(e.target.value)
     setIsTyping(true)
-    setTimeout(() => setIsTyping(false), 500)
+    setTimeout(() => setIsTyping(false), 1500)
   }
 
   const handleContinue = () => {
@@ -227,13 +232,21 @@ function HobbySelectionPage() {
       setShowSuccess(true)
     }
   }
-
-  const navigateToDashboard = () => {
-    setIsNavigating(true)
-    localStorage.setItem("userHobbies", JSON.stringify(selectedHobbies))
-    console.log("Navigating to dashboard...")
-    window.location.href = "/student/dashboard"
+const navigateToDashboard = async () => {
+  if (isNavigating) return;
+  
+  try {
+    setIsNavigating(true);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    await router.push("/student/dashboard");
+    
+  } catch (error) {
+    console.error("Navigation error:", error);
+  
   }
+};
+
 
   const selectedHobbiesWithType = selectedHobbies.map((hobbyName) => {
     const hobby = allHobbies.find((h) => h.name === hobbyName)
@@ -270,6 +283,7 @@ function HobbySelectionPage() {
       </div>
     )
   }
+
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 to-emerald-50">
@@ -765,167 +779,175 @@ function HobbySelectionPage() {
               </motion.div>
             </motion.div>
           ) : (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="flex flex-col items-center justify-center h-full min-h-[600px] text-center relative"
-            >
-              {/* Fixed positioned floating background elements */}
-              <div className="absolute inset-0 overflow-hidden">
-                {FLOATING_POSITIONS.map((pos, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-4 h-4 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-20"
-                    style={{
-                      left: `${pos.left}%`,
-                      top: `${pos.top}%`,
-                    }}
-                    animate={{
-                      y: [-20, -60, -20],
-                      x: [-10, 10, -10],
-                      scale: [1, 1.5, 1],
-                      opacity: [0.2, 0.6, 0.2],
-                    }}
-                    transition={{
-                      duration: 4 + (i % 3),
-                      repeat: Number.POSITIVE_INFINITY,
-                      delay: i * 0.3,
-                    }}
-                  />
-                ))}
+           <motion.div
+  key="success"
+  initial={{ opacity: 0, x: 100 }}
+  animate={{ opacity: 1, x: 0 }}
+  transition={{ duration: 0.6, ease: "easeOut" }}
+  className="flex flex-col items-center justify-center h-full min-h-[600px] text-center relative"
+>
+  {/* Fixed positioned floating background elements - with pointer-events-none and proper z-index */}
+  <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+    {FLOATING_POSITIONS.map((pos, i) => (
+      <motion.div
+        key={i}
+        className="absolute w-4 h-4 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-20"
+        style={{
+          left: `${pos.left}%`,
+          top: `${pos.top}%`,
+        }}
+        animate={{
+          y: [-20, -60, -20],
+          x: [-10, 10, -10],
+          scale: [1, 1.5, 1],
+          opacity: [0.2, 0.6, 0.2],
+        }}
+        transition={{
+          duration: 4 + (i % 3),
+          repeat: Number.POSITIVE_INFINITY,
+          delay: i * 0.3,
+        }}
+      />
+    ))}
+  </div>
+
+  {/* All content with proper z-index to ensure it's above floating elements */}
+  <div className="relative z-10 w-full max-w-2xl px-4">
+    {/* Success Animation */}
+    <motion.div
+      initial={{ scale: 0, rotate: -180 }}
+      animate={{ scale: 1, rotate: 0 }}
+      transition={{ duration: 1, type: "spring", stiffness: 150 }}
+      className="mb-8 relative"
+    >
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+        className="absolute -inset-6"
+      >
+        <div className="w-32 h-32 border-4 border-emerald-200 border-t-emerald-500 rounded-full"></div>
+      </motion.div>
+
+      <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-2xl">
+        <CheckCircle className="w-12 h-12 text-white" />
+      </div>
+
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: [0, 1.3, 1] }}
+        transition={{ delay: 0.5, duration: 0.8 }}
+        className="absolute -top-3 -right-3"
+      >
+        <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+          <Sparkles className="w-5 h-5 text-white" />
+        </div>
+      </motion.div>
+    </motion.div>
+
+    {/* Success Message */}
+    <motion.div
+      initial={{ y: 30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.3, duration: 0.8 }}
+      className="mb-8 max-w-md mx-auto"
+    >
+      <motion.h2
+        animate={{ scale: [1, 1.05, 1] }}
+        transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+        className="text-4xl font-bold text-gray-800 mb-4 flex items-center justify-center gap-3"
+      >
+        <Trophy className="w-10 h-10 text-yellow-500" />
+        Fantastic!
+      </motion.h2>
+      <p className="text-gray-600 text-lg leading-relaxed">
+        Your personalized learning profile is ready! We'll use your interests to create amazing educational
+        experiences just for you.
+      </p>
+    </motion.div>
+
+    {/* Selected Interests Display */}
+    <motion.div
+      initial={{ y: 30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.6, duration: 0.8 }}
+      className="mb-8 w-full max-w-lg mx-auto"
+    >
+      <div className="flex items-center justify-center gap-2 mb-6">
+        <Heart className="w-6 h-6 text-red-500" />
+        <h3 className="text-xl font-bold text-gray-800">Your Unique Interests</h3>
+        <Heart className="w-6 h-6 text-red-500" />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {selectedHobbiesWithType.map((hobby, index) => (
+          <motion.div
+            key={hobby.name}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.8 + index * 0.1, duration: 0.5 }}
+            whileHover={{ scale: 1.05 }}
+            className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-4 flex items-center gap-3 shadow-sm"
+          >
+            {getSmallIconForItem(hobby.name, hobby.type, hobby.isCustom)}
+            <div className="text-left flex-1">
+              <p className="font-semibold text-emerald-800">{hobby.name}</p>
+              <div className="flex items-center gap-1">
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    hobby.type === "Custom"
+                      ? "bg-purple-100 text-purple-700"
+                      : hobby.type === "Hobby"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-orange-100 text-orange-700"
+                  }`}
+                >
+                  {hobby.type}
+                </span>
+                {hobby.isCustom && <Sparkles className="w-3 h-3 text-purple-500" />}
               </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
 
-              {/* Success Animation */}
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ duration: 1, type: "spring", stiffness: 150 }}
-                className="mb-8 relative"
-              >
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                  className="absolute -inset-6"
-                >
-                  <div className="w-32 h-32 border-4 border-emerald-200 border-t-emerald-500 rounded-full"></div>
-                </motion.div>
+    {/* Dashboard Button - FIXED with proper z-index and positioning */}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+      className="pt-6 border-t border-gray-200 w-full"
+    >
+      <motion.button                   
+        disabled={isNavigating}                   
+        whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(16, 185, 129, 0.3)" }}                   
+        whileTap={{ scale: 0.95 }}                   
+        onClick={navigateToDashboard}
+        className={`w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-2xl shadow-xl flex items-center justify-center gap-3 text-lg font-bold transition-all duration-300 relative z-20
+          ${isNavigating ? 'opacity-50 cursor-not-allowed' : 'hover:from-emerald-600 hover:to-teal-700'}`}
+      >
+        <Target className="w-6 h-6" />
+        Launch My Dashboard
+        <ArrowRight className="w-6 h-6" />
+      </motion.button>
+    
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5, duration: 0.8 }}
+        className="text-sm text-gray-500 mt-4 flex items-center justify-center gap-1"
+      >
+        <Rocket className="w-4 h-4" />
+        Ready to start your personalized learning journey!
+      </motion.p>
+    </motion.div>
+  </div>
 
-                <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-2xl">
-                  <CheckCircle className="w-12 h-12 text-white" />
-                </div>
-
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: [0, 1.3, 1] }}
-                  transition={{ delay: 0.5, duration: 0.8 }}
-                  className="absolute -top-3 -right-3"
-                >
-                  <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                </motion.div>
               </motion.div>
-
-              {/* Success Message */}
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.8 }}
-                className="mb-8 max-w-md"
-              >
-                <motion.h2
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                  className="text-4xl font-bold text-gray-800 mb-4 flex items-center justify-center gap-3"
-                >
-                  <Trophy className="w-10 h-10 text-yellow-500" />
-                  Fantastic!
-                </motion.h2>
-                <p className="text-gray-600 text-lg leading-relaxed">
-                  Your personalized learning profile is ready! We'll use your interests to create amazing educational
-                  experiences just for you.
-                </p>
-              </motion.div>
-
-              {/* Selected Interests Display */}
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.8 }}
-                className="mb-8 w-full max-w-lg"
-              >
-                <div className="flex items-center justify-center gap-2 mb-6">
-                  <Heart className="w-6 h-6 text-red-500" />
-                  <h3 className="text-xl font-bold text-gray-800">Your Unique Interests</h3>
-                  <Heart className="w-6 h-6 text-red-500" />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {selectedHobbiesWithType.map((hobby, index) => (
-                    <motion.div
-                      key={hobby.name}
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.8 + index * 0.1, duration: 0.5 }}
-                      whileHover={{ scale: 1.05 }}
-                      className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-4 flex items-center gap-3 shadow-sm"
-                    >
-                      {getSmallIconForItem(hobby.name, hobby.type, hobby.isCustom)}
-                      <div className="text-left flex-1">
-                        <p className="font-semibold text-emerald-800">{hobby.name}</p>
-                        <div className="flex items-center gap-1">
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                              hobby.type === "Custom"
-                                ? "bg-purple-100 text-purple-700"
-                                : hobby.type === "Hobby"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-orange-100 text-orange-700"
-                            }`}
-                          >
-                            {hobby.type}
-                          </span>
-                          {hobby.isCustom && <Sparkles className="w-3 h-3 text-purple-500" />}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Dashboard Button - FIXED */}
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 1.2, duration: 0.8 }}
-                className="w-full max-w-md"
-              >
-                <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(16, 185, 129, 0.3)" }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={navigateToDashboard}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-4 rounded-2xl shadow-xl flex items-center justify-center gap-3 text-lg font-bold transition-all duration-300"
-                >
-                  <Target className="w-6 h-6" />
-                  Launch My Dashboard
-                  <ArrowRight className="w-6 h-6" />
-                </motion.button>
-
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.5, duration: 0.8 }}
-                  className="text-sm text-gray-500 mt-4 flex items-center justify-center gap-1"
-                >
-                  <Rocket className="w-4 h-4" />
-                  Ready to start your personalized learning journey!
-                </motion.p>
-              </motion.div>
-            </motion.div>
+        
           )}
-        </AnimatePresence>
+          </AnimatePresence>
+      
       </div>
     </div>
   )
