@@ -22,7 +22,7 @@ import {
 import { getCurrentWeek } from '@/utils/WeekSelector';
 import Link from 'next/link';
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.waltertayarg.me/api/v1"
 
 type QuickLinkProps = {
   icon: React.ReactNode;
