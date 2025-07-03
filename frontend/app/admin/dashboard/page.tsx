@@ -224,40 +224,11 @@ export default function AdminDashboard() {
       color: "bg-emerald-500",
       trend: "up" as const,
     },
-    {
-      icon: <User size={24} className="text-white" />,
-      title: "Registered Students",
-      value: stats.totalStudents,
-      change: "+12%",
-      color: "bg-blue-500",
-      trend: "up" as const,
-    },
-    {
-      icon: <GraduationCap size={24} className="text-white" />,
-      title: "Courses Registered",
-      value: stats.totalCourses,
-      change: "+2%",
-      color: "bg-violet-500",
-      trend: "up" as const,
-    },
-    {
-      icon: <BookOpen size={24} className="text-white" />,
-      title: "Units Registered",
-      value: stats.totalUnits,
-      change: "+8%",
-      color: "bg-amber-500",
-      trend: "up" as const,
-    },
+
   ];
 
   const quickActions = [
-    {
-      icon: <Users size={24} className="text-white" />,
-      title: "Manage Students",
-      description: "Add, edit, or remove student records",
-      color: "bg-blue-500",
-      href: "/admin/students",
-    },
+   
     {
       icon: <UserCheck size={24} className="text-white" />,
       title: "Manage Lecturers",
@@ -265,20 +236,7 @@ export default function AdminDashboard() {
       color: "bg-emerald-500",
       href: "/admin/lecturers",
     },
-    {
-      icon: <GraduationCap size={24} className="text-white" />,
-      title: "Manage Courses",
-      description: "Create and modify course programs",
-      color: "bg-violet-500",
-      href: "/admin/courses",
-    },
-    {
-      icon: <BookOpen size={24} className="text-white" />,
-      title: "Manage Units",
-      description: "Organize course units and modules",
-      color: "bg-amber-500",
-      href: "/admin/units",
-    },
+  
   ];
 
   return (
