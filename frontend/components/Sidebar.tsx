@@ -56,7 +56,6 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     // Fetch student profile
    
     fetch(`${apiBaseUrl}/auth/me`, {
-      main
       credentials: 'include',
     })
       .then(res => res.ok ? res.json() : null)
