@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import {
   BrainCircuit,
   Users,
@@ -28,12 +28,16 @@ import {
   HardDrive,
   FolderOpen,
   Github,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-export default function EduAISuite() {
+export default function IntelliMark() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const router = useRouter();
   const { scrollYProgress } = useScroll();
   const parallaxY = useTransform(scrollYProgress, [0, 1], [0, 300]);
@@ -74,29 +78,76 @@ export default function EduAISuite() {
     return (icons as Record<string, typeof Globe>)[tool] || Globe;
   };
 
+  const heroSlides = [
+    {
+      image: "https://images.unsplash.com/photo-1531545514256-b1400bc00f31?q=80&w=1974&auto=format&fit=crop",
+      title: "Transform Education",
+      subtitle: "with AI-powered assessment and engagement"
+    },
+    {
+      image: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1974&auto=format&fit=crop",
+      title: "Empower Students",
+      subtitle: "through personalized learning experiences"
+    },
+    {
+      image: "https://images.unsplash.com/photo-1581089781785-603411fa81e5?q=80&w=2070&auto=format&fit=crop",
+      title: "Support Educators",
+      subtitle: "by automating administrative tasks"
+    },
+    {
+      image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1970&auto=format&fit=crop",
+      title: "Drive Academic Success",
+      subtitle: "with data-driven insights and analytics"
+    }
+  ];
+
   const testimonials = [
     {
-      name: "Dr Benson Mwangi",
+      name: "Dr. Benson Mwangi",
       role: "Computer Science Professor",
-      image: "/assets/ben.jpg",
+      image: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?q=80&w=1935&auto=format&fit=crop",
       quote:
         "IntelliMark has completely transformed how I manage assessments. The AI-powered grading has saved me countless hours, and the analytics provide incredible insights into student learning patterns.",
     },
     {
       name: "Joseph Kiprotich",
       role: "Engineering Student",
-      image: "/assets/stud.jpg",
+      image: "https://images.unsplash.com/photo-1531384441138-2736e62e0919?q=80&w=1974&auto=format&fit=crop",
       quote:
         "As a student with a busy schedule, the personalized learning paths and instant feedback have helped me stay on track. I've seen my grades improve significantly since using this platform.",
     },
     {
       name: "Lecturer David Maina",
       role: "Department Head, Mathematics",
-      image: "/assets/lec2.jpg",
+      image: "https://images.unsplash.com/photo-1571844307880-751c6d86f3f3?q=80&w=1973&auto=format&fit=crop",
       quote:
         "The implementation across our department has been seamless. We've seen increased student engagement and improved performance metrics. The customizable assessments are particularly valuable.",
     },
   ];
+
+  // Auto slide for hero section
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentHeroSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [heroSlides.length]);
+
+  // Auto slide for testimonials
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [testimonials.length]);
+
+  const nextHeroSlide = () => {
+    setCurrentHeroSlide((prev) => (prev + 1) % heroSlides.length);
+  };
+
+  const prevHeroSlide = () => {
+    setCurrentHeroSlide((prev) => (prev === 0 ? heroSlides.length - 1 : prev - 1));
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -133,7 +184,7 @@ export default function EduAISuite() {
           initial={{ y: -100 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.6 }}
-          className="fixed w-full top-0 z-50 bg-white/95 backdrop-blur-md border-b border-emerald-100/20 shadow-lg"
+          className="fixed w-full top-0 z-50 bg-white/20 backdrop-blur-md border-b border-emerald-100/20 shadow-lg"
         >
           <div className="container mx-auto px-6">
             <div className="flex justify-between items-center h-16">
@@ -216,7 +267,6 @@ export default function EduAISuite() {
                   "For Lecturers",
                   "For Students",
                   "Testimonials",
-                  "Pricing",
                   "FAQ",
                 ].map((item) => (
                   <a
@@ -247,35 +297,73 @@ export default function EduAISuite() {
           </div>
         </motion.nav>
 
-        {/* Hero Section */}
-        <section className="pt-32 pb-20 px-6 relative">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-emerald-500/10 to-teal-500/10 z-0"></div>
-          <div className="container mx-auto relative z-10">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+        {/* Hero Section with changing images */}
+        <section className="pt-16 relative h-[90vh] overflow-hidden">
+          <div className="absolute inset-0 w-full h-full">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentHeroSlide}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1 }}
+                className="absolute inset-0 w-full h-full"
+              >
+                <div className="absolute inset-0 bg-black/50 z-10" />
+                <Image
+                  src={heroSlides[currentHeroSlide].image}
+                  alt={`Hero slide ${currentHeroSlide + 1}`}
+                  fill
+                  className="object-cover"
+                  priority
+                  quality={100}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <div className="container mx-auto px-6 relative z-20 h-full flex flex-col justify-center">
+            <div className="max-w-3xl text-white">
               <motion.div
                 variants={staggerContainer}
                 initial="initial"
                 animate="animate"
                 className="space-y-8"
               >
-                <motion.h1
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentHeroSlide}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <h1 className="text-5xl lg:text-7xl font-bold leading-tight mb-2">
+                      {heroSlides[currentHeroSlide].title}
+                    </h1>
+                    <p className="text-2xl text-emerald-300 font-light">
+                      {heroSlides[currentHeroSlide].subtitle}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+
+                <motion.h2
                   variants={fadeInUp}
-                  className="text-5xl lg:text-6xl font-bold leading-tight"
+                  className="text-3xl lg:text-4xl font-medium leading-tight"
                 >
-                  Transform How You{" "}
-                  <span className="bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
-                    Teach, Learn,
-                  </span>{" "}
-                  and Motivate
-                </motion.h1>
+                  The AI-powered platform for{" "}
+                  <span className="bg-gradient-to-r from-emerald-300 to-teal-300 bg-clip-text text-transparent">
+                    assessment and engagement
+                  </span>
+                </motion.h2>
 
                 <motion.p
                   variants={fadeInUp}
-                  className="text-xl text-gray-600 leading-relaxed"
+                  className="text-xl text-gray-200 leading-relaxed"
                 >
-                  An AI-powered platform for lecturers and students in
-                  universities and colleges to enhance CTL and student
-                  engagement with automated assessment and performance tracking.
+                  An intelligent solution for lecturers and students in
+                  universities and colleges to enhance teaching and learning with automated 
+                  assessment and performance tracking.
                 </motion.p>
 
                 <motion.div
@@ -298,7 +386,7 @@ export default function EduAISuite() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="px-8 py-4 border-2 border-emerald-500 text-emerald-600 rounded-xl font-semibold text-lg hover:bg-emerald-50 transition-colors"
+                    className="px-8 py-4 border-2 border-white text-white rounded-xl font-semibold text-lg hover:bg-white/10 transition-colors"
                   >
                     See Features
                   </motion.button>
@@ -306,80 +394,47 @@ export default function EduAISuite() {
 
                 <motion.div
                   variants={fadeInUp}
-                  className="flex items-center space-x-6 text-sm text-gray-500"
+                  className="flex items-center space-x-6 text-sm text-gray-300"
                 >
                   <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-500" />
-                    <span>Trusted by 50+ universities worldwide</span>
+                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                    <span>Trusted by 50+ universities across Africa</span>
                   </div>
                 </motion.div>
               </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8 }}
-                className="relative"
-              >
-                <div className="relative bg-white rounded-2xl shadow-2xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-2xl"></div>
-                  <Image
-                    src="/assets/backgroundimage.jpeg"
-                    alt="Students and lecturer using IntelliMark"
-                    className="w-full h-64 object-cover rounded-lg relative z-10"
-                    width={400}
-                    height={400}
-                    quality={100}
-                  />
-                  <div className="mt-4 relative z-10">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                        <GraduationCap className="w-6 h-6 text-emerald-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-800">
-                          Active Learning Session
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Real-time engagement tracking
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Floating Elements */}
-                <div className="absolute -bottom-10 -left-10 bg-white p-4 rounded-lg shadow-lg flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">+28% Engagement</p>
-                    <p className="text-xs text-gray-500">Last 30 days</p>
-                  </div>
-                </div>
-
-                <div className="absolute -top-10 -right-5 bg-white p-3 rounded-lg shadow-lg transform rotate-6">
-                  <div className="flex items-center space-x-2">
-                    {[1, 2, 3, 4, 5].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-4 h-4 text-yellow-400"
-                        fill="#facc15"
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs font-medium mt-1">
-                    Rated 4.9/5 by educators
-                  </p>
-                </div>
-              </motion.div>
             </div>
           </div>
+
+          {/* Hero navigation buttons */}
+          <div className="absolute bottom-10 left-0 right-0 z-20 flex justify-center space-x-2">
+            {heroSlides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentHeroSlide(index)}
+                className={`w-8 h-1 ${
+                  currentHeroSlide === index ? "bg-emerald-500" : "bg-white/50"
+                } transition-all duration-300 hover:bg-emerald-400`}
+              />
+            ))}
+          </div>
+
+          {/* Hero prev/next buttons */}
+          <button
+            onClick={prevHeroSlide}
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white p-2 rounded-lg transition-colors"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <button
+            onClick={nextHeroSlide}
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white p-2 rounded-lg transition-colors"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
         </section>
 
         {/* Trusted By Section */}
-        <section className="py-12 bg-white/50 backdrop-blur-sm">
+        <section className="py-12 bg-white/90 backdrop-blur-sm">
           <div className="container mx-auto px-6">
             <div className="text-center mb-8">
               <h3 className="text-gray-500 font-medium">
@@ -410,7 +465,7 @@ export default function EduAISuite() {
           </div>
         </section>
 
-        {/* Why EduAI Suite - Transparent Section */}
+        {/* Why IntelliMark - Features Section */}
         <section id="features" className="py-20 bg-white/30 backdrop-blur-sm">
           <div className="container mx-auto px-6">
             <motion.div
@@ -517,13 +572,14 @@ export default function EduAISuite() {
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
+                className="rounded-xl overflow-hidden shadow-2xl"
               >
                 <Image
-                  src="/assets/ai.png"
+                  src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop"
                   alt="Advanced AI features in action"
                   width={600}
                   height={400}
-                  className="rounded-xl shadow-2xl"
+                  className="w-full h-full object-cover"
                   quality={100}
                 />
               </motion.div>
@@ -782,8 +838,8 @@ export default function EduAISuite() {
               >
                 <div className="bg-white rounded-2xl shadow-2xl p-6 transform rotate-2 hover:rotate-0 transition-transform duration-500">
                   <Image
-                    src="/assets/lec.jpg"
-                    alt="Lecturer using EduAI Suite dashboard"
+                    src="https://images.unsplash.com/photo-1544531585-9847b68c8c86?q=80&w=2070&auto=format&fit=crop"
+                    alt="Lecturer using IntelliMark dashboard"
                     className="w-full rounded-xl shadow-lg"
                     width={500}
                     height={400}
@@ -829,8 +885,8 @@ export default function EduAISuite() {
               >
                 <div className="bg-white rounded-2xl shadow-2xl p-6 transform -rotate-2 hover:rotate-0 transition-transform duration-500">
                   <Image
-                    src="/assets/student.png"
-                    alt="Student using EduAI Suite on tablet"
+                    src="https://images.unsplash.com/photo-1529390079861-591de354faf5?q=80&w=2070&auto=format&fit=crop"
+                    alt="Student using IntelliMark on tablet"
                     className="w-full rounded-xl shadow-lg"
                     width={500}
                     height={400}
@@ -878,7 +934,7 @@ export default function EduAISuite() {
                 <div className="space-y-4 mt-8">
                   {[
                     "See all your CATs & assignments in a beautiful dashboard with upcoming deadlines",
-                    "Get instant, actionable feedback on submissions—no more waiting for grades",
+                    "Get instant, actionable feedback on submissions--no more waiting for grades",
                     "Receive motivational encouragement when you need it most",
                     "Track your progress with interactive visual analytics and performance insights",
                     "Access personalized study recommendations based on your learning patterns",
@@ -931,59 +987,70 @@ export default function EduAISuite() {
               </p>
             </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {testimonials.map((testimonial, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{
-                    y: -10,
-                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-                  }}
-                  className="bg-white rounded-xl p-8 shadow-xl relative"
-                >
-                  <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 text-emerald-500 text-8xl opacity-10">
-                    &quot;
-                  </div>
-
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16  rounded-full flex items-center justify-center">
-                      {/* <Users className="w-8 h-8 text-emerald-600" /> */}
-                      <Image
-                        src={testimonial.image}
-                        alt={testimonial.name}
-                        className="w-16 h-16 rounded-full absolute inset-0 ml-[8%] mt-[9%] sm:ml-[7%] sm:mt-[7%]"
-                        width={64}
-                        height={64}
-                        quality={100}
-                      />
+            <div className="relative">
+              <div className="max-w-4xl mx-auto">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentTestimonial}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                    className="bg-white rounded-xl p-8 shadow-xl"
+                  >
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                      <div className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0">
+                        <Image
+                          src={testimonials[currentTestimonial].image}
+                          alt={testimonials[currentTestimonial].name}
+                          width={96}
+                          height={96}
+                          className="w-full h-full object-cover"
+                          quality={100}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-5xl text-emerald-500 opacity-20 mb-2">
+                          &quot;
+                        </div>
+                        <p className="text-gray-700 italic text-lg leading-relaxed mb-6">
+                          {testimonials[currentTestimonial].quote}
+                        </p>
+                        <div>
+                          <h4 className="font-semibold text-xl">
+                            {testimonials[currentTestimonial].name}
+                          </h4>
+                          <p className="text-emerald-600">
+                            {testimonials[currentTestimonial].role}
+                          </p>
+                          <div className="flex items-center mt-2">
+                            {[1, 2, 3, 4, 5].map((_, i) => (
+                              <Star
+                                key={i}
+                                className="w-5 h-5 text-yellow-400"
+                                fill="#facc15"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="mt-1 sm:mt-4 md:mt-1">
-                      <h4 className="font-semibold text-lg">
-                        {testimonial.name}
-                      </h4>
-                      <p className="text-emerald-600">{testimonial.role}</p>
-                    </div>
-                  </div>
+                  </motion.div>
+                </AnimatePresence>
 
-                  <p className="text-gray-600 italic leading-relaxed mb-6">
-                    "{testimonial.quote}"
-                  </p>
-
-                  <div className="flex items-center">
-                    {[1, 2, 3, 4, 5].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-5 h-5 text-yellow-400"
-                        fill="#facc15"
-                      />
-                    ))}
-                  </div>
-                </motion.div>
-              ))}
+                {/* Testimonial navigation */}
+                <div className="flex justify-center mt-6 space-x-2">
+                  {testimonials.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentTestimonial(index)}
+                      className={`w-8 h-1 ${
+                        currentTestimonial === index ? "bg-emerald-500" : "bg-gray-300"
+                      } transition-all duration-300 hover:bg-emerald-400`}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -1007,7 +1074,7 @@ export default function EduAISuite() {
 
               <div className="max-w-5xl mx-auto bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 mt-8">
                 <Image
-                  src="/assets/dash.png"
+                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop"
                   alt="Performance dashboard showing student analytics"
                   className="w-full rounded-lg shadow-lg mb-6"
                   width={1000}
@@ -1087,7 +1154,7 @@ export default function EduAISuite() {
                 </h2>
                 <p className="text-xl mb-8 opacity-90 max-w-3xl mx-auto">
                   Join thousands of educators and students already transforming
-                  their educational journey with EduAI Suite.
+                  their educational journey with IntelliMark.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -1133,7 +1200,7 @@ export default function EduAISuite() {
                 Frequently Asked Questions
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Everything you need to know about EduAI Suite
+                Everything you need to know about IntelliMark
               </p>
             </motion.div>
 
@@ -1142,7 +1209,7 @@ export default function EduAISuite() {
                 {
                   question: "Is the platform suitable for any institution?",
                   answer:
-                    "Yes, EduAI Suite is designed for universities, colleges, and schools of all sizes. Our flexible architecture allows the platform to scale with institutions of any size, from small departments to large multi-campus universities.",
+                    "Yes, IntelliMark is designed for universities, colleges, and schools of all sizes. Our flexible architecture allows the platform to scale with institutions of any size, from small departments to large multi-campus universities.",
                 },
                 {
                   question: "Are the AI-generated questions reliable?",
@@ -1194,10 +1261,13 @@ export default function EduAISuite() {
             <div className="grid md:grid-cols-5 gap-8">
               <div className="space-y-4 md:col-span-2">
                 <div className="flex items-center space-x-2">
-                  <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-2 rounded-xl">
-                    <BrainCircuit className="text-white h-6 w-6" />
-                  </div>
-                  <span className="text-xl font-bold">EduAI Suite</span>
+                <Image
+                src="/assets/logo3.png"
+                alt="logo"
+                width={190}
+                height={160}
+                quality={100}
+                />
                 </div>
                 <p className="text-gray-400">
                   Transforming education through intelligent automation and
@@ -1208,13 +1278,13 @@ export default function EduAISuite() {
                   <p className="text-gray-400">
                     Contact us:{" "}
                     <span className="text-emerald-400">
-                      info@eduaisuite.com
+                      info@intellimark.com
                     </span>
                   </p>
                   <p className="text-gray-400">
                     Support:{" "}
                     <span className="text-emerald-400">
-                      support@eduaisuite.com
+                      support@intellimark.com
                     </span>
                   </p>
                 </div>
@@ -1297,7 +1367,7 @@ export default function EduAISuite() {
 
             <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
               <p>
-                &copy; 2025 EduAI Suite. All rights reserved. Empowering
+                &copy; 2025 IntelliMark. All rights reserved. Empowering
                 education through innovation.
               </p>
             </div>
