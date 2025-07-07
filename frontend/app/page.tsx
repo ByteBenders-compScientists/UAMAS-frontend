@@ -86,7 +86,7 @@ export default function IntelliMark() {
       subtitle: "through personalized learning experiences"
     },
     {
-      image: "https://images.unsplash.com/photo-1581089781785-603411fa81e5?q=80&w=2070&auto=format&fit=crop",
+      image: "/assets/educators.jpg",
       title: "Support Educators",
       subtitle: "by automating administrative tasks"
     },
