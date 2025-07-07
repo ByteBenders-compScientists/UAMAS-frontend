@@ -79,13 +79,9 @@ export default function IntelliMark() {
   };
 
   const heroSlides = [
+   
     {
-      image: "https://images.unsplash.com/photo-1531545514256-b1400bc00f31?q=80&w=1974&auto=format&fit=crop",
-      title: "Transform Education",
-      subtitle: "with AI-powered assessment and engagement"
-    },
-    {
-      image: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1974&auto=format&fit=crop",
+      image: "/assets/ana2.jpg",
       title: "Empower Students",
       subtitle: "through personalized learning experiences"
     },
@@ -95,7 +91,12 @@ export default function IntelliMark() {
       subtitle: "by automating administrative tasks"
     },
     {
-      image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1970&auto=format&fit=crop",
+      image: "/assets/hero.jpg",
+      title: "Transform Education",
+      subtitle: "with AI-powered assessment and engagement"
+    },
+    {
+      image: "https://images.unsplash.com/photo-1645263012668-a6617115f9b9?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       title: "Drive Academic Success",
       subtitle: "with data-driven insights and analytics"
     }
@@ -105,21 +106,21 @@ export default function IntelliMark() {
     {
       name: "Dr. Benson Mwangi",
       role: "Computer Science Professor",
-      image: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?q=80&w=1935&auto=format&fit=crop",
+      image: "/assets/ben.jpg",
       quote:
         "IntelliMark has completely transformed how I manage assessments. The AI-powered grading has saved me countless hours, and the analytics provide incredible insights into student learning patterns.",
     },
     {
       name: "Joseph Kiprotich",
       role: "Engineering Student",
-      image: "https://images.unsplash.com/photo-1531384441138-2736e62e0919?q=80&w=1974&auto=format&fit=crop",
+      image: "/assets/lec2.jpg",
       quote:
         "As a student with a busy schedule, the personalized learning paths and instant feedback have helped me stay on track. I've seen my grades improve significantly since using this platform.",
     },
     {
       name: "Lecturer David Maina",
       role: "Department Head, Mathematics",
-      image: "https://images.unsplash.com/photo-1571844307880-751c6d86f3f3?q=80&w=1973&auto=format&fit=crop",
+      image: "/assets/stud.jpg",
       quote:
         "The implementation across our department has been seamless. We've seen increased student engagement and improved performance metrics. The customizable assessments are particularly valuable.",
     },
@@ -184,7 +185,7 @@ export default function IntelliMark() {
           initial={{ y: -100 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.6 }}
-          className="fixed w-full top-0 z-50 bg-white/20 backdrop-blur-md border-b border-emerald-100/20 shadow-lg"
+          className="fixed w-full top-0 z-50 bg-white/40 backdrop-blur-md border-b border-emerald-100/20 shadow-lg"
         >
           <div className="container mx-auto px-6">
             <div className="flex justify-between items-center h-16">
@@ -575,7 +576,7 @@ export default function IntelliMark() {
                 className="rounded-xl overflow-hidden shadow-2xl"
               >
                 <Image
-                  src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop"
+                  src="/assets/ai.png"
                   alt="Advanced AI features in action"
                   width={600}
                   height={400}
@@ -838,7 +839,7 @@ export default function IntelliMark() {
               >
                 <div className="bg-white rounded-2xl shadow-2xl p-6 transform rotate-2 hover:rotate-0 transition-transform duration-500">
                   <Image
-                    src="https://images.unsplash.com/photo-1544531585-9847b68c8c86?q=80&w=2070&auto=format&fit=crop"
+                    src="/assets/lec2.jpeg"
                     alt="Lecturer using IntelliMark dashboard"
                     className="w-full rounded-xl shadow-lg"
                     width={500}
@@ -885,7 +886,7 @@ export default function IntelliMark() {
               >
                 <div className="bg-white rounded-2xl shadow-2xl p-6 transform -rotate-2 hover:rotate-0 transition-transform duration-500">
                   <Image
-                    src="https://images.unsplash.com/photo-1529390079861-591de354faf5?q=80&w=2070&auto=format&fit=crop"
+                    src="/assets/students4.jpg"
                     alt="Student using IntelliMark on tablet"
                     className="w-full rounded-xl shadow-lg"
                     width={500}
