@@ -392,9 +392,9 @@ export default function AuthPage() {
               className="flex items-center space-x-3"
             >
               <Image
-                src="/assets/logo.png"
+                src="/assets/logo3.png"
                 alt="logo"
-                width={180}
+                width={200}
                 height={180}
                 quality={100}
                 />

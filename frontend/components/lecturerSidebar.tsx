@@ -251,7 +251,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
             className="flex items-center space-x-2"
           >
             <Image
-              src="/assets/logo2.png"
+              src="/assets/logo3.png"
               alt="logo"
               width={180}
               height={160}
@@ -360,10 +360,10 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
             >
               {(!sidebarCollapsed || isMobileView) && (
                 <Image
-                  src="/assets/logo2.png"
+                  src="/assets/logo3.png"
                   alt="logo"
-                  width={180}
-                  height={160}
+                  width={210}
+                  height={180}
                   quality={100}
                 />
               )}
