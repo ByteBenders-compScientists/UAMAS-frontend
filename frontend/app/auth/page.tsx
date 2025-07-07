@@ -394,7 +394,7 @@ export default function AuthPage() {
               <Image
                 src="/assets/logo3.png"
                 alt="logo"
-                width={180}
+                width={200}
                 height={180}
                 quality={100}
                 />

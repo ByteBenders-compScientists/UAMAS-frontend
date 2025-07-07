@@ -362,8 +362,8 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
                 <Image
                   src="/assets/logo3.png"
                   alt="logo"
-                  width={180}
-                  height={160}
+                  width={210}
+                  height={180}
                   quality={100}
                 />
               )}
