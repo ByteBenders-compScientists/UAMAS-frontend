@@ -80,7 +80,7 @@ export default function EduAISuite() {
       role: "Computer Science Professor",
       image: "/assets/ben.jpg",
       quote:
-        "EduAI Suite has completely transformed how I manage assessments. The AI-powered grading has saved me countless hours, and the analytics provide incredible insights into student learning patterns.",
+        "IntelliMark has completely transformed how I manage assessments. The AI-powered grading has saved me countless hours, and the analytics provide incredible insights into student learning patterns.",
     },
     {
       name: "Joseph Kiprotich",
@@ -325,7 +325,7 @@ export default function EduAISuite() {
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-2xl"></div>
                   <Image
                     src="/assets/backgroundimage.jpeg"
-                    alt="Students and lecturer using EduAI Suite"
+                    alt="Students and lecturer using IntelliMark"
                     className="w-full h-64 object-cover rounded-lg relative z-10"
                     width={400}
                     height={400}
@@ -420,7 +420,7 @@ export default function EduAISuite() {
               className="text-center mb-16"
             >
               <h2 className="text-4xl font-bold text-gray-800 mb-4">
-                Why EduAI Suite?
+                Why IntelliMark?
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 Comprehensive tools designed specifically for modern education,
