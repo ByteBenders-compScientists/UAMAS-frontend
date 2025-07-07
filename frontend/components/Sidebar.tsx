@@ -173,21 +173,25 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
         `}
       >
         {/* Header Section */}
-        <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center">
-            {(!sidebarCollapsed || isMobileView || isTabletView) && (
-              <span className="ml-3 font-semibold text-lg tracking-wide text-gray-800">
-                 <Image
-                src="/assets/logo.png"
-                alt="logo"
-                width={180}
-                height={160}
-                quality={100}
+      <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
+        <div className="container mx-auto px-6">
+          <div className="flex justify-between items-center h-16">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center space-x-2"
+            >
+              {(!sidebarCollapsed || isMobileView) && (
+                <Image
+                  src="/assets/logo2.png"
+                  alt="logo"
+                  width={180}
+                  height={160}
+                  quality={100}
                 />
-              </span>
-            )}
+              )}
+            </motion.div>
+            </div>
           </div>
-          
           {(isMobileView || isTabletView) ? (
             <button
               onClick={() => setMobileMenuOpen(false)}

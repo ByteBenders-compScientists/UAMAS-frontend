@@ -56,7 +56,7 @@ export default function EduAISuite() {
     router.push(path);
   };
 
-  const getIcon = (tool) => {
+  const getIcon = (tool: string) => {
     const icons = {
       Canvas: BookOpen,
       Moodle: GraduationCap,
@@ -70,8 +70,8 @@ export default function EduAISuite() {
       OneDrive: HardDrive,
       "Google Drive": FolderOpen,
       GitHub: Github,
-    };
-    return icons[tool] || Globe;
+    } as const;
+    return (icons as Record<string, typeof Globe>)[tool] || Globe;
   };
 
   const testimonials = [
@@ -142,7 +142,7 @@ export default function EduAISuite() {
                 className="flex items-center space-x-2"
               >
                  <Image
-                src="/assets/logo.png"
+                src="/assets/logo2.png"
                 alt="logo"
                 width={180}
                 height={160}
