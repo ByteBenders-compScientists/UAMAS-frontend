@@ -184,7 +184,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
                 <Image
                   src="/assets/logo3.png"
                   alt="logo"
-                  width={180}
+                  width={200}
                   height={160}
                   quality={100}
                 />
