@@ -7,7 +7,7 @@ import AdminSidebar from "@/components/lecturerSidebar"
 import Header from "@/components/Header"
 import EmptyState from "@/components/EmptyState"
 import AddStudentModal from "@/components/lecturer/AddStudentModal"
-import { Users, Plus, Search, Filter, Edit, Trash2, Eye, Download, Upload, MoreVertical } from "lucide-react"
+import { Users, Plus, Search, Filter, Edit, Trash2, Eye, Download, Upload } from "lucide-react"
 
 type Student = {
   id: string
@@ -33,6 +33,21 @@ type Student = {
     course_id: string
   }>
 }
+interface ModalStudent {
+  id: string
+  reg_number: string
+  firstname: string
+  surname: string
+  othernames: string
+  year_of_study: number
+  semester: number
+  email: string // Make sure this matches your modal's expected type
+  course: {
+    id: string
+    name: string
+    code?: string
+  }
+}
 
 type Course = {
   id: string
@@ -42,86 +57,6 @@ type Course = {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
-const StudentCard = ({
-  student,
-  onEdit,
-  onDelete,
-  onView,
-}: {
-  student: Student
-  onEdit: (student: Student) => void
-  onDelete: (id: string) => void
-  onView: (student: Student) => void
-}) => (
-  <motion.div
-    whileHover={{ y: -2 }}
-    className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
-  >
-    <div className="flex items-start justify-between mb-4">
-      <div className="flex items-center space-x-3">
-        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-          <Users size={20} className="text-blue-600" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-gray-800">
-            {student.firstname} {student.surname}
-          </h3>
-          <p className="text-sm text-gray-500">{student.reg_number}</p>
-        </div>
-      </div>
-
-      <div className="relative group">
-        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-          <MoreVertical size={16} className="text-gray-400" />
-        </button>
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-          <button
-            onClick={() => onView(student)}
-            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-          >
-            <Eye size={16} />
-            <span>View Details</span>
-          </button>
-          <button
-            onClick={() => onEdit(student)}
-            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-          >
-            <Edit size={16} />
-            <span>Edit</span>
-          </button>
-          <button
-            onClick={() => onDelete(student.id)}
-            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
-          >
-            <Trash2 size={16} />
-            <span>Delete</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div className="space-y-2">
-      <div className="flex justify-between text-sm">
-        <span className="text-gray-500">Course:</span>
-        <span className="font-medium text-gray-800">{student.course.name}</span>
-      </div>
-      <div className="flex justify-between text-sm">
-        <span className="text-gray-500">Year:</span>
-        <span className="font-medium text-gray-800">Year {student.year_of_study}</span>
-      </div>
-      <div className="flex justify-between text-sm">
-        <span className="text-gray-500">Semester:</span>
-        <span className="font-medium text-gray-800">Semester {student.semester}</span>
-      </div>
-      {student.othernames && (
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-500">Other Names:</span>
-          <span className="font-medium text-gray-800">{student.othernames}</span>
-        </div>
-      )}
-    </div>
-  </motion.div>
-)
 
 export default function StudentsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout()
@@ -201,7 +136,7 @@ export default function StudentsPage() {
       )
   )
 
-  const handleAddStudent = async (studentData: any) => {
+  const handleAddStudent = async (studentData: unknown) => {
     try {
       if (selectedStudent) {
         // Update existing student
@@ -455,22 +390,22 @@ export default function StudentsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex space-x-2">
-                            <button 
-                              onClick={() => handleViewStudent(student)} 
+                            <button
+                              onClick={() => handleViewStudent(student)}
                               className="hover:bg-gray-100 p-1 rounded"
                               title="View Details"
                             >
                               <Eye size={16} className="text-gray-600" />
                             </button>
-                            <button 
-                              onClick={() => handleEditStudent(student)} 
+                            <button
+                              onClick={() => handleEditStudent(student)}
                               className="hover:bg-gray-100 p-1 rounded"
                               title="Edit Student"
                             >
                               <Edit size={16} className="text-blue-600" />
                             </button>
-                            <button 
-                              onClick={() => handleDeleteStudent(student.id)} 
+                            <button
+                              onClick={() => handleDeleteStudent(student.id)}
                               className="hover:bg-gray-100 p-1 rounded"
                               title="Delete Student"
                             >
@@ -491,7 +426,7 @@ export default function StudentsPage() {
       {/* Add/Edit Student Modal */}
       {showAddModal && (
         <AddStudentModal
-          student={selectedStudent}
+          student={selectedStudent as ModalStudent | null}
           onClose={() => {
             setShowAddModal(false)
             setSelectedStudent(null)
@@ -499,6 +434,7 @@ export default function StudentsPage() {
           onSubmit={handleAddStudent}
         />
       )}
+
     </div>
   )
 }
