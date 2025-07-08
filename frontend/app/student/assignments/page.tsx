@@ -74,6 +74,7 @@ export default function AssignmentsPage() {
   const [openEndedInputModes, setOpenEndedInputModes] = useState<
     ("text" | "image" | null)[]
   >([]);
+  const [isNextLoading, setIsNextLoading] = useState(false);
 
   // Fetch Assignments from unified API
   useEffect(() => {
@@ -570,14 +571,6 @@ export default function AssignmentsPage() {
                           </div>
                         </div>
                       )}
-
-                      <button
-                        onClick={() => setShowConfirmSubmit(true)}
-                        disabled={currentQuestion !== questions.length - 1}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                      >
-                        Submit
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -594,37 +587,45 @@ export default function AssignmentsPage() {
                         <div className="text-sm text-gray-600">
                           Question {currentQuestion + 1} of {questions.length}
                         </div>
-
-                        <button
-                          onClick={async () => {
-                            if (questions[currentQuestion]?.status === "answered") {
-                              setCurrentQuestion(
-                                Math.min(
-                                  questions.length - 1,
-                                  currentQuestion + 1
-                                )
-                              );
-                            } else {
+                        {currentQuestion < questions.length - 1 ? (
+                          <button
+                            onClick={async () => {
+                              setIsNextLoading(true);
                               await submitCurrentAnswer(currentQuestion);
-                              setCurrentQuestion(
-                                Math.min(
-                                  questions.length - 1,
-                                  currentQuestion + 1
-                                )
-                              );
+                              setCurrentQuestion(currentQuestion + 1);
+                              setIsNextLoading(false);
+                            }}
+                            disabled={
+                              isNextLoading || questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered()
                             }
-                          }}
-                          disabled={
-                            currentQuestion === questions.length - 1 ||
-                            (questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered())
-                          }
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                        >
-                          {questions[currentQuestion]?.status === "answered"
-                            ? "Answered, Next"
-                            : "Next"}
-                          <ChevronRight size={16} className="ml-1" />
-                        </button>
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                          >
+                            {isNextLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                            {questions[currentQuestion]?.status === "answered" ? "Answered, Next" : "Next"}
+                            <ChevronRight size={16} className="ml-1" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={async () => {
+                              setIsNextLoading(true);
+                              await submitCurrentAnswer(currentQuestion);
+                              if (activeAssignment) {
+                                await fetch(`${apiBaseUrl}/bd/student/assessments/${activeAssignment}/submit`, {
+                                  method: "GET",
+                                  credentials: "include",
+                                });
+                              }
+                              setIsNextLoading(false);
+                              setIsTakingAssignment(false); // End the Assignment UI
+                            }}
+                            disabled={isNextLoading || questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered()}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                          >
+                            {isNextLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                            {questions[currentQuestion]?.status === "answered" ? "Answered, Finish & Submit" : "Finish & Submit"}
+                            <ChevronRight size={16} className="ml-1" />
+                          </button>
+                        )}
                       </div>
 
                       <div className="mt-4">
@@ -647,61 +648,6 @@ export default function AssignmentsPage() {
                   )}
                 </div>
               </div>
-
-              {/* Confirmation Modal */}
-              {showConfirmSubmit && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-white rounded-xl shadow-lg max-w-md w-full p-6"
-                  >
-                    <div className="text-center">
-                      <AlertCircle
-                        size={48}
-                        className="mx-auto text-amber-500 mb-4"
-                      />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        Submit Assignment?
-                      </h3>
-
-                      <p className="text-gray-600 mb-6">
-                        You have answered {getAnsweredCount()} out of{" "}
-                        {questions.length} questions.
-                        {getAnsweredCount() < questions.length &&
-                          " Unanswered questions will be marked as incorrect."}
-                      </p>
-
-                      <div className="flex justify-center space-x-4">
-                        <button
-                          onClick={() => setShowConfirmSubmit(false)}
-                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                        >
-                          Cancel
-                        </button>
-
-                        <button
-                          onClick={handleSubmitAssignment}
-                          disabled={isSubmitting}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          {isSubmitting ? (
-                            <div className="flex items-center">
-                              <Loader2
-                                size={16}
-                                className="animate-spin mr-2"
-                              />
-                              Submitting...
-                            </div>
-                          ) : (
-                            "Confirm Submission"
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-              )}
             </div>
           ) : (
             <div className="max-w-6xl mx-auto">

@@ -35,6 +35,8 @@ type NavItemType = {
   badge?: number | string;
 };
 
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+
 const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const pathname = usePathname();
   const { 
@@ -52,7 +54,8 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   useEffect(() => {
     setMounted(true);
     // Fetch student profile
-    fetch('http://localhost:8080/api/v1/auth/me', {
+   
+    fetch(`${apiBaseUrl}/auth/me`, {
       credentials: 'include',
     })
       .then(res => res.ok ? res.json() : null)
@@ -76,7 +79,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/student/dashboard' },
     { name: 'My CATs', icon: <BookOpen size={20} />, path: '/student/cats' },
     { name: 'Assignments', icon: <ClipboardList size={20} />, path: '/student/assignments', badge: 3 },
-    { name: 'Submission', icon: <FileText size={20} />, path: '/student/submission' },
+    { name: 'Results', icon: <FileText size={20} />, path: '/student/submission' },
     { name: 'My Units', icon: <Calendar size={20} />, path: '/student/units' },
     { name: 'Library', icon: <Library size={20} />, path: '/student/library' },
     { name: 'Forums', icon: <MessageSquare size={20} />, path: '/student/forums', badge: 'New' },
@@ -170,21 +173,25 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
         `}
       >
         {/* Header Section */}
-        <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center">
-            {(!sidebarCollapsed || isMobileView || isTabletView) && (
-              <span className="ml-3 font-semibold text-lg tracking-wide text-gray-800">
-                 <Image
-                src="/assets/logo.png"
-                alt="logo"
-                width={180}
-                height={160}
-                quality={100}
+      <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
+        <div className="container mx-auto px-6">
+          <div className="flex justify-between items-center h-16">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center space-x-2"
+            >
+              {(!sidebarCollapsed || isMobileView) && (
+                <Image
+                  src="/assets/logo3.png"
+                  alt="logo"
+                  width={200}
+                  height={160}
+                  quality={100}
                 />
-              </span>
-            )}
+              )}
+            </motion.div>
+            </div>
           </div>
-          
           {(isMobileView || isTabletView) ? (
             <button
               onClick={() => setMobileMenuOpen(false)}

@@ -164,28 +164,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch students
-        const studentsResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/students", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        })
-        const studentsData = await studentsResponse.json()
-
-        // Fetch lecturers
-        const lecturersResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/lecturers", {
-
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        });
-
-        // Fetch analytics
-        const analyticsResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/analytics", {
+        // Fetch analytics only
+        const analyticsResponse = await fetch(`${apiBaseUrl}/admin/analytics`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -193,18 +173,6 @@ export default function AdminDashboard() {
           credentials: "include",
         });
         const analyticsData = await analyticsResponse.json();
-
-
-        // Fetch courses
-        const coursesResponse = await fetch("https://api.waltertayarg.me/api/v1/admin/courses", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        })
-        const coursesData = await coursesResponse.json()
-
 
         // Calculate total users
         const totalUsers =
@@ -256,40 +224,11 @@ export default function AdminDashboard() {
       color: "bg-emerald-500",
       trend: "up" as const,
     },
-    {
-      icon: <User size={24} className="text-white" />,
-      title: "Registered Students",
-      value: stats.totalStudents,
-      change: "+12%",
-      color: "bg-blue-500",
-      trend: "up" as const,
-    },
-    {
-      icon: <GraduationCap size={24} className="text-white" />,
-      title: "Courses Registered",
-      value: stats.totalCourses,
-      change: "+2%",
-      color: "bg-violet-500",
-      trend: "up" as const,
-    },
-    {
-      icon: <BookOpen size={24} className="text-white" />,
-      title: "Units Registered",
-      value: stats.totalUnits,
-      change: "+8%",
-      color: "bg-amber-500",
-      trend: "up" as const,
-    },
+
   ];
 
   const quickActions = [
-    {
-      icon: <Users size={24} className="text-white" />,
-      title: "Manage Students",
-      description: "Add, edit, or remove student records",
-      color: "bg-blue-500",
-      href: "/admin/students",
-    },
+   
     {
       icon: <UserCheck size={24} className="text-white" />,
       title: "Manage Lecturers",
@@ -297,20 +236,7 @@ export default function AdminDashboard() {
       color: "bg-emerald-500",
       href: "/admin/lecturers",
     },
-    {
-      icon: <GraduationCap size={24} className="text-white" />,
-      title: "Manage Courses",
-      description: "Create and modify course programs",
-      color: "bg-violet-500",
-      href: "/admin/courses",
-    },
-    {
-      icon: <BookOpen size={24} className="text-white" />,
-      title: "Manage Units",
-      description: "Organize course units and modules",
-      color: "bg-amber-500",
-      href: "/admin/units",
-    },
+  
   ];
 
   return (
