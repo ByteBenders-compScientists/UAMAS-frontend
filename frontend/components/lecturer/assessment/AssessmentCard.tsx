@@ -12,16 +12,17 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { Assessment, LegacyCourse as Course } from '../../../types/assessment';
+import { LegacyAssessment, LegacyCourse } from '../../../types/assessment';
 
 import { formatDate, getDifficultyColor, getTypeColor, getBlooms } from '../../../utils/assessmentUtils';
 
+
 interface AssessmentCardProps {
-  assessment: Assessment;
-  courses: Course[];
-  onEdit: (assessment: Assessment) => void;
-  onDelete: (assessment: Assessment) => void;
-  onView: (assessment: Assessment) => void;
+  assessment: LegacyAssessment; // Change this from Assessment to LegacyAssessment
+  courses: LegacyCourse[]; // Make sure this matches too
+  onEdit: (assessment: LegacyAssessment) => void; // Update callback types
+  onDelete: (assessment: LegacyAssessment) => void;
+  onView: (assessment: LegacyAssessment) => void;
   onVerify: (id: string) => void;
   index: number;
 }

@@ -10,8 +10,6 @@ import AdminSidebar from "@/components/AdminSidebar";
 import Header from "@/components/Header";
 import {
   Users,
-  GraduationCap,
-  BookOpen,
   UserCheck,
   TrendingUp,
   Bell,
@@ -19,7 +17,6 @@ import {
   BarChart3,
   Activity,
   Shield,
-  User,
 } from "lucide-react";
 
 type Stats = {

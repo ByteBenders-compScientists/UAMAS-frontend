@@ -1,9 +1,9 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
-import { Assessment } from '../../types/assessment';
+import { LegacyAssessment } from '../../types/assessment';
 
 interface DeleteAssessmentModalProps {
-  assessment: Assessment;
+  assessment: LegacyAssessment;
   onConfirm: () => void;
   onCancel: () => void;
 }

@@ -3,13 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion} from 'framer-motion';
 import { useLayout } from './LayoutController';
 import {
   LayoutDashboard,
   BookOpen,
   ClipboardList,
-  GraduationCap,
   Calendar,
   Library,
   MessageSquare,
@@ -19,7 +18,6 @@ import {
   ChevronRight,
   User,
   X,
-  LucideIcon,
   FileText
 } from 'lucide-react';
 import Image from 'next/image';
