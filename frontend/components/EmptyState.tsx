@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { BookOpen, Calendar, Plus, ArrowRight } from 'lucide-react';
+import { BookOpen, Plus } from 'lucide-react';
 
 interface EmptyStateProps {
   title: string;

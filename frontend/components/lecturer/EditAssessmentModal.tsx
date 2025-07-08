@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { Save, Loader2, FileText } from 'lucide-react';
-import { Assessment, Course, Question } from '../../types/assessment';
+import { LegacyCourse , LegacyAssessment, LegacyQuestion as Question } from '../../types/assessment';
 import QuestionEditor from './QuestionsEditor';
 
 interface EditAssessmentModalProps {
-  assessment: Assessment;
-  courses: Course[];
+  assessment: LegacyAssessment; // Change from Assessment to LegacyAssessment
+  courses: LegacyCourse[]; // Make sure this matches your course type
   onUpdate: (data: any) => void;
   onCancel: () => void;
   loading: boolean;
@@ -13,7 +14,6 @@ interface EditAssessmentModalProps {
 
 const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({ 
   assessment, 
-  courses, 
   onUpdate, 
   onCancel, 
   loading 
@@ -33,11 +33,25 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
     duration: assessment.duration || 60
   });
 
-  const [questions, setQuestions] = useState<Question[]>(assessment.questions || []);
-  const [activeTab, setActiveTab] = useState<'details' | 'questions'>('details');
+  // Convert API questions to LegacyQuestion format if needed
+  const convertToLegacyQuestions = (apiQuestions: any[] | undefined): Question[] => {
+    if (!apiQuestions) return [];
+    
+    return apiQuestions.map(q => ({
+      id: q.id || crypto.randomUUID(),
+      question: q.question || q.text || '', // Handle different property names
+      type: q.type || "multiple-choice",
+      options: q.options || [],
+      correct_answer: q.correct_answer || q.answer || '',
+      marks: q.marks || 1,
+      explanation: q.explanation || ''
+    }));
+  };
 
-  const course = courses.find(c => c.id === assessment.course_id);
-  const unit = course?.units.find(u => u.id === assessment.unit_id);
+  const [questions, setQuestions] = useState<Question[]>(
+    convertToLegacyQuestions(assessment.questions)
+  );
+  const [activeTab, setActiveTab] = useState<'details' | 'questions'>('details');
 
   const handleQuestionUpdate = (index: number, updatedQuestion: Question) => {
     const newQuestions = [...questions];

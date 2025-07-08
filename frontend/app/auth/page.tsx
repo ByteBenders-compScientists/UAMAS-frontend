@@ -354,7 +354,7 @@ export default function AuthPage() {
           </div>
 
           {/* Smaller floating text elements */}
-          {floatingElements.map((element, index) => (
+          {floatingElements.map((element) => (
             <motion.div
               key={element.text}
               className={`absolute ${element.position} z-30`}
@@ -428,7 +428,7 @@ export default function AuthPage() {
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-6 ml-20">
-                {stats.map((stat, index) => (
+                {stats.map((stat) => (
                   <motion.div
                     key={stat.label}
                     initial={{ opacity: 0, y: 20 }}
@@ -720,7 +720,7 @@ export default function AuthPage() {
                     color: "hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50",
                   },
                   { name: "Apple", icon: SiApple, color: "hover:text-gray-800 hover:border-gray-300 hover:bg-gray-50" },
-                ].map((provider, index) => (
+                ].map((provider) => (
                   <motion.button
                     key={provider.name}
                     type="button"

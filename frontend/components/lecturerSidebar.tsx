@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,10 +9,8 @@ import Image from "next/image";
 import { useLayout } from "./LayoutController";
 import {
   LayoutDashboard,
-  BookOpen,
   ClipboardList,
   GraduationCap,
-  Calendar,
   Library,
   MessageSquare,
   Settings,
@@ -111,6 +110,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
     setMounted(true);
     fetchProfile();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!mounted) return null;

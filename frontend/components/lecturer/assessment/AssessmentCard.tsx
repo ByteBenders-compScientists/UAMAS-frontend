@@ -12,18 +12,21 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { Assessment, Course } from '../../../types/assessment';
+import { LegacyAssessment, LegacyCourse } from '../../../types/assessment';
+
 import { formatDate, getDifficultyColor, getTypeColor, getBlooms } from '../../../utils/assessmentUtils';
 
+
 interface AssessmentCardProps {
-  assessment: Assessment;
-  courses: Course[];
-  onEdit: (assessment: Assessment) => void;
-  onDelete: (assessment: Assessment) => void;
-  onView: (assessment: Assessment) => void;
+  assessment: LegacyAssessment; // Change this from Assessment to LegacyAssessment
+  courses: LegacyCourse[]; // Make sure this matches too
+  onEdit: (assessment: LegacyAssessment) => void; // Update callback types
+  onDelete: (assessment: LegacyAssessment) => void;
+  onView: (assessment: LegacyAssessment) => void;
   onVerify: (id: string) => void;
   index: number;
 }
+
 
 const AssessmentCard: React.FC<AssessmentCardProps> = ({
   assessment,
@@ -61,7 +64,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
                 </div>
               )}
               <span className="text-gray-300 text-xs">•</span>
-              <span className="text-xs font-medium text-gray-600">{unit?.name}</span>
+                <span className="text-xs font-medium text-gray-600">{unit?.name}</span>
               <span className="text-gray-300 text-xs">•</span>
               <span className="text-xs font-medium text-gray-600 flex items-center">
                 <Calendar className="w-3 h-3 mr-1" />
@@ -96,8 +99,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
             {assessment.difficulty}
           </span>
           <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            {assessment.questions_type === 'application' ? 'Application' : 
-             assessment.questions_type === 'open-ended' ? 'Open-ended' : 'Close-ended'}
+            {assessment.questions_type === 'open-ended' ? 'Open-ended' : 'Close-ended'}
           </span>
         </div>
 

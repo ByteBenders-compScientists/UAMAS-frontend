@@ -3,12 +3,20 @@
 import { useState } from 'react';
 import { X, Video, File, Link as LinkIcon } from 'lucide-react';
 
+interface EditItem {
+  id?: string;
+  title?: string;
+  type?: 'lecture' | 'assignment' | 'resource';
+  description?: string;
+  date?: string;
+}
+
 interface AddContentModalProps {
   week: number;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
-  editItem?: any;
+  onSave: (data: unknown) => void;
+  editItem?: EditItem;
 }
 
 const AddContentModal = ({ week, isOpen, onClose, onSave, editItem }: AddContentModalProps) => {

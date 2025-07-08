@@ -10,7 +10,7 @@ import {
   ChevronRight,
   Target
 } from 'lucide-react';
-import { Course } from '../../../types/assessment';
+import {LegacyCourse as Course } from '../../../types/assessment';
 
 interface SideAccessPanelProps {
   selectedCourse: string;

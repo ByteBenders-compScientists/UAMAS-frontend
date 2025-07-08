@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { BookMarked, ClipboardList, FileCheck, CheckCircle } from 'lucide-react';
-import { Assessment } from '../../types/assessment';
+import { LegacyAssessment } from '../../types/assessment'; // Change this import
 
 interface StatsCardsProps {
-  assessments: Assessment[];
+  assessments: LegacyAssessment[]; // Change this type
 }
 
 const StatsCards: React.FC<StatsCardsProps> = ({ assessments }) => {
@@ -30,7 +29,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ assessments }) => {
     },
     {
       icon: FileCheck,
-      label: "Assignments", 
+      label: "Assignments",
       value: assessments.filter(a => a.type === "Assignment").length,
       color: "text-purple-600",
       bg: "bg-purple-50",
