@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useLayout } from "./LayoutController";
 import {
   LayoutDashboard,
@@ -135,9 +136,9 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       badge: 3,
     },
     {
-      name: "Grades",
+      name: "Submissions",
       icon: <GraduationCap size={20} />,
-      path: "/lecturer/grades",
+      path: "/lecturer/submission",
     },
     {
       name: "Students",
@@ -151,7 +152,6 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       path: "/lecturer/course",
       badge: 2,
     },
-    { name: "Units", icon: <BookOpen size={20} />, path: "/lecturer/units" },
     { name: "Library", icon: <Library size={20} />, path: "/lecturer/library" },
     {
       name: "Forums",
@@ -242,6 +242,43 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       </Link>
     );
   };
+ const renderHeader = () => (
+    <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
+      <div className="container mx-auto px-6">
+        <div className="flex justify-between items-center h-16">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="flex items-center space-x-2"
+          >
+            <Image
+              src="/assets/logo3.png"
+              alt="logo"
+              width={180}
+              height={160}
+              quality={100}
+            />
+          </motion.div>
+        </div>
+      </div>
+      
+      {(isMobileView || isTabletView) ? (
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
+        >
+          <X size={18} />
+        </button>
+      ) : (
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
+        >
+          {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
+      )}
+    </div>
+  );
+
 
   // User Profile Section Component
   const UserProfileSection = () => {
@@ -313,20 +350,27 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           ${isMobileView || isTabletView ? "w-[270px]" : ""}
         `}
       >
-        {/* Header Section */}
-        <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center">
-            <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-white font-extrabold text-lg">E</span>
+      {/* Header Section */}
+       <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
+        <div className="container mx-auto px-6">
+          <div className="flex justify-between items-center h-16">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center space-x-2"
+            >
+              {(!sidebarCollapsed || isMobileView) && (
+                <Image
+                  src="/assets/logo3.png"
+                  alt="logo"
+                  width={210}
+                  height={180}
+                  quality={100}
+                />
+              )}
+            </motion.div>
             </div>
-            {(!sidebarCollapsed || isMobileView || isTabletView) && (
-              <span className="ml-3 font-semibold text-lg tracking-wide text-gray-800">
-                EduPortal
-              </span>
-            )}
           </div>
-
-          {isMobileView || isTabletView ? (
+          {(isMobileView || isTabletView) ? (
             <button
               onClick={() => setMobileMenuOpen(false)}
               className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
@@ -338,14 +382,10 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
             >
-              {sidebarCollapsed ? (
-                <ChevronRight size={18} />
-              ) : (
-                <ChevronLeft size={18} />
-              )}
+              {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </button>
           )}
-        </div>
+        </div> 
 
         {/* User Profile Section */}
         {(!sidebarCollapsed || isMobileView || isTabletView) && (
