@@ -184,9 +184,6 @@ export default function LecturersPage() {
   }
 
 
-  const handleViewLecturer = (lecturer: Lecturer) => {
-    console.log("Viewing lecturer:", lecturer)
-  }
 
   // const handleAssignUnits = (lecturer: Lecturer) => {
   //   setSelectedLecturer(lecturer)
@@ -194,19 +191,6 @@ export default function LecturersPage() {
   //   setShowAddModal(true)
   // }
 
-  const handleUnitsAssigned = async (unitIds: string[]) => {
-    // Reload the lecturers list to show updated unit assignments
-    const lecturersResponse = await fetch(`${apiBaseUrl}/admin/lecturers`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-    })
-
-    const lecturersData = await lecturersResponse.json()
-    setLecturers(lecturersData)
-  }
 
   return (
     <div className="flex h-screen bg-gray-50">

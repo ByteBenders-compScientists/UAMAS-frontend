@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { useLayout } from "@/components/LayoutController";
 import Sidebar from "@/components/lecturerSidebar";
 import Header from "@/components/Header";
@@ -63,16 +64,12 @@ const AssessmentsDashboard: React.FC = () => {
   const { 
     data: apiCourses, 
     loading: coursesLoading, 
-    error: coursesError,
-    refetch: refetchCourses 
-  } = useApi(() => courseApi.getCourses(), []);
+    error: coursesError  } = useApi(() => courseApi.getCourses(), []);
 
   const { 
     data: apiUnits, 
     loading: unitsLoading, 
-    error: unitsError,
-    refetch: refetchUnits 
-  } = useApi(() => unitApi.getUnits(), []);
+    error: unitsError  } = useApi(() => unitApi.getUnits(), []);
 
   const { 
     data: apiAssessments, 
@@ -168,6 +165,7 @@ const AssessmentsDashboard: React.FC = () => {
     setTimeout(() => setMessage(null), 5000);
   };
 
+   
   const handleCreateAssessment = async (data: any, isAI: boolean) => {
     setLoading(true);
     try {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, Bell, Search, User, Calendar } from 'lucide-react';
+import { Menu, Bell, Search, Calendar } from 'lucide-react';
 import { useLayout } from './LayoutController';
 import WeekSelector from './WeekSelector';
 import { getCurrentWeek, getWeekDateRange, formatDateRange } from '@/utils/WeekSelector';
@@ -16,7 +16,7 @@ const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
   const { isMobileView, isTabletView, setMobileMenuOpen } = useLayout();
   const [currentWeek, setCurrentWeek] = useState(getCurrentWeek());
   const [searchQuery, setSearchQuery] = useState('');
-  const [notificationCount, setNotificationCount] = useState(2);
+  const [notificationCount] = useState(2);
 
   const handleWeekChange = (week: number) => {
     setCurrentWeek(week);

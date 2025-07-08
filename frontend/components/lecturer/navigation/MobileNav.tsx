@@ -8,7 +8,7 @@ import {
   Calendar, 
   ChevronDown 
 } from 'lucide-react';
-import { Course } from '../../../types/assessment';
+import {LegacyCourse as Course } from '../../../types/assessment';
 
 interface MobileNavProps {
   open: boolean;

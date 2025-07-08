@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import {
-  BrainCircuit,
   Users,
   BookOpen,
   BarChart3,
@@ -211,7 +210,7 @@ export default function IntelliMark() {
                   "For Students",
                   "Testimonials",
                   "FAQ",
-                ].map((item, index) => (
+                ].map((item) => (
                   <motion.a
                     key={item}
                     href={`#${item.toLowerCase().replace(" ", "-")}`}
@@ -911,8 +910,8 @@ export default function IntelliMark() {
                       <p className="font-medium text-sm">Achievement</p>
                     </div>
                     <p className="text-xs text-gray-600">
-                      "Completed 5 consecutive assignments with above 90%
-                      scores!"
+                      &ldquo;Completed 5 consecutive assignments with above 90%
+                      scores!&rdquo;
                     </p>
                   </div>
                 </div>
