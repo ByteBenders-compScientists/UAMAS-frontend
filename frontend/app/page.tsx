@@ -299,7 +299,7 @@ export default function IntelliMark() {
         </motion.nav>
 
         {/* Hero Section with changing images */}
-        <section className="pt-16 relative h-[90vh] overflow-hidden">
+        <section className="pt-16 relative h-[100vh] overflow-hidden">
           <div className="absolute inset-0 w-full h-full">
             <AnimatePresence mode="wait">
               <motion.div
@@ -339,7 +339,7 @@ export default function IntelliMark() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.5 }}
                   >
-                    <h1 className="text-5xl lg:text-7xl font-bold leading-tight mb-2">
+                    <h1 className="text-3xl lg:text-4xl font-bold leading-tight mt-2">
                       {heroSlides[currentHeroSlide].title}
                     </h1>
                     <p className="text-2xl text-emerald-300 font-light">
