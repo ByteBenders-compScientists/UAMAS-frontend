@@ -1,32 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
-import React, { useState } from 'react';
-import {useLayout} from '@/components/LayoutController';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLayout } from '@/components/LayoutController';
 import Sidebar from '@/components/lecturerSidebar';
 import { 
-  BookMarked, BarChart3, Clock, Monitor, Plus, Star, User, 
-  Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp, GraduationCap,
-  FileText, MessageSquare, Library, Settings, Upload, Image, Calendar,
-  File, CheckCircle, AlertCircle, BookOpen, ChevronRight, Download,
-  MessageCircle, Book, Edit, Trash2, Search, Filter, Eye, TrendingUp
+  Clock, Menu, Bell, User, X, CheckCircle, BarChart3, 
+  TrendingUp, Edit, Eye
 } from 'lucide-react';
 
 // ===== TYPES =====
-interface NavigationItem {
-  icon: React.ElementType;
-  label: string;
-  active?: boolean;
-  count?: number;
-  hasDropdown?: boolean;
-  dropdownItems?: DropdownItem[];
-  path?: string;
-}
-
-interface DropdownItem {
-  label: string;
-  path: string;
-  icon?: React.ElementType;
-}
-
 interface Assessment {
   id: string;
   title: string;
@@ -36,11 +18,44 @@ interface Assessment {
   deadline: string;
   status: string;
   verified: boolean;
-  questions: any[];
+  questions: unknown[];
   unit_id: string;
   course_id?: string;
   course_name?: string;
   unit_name?: string;
+}
+
+interface Course {
+  id: string;
+  name: string;
+  units: Unit[];
+}
+
+interface Unit {
+  id: string;
+  unit_name: string;
+}
+
+interface Submission {
+  submission_id: string;
+  student_name: string;
+  reg_number: string;
+  course_name: string;
+  unit_name: string;
+  assessment_topic: string;
+  graded: boolean;
+  total_marks: number;
+  results?: SubmissionResult[];
+}
+
+interface SubmissionResult {
+  id: string;
+  question_text: string;
+  score: number;
+  marks: number;
+  feedback: string;
+  graded_at: string;
+  question_id: string;
 }
 
 interface SubmissionEntry {
@@ -59,10 +74,10 @@ interface SubmissionEntry {
   status: 'Graded' | 'Pending' | 'Late' | 'Resubmission';
 }
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
 // ===== UTILITY FUNCTIONS =====
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string): string => {
   if (!dateString) return 'N/A';
   const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
   return new Date(dateString).toLocaleDateString(undefined, options);
@@ -95,24 +110,6 @@ const getGradeBadgeClass = (grade: string): string => {
 };
 
 // ===== COMPONENTS =====
-const SidebarHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-  <div className="flex items-center justify-between p-6 border-b border-rose-200/50">
-    <div className="flex items-center space-x-3">
-      <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-        <LetterText className="w-5 h-5 text-rose-600" />
-      </div>
-      <span className="text-xl font-bold text-white">EduPortal</span>
-    </div>
-    <button 
-      className="lg:hidden text-white hover:text-rose-100 transition-colors p-1"
-      onClick={onClose}
-      aria-label="Close sidebar"
-    >
-      <X className="w-5 h-5" />
-    </button>
-  </div>
-);
-
 const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle }) => (
   <header className="flex items-center justify-between px-4 py-4 lg:py-6 bg-white border-b border-gray-200 shadow-sm lg:shadow-none">
     <div className="flex items-center space-x-3">
@@ -140,113 +137,12 @@ const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle 
   </header>
 );
 
-const UserProfile: React.FC = () => (
-  <div className="p-6 border-b border-rose-200/50">
-    <div className="flex items-center space-x-3">
-      <div className="w-12 h-12 bg-gradient-to-r from-white to-rose-50 rounded-xl flex items-center justify-center">
-        <div className="w-8 h-8 bg-gradient-to-r from-rose-500 to-pink-500 rounded-lg flex items-center justify-center">
-          <User className="w-4 h-4 text-white" />
-        </div>
-      </div>
-      <div>
-        <div className="font-semibold text-white">Dr. Alex Kimani</div>
-        <div className="text-sm text-rose-100">Senior Lecturer</div>
-      </div>
-    </div>
-  </div>
-);
-
-const NavigationDropdown: React.FC<{
-  items: DropdownItem[];
-  isOpen: boolean;
-}> = ({ items, isOpen }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="ml-6 mt-2 space-y-1">
-      {items.map((item, index) => (
-        <button
-          key={index}
-          className="w-full text-left flex items-center space-x-3 p-2 text-sm rounded-lg hover:bg-rose-300/30 transition-all duration-200 text-rose-100"
-        >
-          {item.icon && <item.icon className="w-4 h-4" />}
-          <span>{item.label}</span>
-        </button>
-      ))}
-    </div>
-  );
-};
-
-const NavigationItemComponent: React.FC<{
-  item: NavigationItem;
-  isDropdownOpen: boolean;
-  onDropdownToggle: () => void;
-}> = ({ item, isDropdownOpen, onDropdownToggle }) => {
-  if (item.hasDropdown) {
-    return (
-      <div>
-        <button
-          onClick={onDropdownToggle}
-          className={`w-full flex items-center justify-between space-x-3 p-3 rounded-xl transition-all duration-200 ${
-            item.active 
-              ? 'bg-white text-rose-600 shadow-lg' 
-              : 'hover:bg-rose-300/20 text-white'
-          }`}
-          aria-expanded={isDropdownOpen}
-        >
-          <div className="flex items-center space-x-3">
-            <item.icon className="w-5 h-5" />
-            <span className="text-sm font-medium">{item.label}</span>
-          </div>
-          {isDropdownOpen ? (
-            <ChevronUp className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4" />
-          )}
-        </button>
-        
-        <NavigationDropdown 
-          items={item.dropdownItems || []} 
-          isOpen={isDropdownOpen}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <button 
-      className={`w-full flex items-center justify-between space-x-3 p-3 rounded-xl transition-all duration-200 ${
-        item.active 
-          ? 'bg-white text-rose-600 shadow-lg' 
-          : 'hover:bg-rose-300/20 text-white'
-      }`}
-    >
-      <div className="flex items-center space-x-3">
-        <item.icon className="w-5 h-5" />
-        <span className="text-sm font-medium">{item.label}</span>
-      </div>
-      {item.count && (
-        <span className="bg-white text-rose-600 text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-          {item.count}
-        </span>
-      )}
-    </button>
-  );
-};
-
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  navigationItems: NavigationItem[];
-  isCreateDropdownOpen: boolean;
-  onCreateDropdownToggle: () => void;
-}
-
 const GradeStats: React.FC<{ grades: SubmissionEntry[] }> = ({ grades }) => {
   const totalGraded = grades.filter(g => g.status === 'Graded').length;
   const totalPending = grades.filter(g => g.status === 'Pending').length;
-  const averageScore = grades.filter(g => g.status === 'Graded').reduce((acc, g) => acc + g.score, 0) / totalGraded || 0;
-  const highestScore = Math.max(...grades.filter(g => g.status === 'Graded').map(g => g.score));
+  const gradedGrades = grades.filter(g => g.status === 'Graded');
+  const averageScore = gradedGrades.length > 0 ? gradedGrades.reduce((acc, g) => acc + g.score, 0) / gradedGrades.length : 0;
+  const highestScore = gradedGrades.length > 0 ? Math.max(...gradedGrades.map(g => g.score)) : 0;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
@@ -394,71 +290,71 @@ const GradesTable: React.FC<{ grades: SubmissionEntry[], onGradeEdit: (gradeId: 
 );
 
 // ===== MAIN COMPONENT =====
-const page: React.FC = () => {
+const Page: React.FC = () => {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string>('');
-  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loadingAssessments, setLoadingAssessments] = useState(false);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedResult, setSelectedResult] = useState<any | null>(null);
+  const [selectedResult, setSelectedResult] = useState<Submission | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
   const [editingResultId, setEditingResultId] = useState<string | null>(null);
   const [editScore, setEditScore] = useState<number | null>(null);
   const [editFeedback, setEditFeedback] = useState<string>('');
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [selectedUnitId, setSelectedUnitId] = useState('');
 
   // Fetch courses/units on mount
-  React.useEffect(() => {
+  useEffect(() => {
     fetch(`${apiBaseUrl}/auth/lecturer/courses`, { credentials: 'include' })
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch courses');
         return res.json();
       })
-      .then(data => setCourses(data))
+      .then((data: Course[]) => setCourses(data))
       .catch(() => setCourses([]));
   }, []);
 
   // Filtered units for selected course
-  const filteredUnits = React.useMemo(() => {
+  const filteredUnits = useMemo(() => {
     if (!selectedCourseId) return [];
-    const course = courses.find((c: any) => c.id === selectedCourseId);
+    const course = courses.find((c: Course) => c.id === selectedCourseId);
     return course ? course.units : [];
   }, [selectedCourseId, courses]);
 
   // Filtered assessments for selected course/unit
-  const filteredAssessments = React.useMemo(() => {
+  const filteredAssessments = useMemo(() => {
     let filtered = assessments;
     if (selectedCourseId) {
       filtered = filtered.filter(a => {
-        // Try to match course by course_name or course_id
-        const course = courses.find((c: any) => c.id === selectedCourseId);
+        const course = courses.find((c: Course) => c.id === selectedCourseId);
         return course && (a.course_name === course.name || a.course_id === course.id);
       });
     }
     if (selectedUnitId) {
-      filtered = filtered.filter(a => a.unit_id === selectedUnitId || a.unit_name === (filteredUnits.find((u: any) => u.id === selectedUnitId)?.unit_name));
+      filtered = filtered.filter(a => a.unit_id === selectedUnitId || a.unit_name === (filteredUnits.find((u: Unit) => u.id === selectedUnitId)?.unit_name));
     }
     return filtered;
   }, [assessments, selectedCourseId, selectedUnitId, courses, filteredUnits]);
 
   // Reset unit and assessment when course changes
-  React.useEffect(() => {
+  useEffect(() => {
     setSelectedUnitId('');
     setSelectedAssessmentId('');
   }, [selectedCourseId]);
+
   // Reset assessment when unit changes
-  React.useEffect(() => {
+  useEffect(() => {
     setSelectedAssessmentId('');
   }, [selectedUnitId]);
 
   // Fetch assessments on mount
-  React.useEffect(() => {
+  useEffect(() => {
     setLoadingAssessments(true);
     fetch(`${apiBaseUrl}/bd/lecturer/assessments`, {
       credentials: 'include',
@@ -467,7 +363,7 @@ const page: React.FC = () => {
         if (!res.ok) throw new Error('Failed to fetch assessments');
         return res.json();
       })
-      .then(data => {
+      .then((data: Assessment[]) => {
         setAssessments(data);
         setLoadingAssessments(false);
       })
@@ -478,7 +374,7 @@ const page: React.FC = () => {
   }, []);
 
   // Fetch submissions when assessment changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (!selectedAssessmentId) {
       setSubmissions([]);
       return;
@@ -491,7 +387,7 @@ const page: React.FC = () => {
         if (!res.ok) throw new Error('Failed to fetch submissions');
         return res.json();
       })
-      .then(data => {
+      .then((data: Submission[]) => {
         setSubmissions(data);
         setLoadingSubmissions(false);
       })
@@ -502,7 +398,7 @@ const page: React.FC = () => {
   }, [selectedAssessmentId]);
 
   // Modal for result details
-  const handleSeeResult = (submission: any) => {
+  const handleSeeResult = (submission: Submission) => {
     setSelectedResult(submission);
     setShowResultModal(true);
   };
@@ -513,7 +409,7 @@ const page: React.FC = () => {
   };
 
   // Handle edit click
-  const handleEditResult = (result: any) => {
+  const handleEditResult = (result: SubmissionResult) => {
     setEditingResultId(result.id);
     setEditScore(result.score);
     setEditFeedback(result.feedback || '');
@@ -521,7 +417,7 @@ const page: React.FC = () => {
   };
 
   // Handle save
-  const handleSaveResult = async (result: any) => {
+  const handleSaveResult = async (result: SubmissionResult) => {
     if (editScore === null || isNaN(editScore)) {
       setUpdateError('Score is required.');
       return;
@@ -533,7 +429,7 @@ const page: React.FC = () => {
     setUpdateLoading(true);
     setUpdateError(null);
     try {
-      const res = await fetch(`${apiBaseUrl}/bd/lecturer/submissions/${selectedResult.submission_id}`, {
+      const res = await fetch(`${apiBaseUrl}/bd/lecturer/submissions/${selectedResult?.submission_id}`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -544,12 +440,13 @@ const page: React.FC = () => {
         }),
       });
       if (!res.ok) throw new Error('Failed to update result');
+      
       // Update UI locally
-      setSelectedResult((prev: any) => {
+      setSelectedResult((prev: Submission | null) => {
         if (!prev) return prev;
         return {
           ...prev,
-          results: prev.results.map((r: any) =>
+          results: prev.results?.map((r: SubmissionResult) =>
             r.id === result.id ? { ...r, score: editScore, feedback: editFeedback || r.feedback } : r
           ),
         };
@@ -557,12 +454,24 @@ const page: React.FC = () => {
       setEditingResultId(null);
       setEditScore(null);
       setEditFeedback('');
-    } catch (err: any) {
-      setUpdateError(err.message || 'Failed to update result');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setUpdateError(err.message);
+      } else {
+        setUpdateError('Failed to update result');
+      }
     } finally {
       setUpdateLoading(false);
     }
   };
+
+  const handleGradeEdit = (gradeId: string) => {
+    // Implementation for editing grades
+    console.log('Edit grade:', gradeId);
+  };
+
+  // Mock data for stats - replace with actual data when available
+  const mockGrades: SubmissionEntry[] = [];
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -590,7 +499,7 @@ const page: React.FC = () => {
                       onChange={e => setSelectedCourseId(e.target.value)}
                     >
                       <option value="">-- All Courses --</option>
-                      {courses.map((course: any) => (
+                      {courses.map((course: Course) => (
                         <option key={course.id} value={course.id}>{course.name}</option>
                       ))}
                     </select>
@@ -606,7 +515,7 @@ const page: React.FC = () => {
                       disabled={!selectedCourseId}
                     >
                       <option value="">-- All Units --</option>
-                      {filteredUnits.map((unit: any) => (
+                      {filteredUnits.map((unit: Unit) => (
                         <option key={unit.id} value={unit.id}>{unit.unit_name}</option>
                       ))}
                     </select>
@@ -664,6 +573,12 @@ const page: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Stats component - shown only when there's data */}
+            {mockGrades.length > 0 && <GradeStats grades={mockGrades} />}
+
+            {/* Grades table - shown only when there's data */}
+            {mockGrades.length > 0 && <GradesTable grades={mockGrades} onGradeEdit={handleGradeEdit} />}
 
             {/* Submissions Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -738,7 +653,7 @@ const page: React.FC = () => {
                   <div className="overflow-y-auto" style={{ maxHeight: '65vh' }}>
                     {selectedResult.results && selectedResult.results.length > 0 ? (
                       <div className="space-y-4">
-                        {selectedResult.results.map((result: any) => (
+                        {selectedResult.results.map((result: SubmissionResult) => (
                           <div key={result.id} className="border rounded-lg p-4">
                             <div className="font-semibold text-gray-800 mb-1">Question: {result.question_text}</div>
                             <div className="text-gray-700 mb-2">Score: {editingResultId === result.id ? (
@@ -812,4 +727,5 @@ const page: React.FC = () => {
     </div>
   );
 };
-export default page;
+
+export default Page;
