@@ -1,7 +1,9 @@
 import React from "react";
 import { Flag, ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 
 interface CatQuestionsProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   questions: any[];
   currentQuestion: number;
   selectedAnswers: number[];
@@ -124,11 +126,14 @@ const CatQuestions: React.FC<CatQuestionsProps> = ({
                     }}
                   />
                   {openEndedImages[currentQuestion] && (
-                    <div className="mt-2">
-                      <img
+                    <div className="mt-2">                      
+                      <Image
                         src={URL.createObjectURL(openEndedImages[currentQuestion]!)}
                         alt="Preview"
                         className="max-h-40 rounded"
+                        width={160}
+                        height={160}
+                        objectFit="contain"
                       />
                     </div>
                   )}
