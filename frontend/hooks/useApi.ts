@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 // Generic hook for API calls
 export function useApi<T>(
   apiCall: () => Promise<T>,
-  dependencies: any[] = []
+  dependencies: unknown[] = []
 ) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +37,7 @@ export function useApi<T>(
     return () => {
       isMounted = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, dependencies);
 
   const refetch = async () => {
@@ -56,7 +57,7 @@ export function useApi<T>(
 }
 
 // Hook for mutations (POST, PUT, DELETE)
-export function useMutation<T, P = any>() {
+export function useMutation<T, P = unknown>() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { Save, Loader2, FileText } from 'lucide-react';
-import { Assessment, LegacyCourse as Course, LegacyQuestion as Question } from '../../types/assessment';
+import { LegacyCourse , LegacyAssessment, LegacyQuestion as Question } from '../../types/assessment';
 import QuestionEditor from './QuestionsEditor';
 
 interface EditAssessmentModalProps {
-  assessment: Assessment;
-  courses: Course[];
-  onUpdate: (data: unknown) => void;
+  assessment: LegacyAssessment; // Change from Assessment to LegacyAssessment
+  courses: LegacyCourse[]; // Make sure this matches your course type
+  onUpdate: (data: any) => void;
   onCancel: () => void;
   loading: boolean;
 }
@@ -150,7 +150,7 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
               <label className="block text-sm font-bold text-gray-700 mb-3">Difficulty</label>
               <select
                 value={formData.difficulty}
-                onChange={(e) => setFormData({...formData, difficulty: e.target.value as "Easy" | "Intermediate" | "Advance"})}
+                onChange={(e) => setFormData({...formData, difficulty: e.target.value as "Easy" | "Intermediate" | "Advanced"})}
                 className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
               >
                 <option value="Easy">Easy</option>

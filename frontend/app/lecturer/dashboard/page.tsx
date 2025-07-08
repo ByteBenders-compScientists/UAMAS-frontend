@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -75,7 +76,7 @@ interface Assessment {
   deadline: string;
   status: string;
   verified: boolean;
-  questions: any[];
+  questions: unknown[];
   unit_id: string;
 }
 
@@ -85,7 +86,7 @@ interface Submission {
   assessment_id: string;
   graded: boolean;
   total_marks: number;
-  results: any[];
+  results: unknown[];
 }
 
 interface QuickActionCard {
@@ -121,11 +122,11 @@ const LecturerDashboard: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
+  const [submissions] = useState<Submission[]>([]);
+  const [, setUnits] = useState<Unit[]>([]);
   const [profile, setProfile] = useState<LecturerProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [lecturerProfile, setLecturerProfile] = useState<any>(null);
+  const [lecturerProfile, setLecturerProfile] = useState<LecturerProfile | null>(null);
 
   // API Base URL
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
@@ -141,10 +142,10 @@ const LecturerDashboard: React.FC = () => {
   };
 
   // Get full display name with title
-  const getDisplayName = (profile: LecturerProfile) => {
-    const title = profile.title || "Dr.";
-    return `${title} ${profile.name} ${profile.surname}`;
-  };
+  // const getDisplayName = (profile: LecturerProfile) => {
+  //   const title = profile.title || "Dr.";
+  //   return `${title} ${profile.name} ${profile.surname}`;
+  // };
 
   // Fetch lecturer profile
   const fetchProfile = async () => {

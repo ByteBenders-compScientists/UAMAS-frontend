@@ -54,12 +54,16 @@ const CourseCard = ({
   onDelete,
   onView,
   onAddUnit,
+  onEditUnit,
+  onDeleteUnit,
 }: {
   course: Course;
   onEdit: (course: Course) => void;
   onDelete: (id: string) => void;
   onView: (course: Course) => void;
   onAddUnit: (course: Course) => void;
+  onEditUnit: (unit: Unit) => void;
+  onDeleteUnit: (unitId: string) => void;
 }) => (
   <motion.div
     whileHover={{ y: -2 }}
@@ -147,7 +151,7 @@ const CourseCard = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleEditUnit(unit);
+                        onEditUnit(unit);
                       }}
                       className="p-1 hover:bg-violet-200 rounded text-violet-600"
                       title="Edit unit"
@@ -157,7 +161,7 @@ const CourseCard = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteUnit(unit.id);
+                        onDeleteUnit(unit.id);
                       }}
                       className="p-1 hover:bg-red-200 rounded text-red-600"
                       title="Delete unit"
@@ -628,6 +632,8 @@ export default function CoursesPage() {
                       onDelete={handleDeleteCourse}
                       onView={handleViewCourse}
                       onAddUnit={handleAddUnit}
+                      onEditUnit={handleEditUnit}
+                      onDeleteUnit={handleDeleteUnit}
                     />
                   </motion.div>
                 ))}
