@@ -8,7 +8,7 @@ import {
   Check, 
   Loader2
 } from 'lucide-react';
-import { Assessment, Course } from '../../../types/assessment';
+import { Assessment,LegacyCourse as Course } from '../../../types/assessment';
 
 interface AssessmentFormProps {
   initialData?: Assessment;
@@ -16,7 +16,7 @@ interface AssessmentFormProps {
   selectedUnit: string;
   selectedWeek: number;
   courses: Course[];
-  onSubmit: (data: any, isAI: boolean) => void;
+  onSubmit: (data: unknown, isAI: boolean) => void;
   onCancel: () => void;
   loading: boolean;
   isEditing?: boolean;
@@ -37,7 +37,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
     title: initialData?.title || "",
     description: initialData?.description || "",
     type: initialData?.type || "CAT",
-    questions_type: initialData?.questions_type || "close-ended",
+    questions_type: initialData?.questions_type || "close-ended" as "close-ended" | "open-ended" | "application",
     close_ended_type: initialData?.close_ended_type || "multiple choice with one answer",
     topic: initialData?.topic || "",
     total_marks: initialData?.total_marks || 30,
@@ -152,7 +152,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             </label>
             <select
               value={formData.questions_type}
-              onChange={(e) => setFormData({...formData, questions_type: e.target.value as "open-ended" | "close-ended" | "application"})}
+              onChange={(e) => setFormData({...formData, questions_type: e.target.value as "close-ended" | "open-ended" | "application"})}
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
             >
               <option value="close-ended">Close-ended Questions</option>
@@ -198,7 +198,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             </label>
             <select
               value={formData.difficulty}
-              onChange={(e) => setFormData({...formData, difficulty: e.target.value as "Easy" | "Intermediate" | "Advanced"})}
+              onChange={(e) => setFormData({...formData, difficulty: e.target.value as "Easy" | "Intermediate" | "Advance"})}
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
             >
               <option value="Easy">Easy</option>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Save } from 'lucide-react';
-import { Question } from '../../types/assessment';
+import { LegacyQuestion as Question } from '../../types/assessment';
 
 interface QuestionEditorProps {
   question: Question;
