@@ -8,7 +8,6 @@ import {
   Bell,
   Menu,
   X,
-  Text as LetterText,
   ChevronDown,
   FileText,
   Library,
@@ -29,22 +28,7 @@ import {
 // ===== CONSTANTS =====
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
-// ===== TYPES =====
-interface NavigationItem {
-  icon: React.ElementType;
-  label: string;
-  active?: boolean;
-  count?: number;
-  hasDropdown?: boolean;
-  dropdownItems?: DropdownItem[];
-  path?: string;
-}
 
-interface DropdownItem {
-  label: string;
-  path: string;
-  icon?: React.ElementType;
-}
 
 interface Note {
   id: number;
@@ -181,7 +165,7 @@ const uploadNote = async (
   courseId: number,
   unitId: number,
   formData: FormData
-): Promise<any> => {
+): Promise<unknown> => {
   try {
     const response = await fetch(
       `${API_BASE_URL}/bd/lecturer/units/${unitId}/notes`,
