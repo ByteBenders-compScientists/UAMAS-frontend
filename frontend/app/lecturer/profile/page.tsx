@@ -171,7 +171,7 @@ const NavigationDropdown = ({
       {items.map((item: DropdownItem, index: number) => (
         <button
           key={index}
-          className="w-full text-left block p-2 text-sm font-medium rounded-lg hover:bg-rose-300 hover:bg-opacity-50 transition-all duration-200 text-white flex items-center"
+          className="w-full text-left p-2 text-sm font-medium rounded-lg hover:bg-rose-300 hover:bg-opacity-50 transition-all duration-200 text-white flex items-center"
           onClick={() => console.log(`Navigate to ${item.path}`)}
         >
           {item.icon && <item.icon className="w-4 h-4 mr-2" />}
