@@ -224,10 +224,7 @@ export default function ForumsPage() {
                 title="No Discussions Yet"
                 description="Be the first to start a discussion. Ask questions, share ideas, or connect with other students."
                 icon={<MessageSquare size={48} />}
-                action={{
-                  label: 'Start a Discussion',
-                  onClick: () => console.log('Start discussion clicked')
-                }}
+                onAction={() => console.log('Start discussion clicked')}
               />
             </div>
           ) : (
