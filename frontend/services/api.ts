@@ -216,7 +216,7 @@ export const notesApi = {
 
 // Type definitions based on API documentation
 export interface Course {
-  color: any;
+  color: unknown;
   id: string;
   name: string;
   code: string;
