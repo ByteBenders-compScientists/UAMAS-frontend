@@ -171,15 +171,15 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const sidebarVariants = {
     desktop: {
       width: sidebarCollapsed ? 80 : 240,
-      transition: { duration: 0.3, ease: "easeInOut" },
+      transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
     },
     mobile: {
       x: 0,
-      transition: { duration: 0.3, ease: "easeInOut" },
+      transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
     },
     mobileHidden: {
       x: "-100%",
-      transition: { duration: 0.3, ease: "easeInOut" },
+      transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
     },
   };
 
@@ -242,43 +242,6 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       </Link>
     );
   };
- const renderHeader = () => (
-    <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
-      <div className="container mx-auto px-6">
-        <div className="flex justify-between items-center h-16">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="flex items-center space-x-2"
-          >
-            <Image
-              src="/assets/logo3.png"
-              alt="logo"
-              width={180}
-              height={160}
-              quality={100}
-            />
-          </motion.div>
-        </div>
-      </div>
-      
-      {(isMobileView || isTabletView) ? (
-        <button
-          onClick={() => setMobileMenuOpen(false)}
-          className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
-        >
-          <X size={18} />
-        </button>
-      ) : (
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
-        >
-          {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
-      )}
-    </div>
-  );
-
 
   // User Profile Section Component
   const UserProfileSection = () => {
@@ -350,24 +313,24 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           ${isMobileView || isTabletView ? "w-[270px]" : ""}
         `}
       >
-      {/* Header Section */}
-       <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
-        <div className="container mx-auto px-6">
-          <div className="flex justify-between items-center h-16">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center space-x-2"
-            >
-              {(!sidebarCollapsed || isMobileView) && (
-                <Image
-                  src="/assets/logo3.png"
-                  alt="logo"
-                  width={210}
-                  height={180}
-                  quality={100}
-                />
-              )}
-            </motion.div>
+        {/* Header Section */}
+        <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
+          <div className="container mx-auto px-6">
+            <div className="flex justify-between items-center h-16">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center space-x-2"
+              >
+                {(!sidebarCollapsed || isMobileView) && (
+                  <Image
+                    src="/assets/logo3.png"
+                    alt="logo"
+                    width={210}
+                    height={180}
+                    quality={100}
+                  />
+                )}
+              </motion.div>
             </div>
           </div>
           {(isMobileView || isTabletView) ? (
@@ -385,13 +348,11 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
               {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </button>
           )}
-        </div> 
+        </div>
 
         {/* User Profile Section */}
         {(!sidebarCollapsed || isMobileView || isTabletView) && (
-
           <UserProfileSection />
-
         )}
 
         {/* Navigation Section */}
@@ -409,7 +370,6 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           {(!sidebarCollapsed || isMobileView || isTabletView) && (
             <div className="px-4 pb-4">
               <div className="bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl p-4 text-center">
-                {/* We'll use an inline SVG instead of an Image component */}
                 <div className="mx-auto mb-2 -mt-6 h-24 w-full flex justify-center">
                   <svg
                     width="100"
