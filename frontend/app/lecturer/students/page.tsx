@@ -255,7 +255,7 @@ export default function StudentsPage() {
         <Header title="Students Management" />
 
         <main className="p-4 md:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-8xl mx-auto">
             {/* Header Actions */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
               <div>
