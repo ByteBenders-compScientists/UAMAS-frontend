@@ -123,7 +123,6 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
     return null;
 
   const navItems: NavItemType[] = [
-
     {
       name: "Dashboard",
       icon: <LayoutDashboard size={20} />,
@@ -159,7 +158,6 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       path: "/lecturer/forums",
       badge: "New",
     },
-
   ];
 
   const bottomNavItems: NavItemType[] = [
@@ -168,19 +166,19 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
     { name: "Logout", icon: <LogOut size={20} />, path: "/logout" },
   ];
 
-  const sidebarVariants = {
-    desktop: {
-      width: sidebarCollapsed ? 80 : 240,
-      transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
-    },
-    mobile: {
-      x: 0,
-      transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
-    },
-    mobileHidden: {
-      x: "-100%",
-      transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
-    },
+  // Get animation properties based on current state
+  const getSidebarAnimation = () => {
+    if (isMobileView || isTabletView) {
+      return {
+        x: isMobileMenuOpen ? 0 : "-100%",
+        transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
+      };
+    } else {
+      return {
+        width: sidebarCollapsed ? 80 : 240,
+        transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
+      };
+    }
   };
 
   // Mobile/tablet overlay when sidebar is open
@@ -298,15 +296,12 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
     <>
       {renderOverlay()}
       <motion.div
-        initial={isMobileView || isTabletView ? "mobileHidden" : "desktop"}
-        animate={
+        initial={
           isMobileView || isTabletView
-            ? isMobileMenuOpen
-              ? "mobile"
-              : "mobileHidden"
-            : "desktop"
+            ? { x: "-100%" }
+            : { width: sidebarCollapsed ? 80 : 240 }
         }
-        variants={sidebarVariants}
+        animate={getSidebarAnimation()}
         className={`
           h-screen fixed left-0 top-0 z-40 flex flex-col
           bg-white text-gray-700 shadow-xl border-r border-gray-200
