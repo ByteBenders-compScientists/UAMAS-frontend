@@ -121,7 +121,7 @@ export default function MyUnitsPage() {
               />
             </div>
           ) : (
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               {/* Stats Overview */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 {/* Total Units */}

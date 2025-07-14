@@ -256,7 +256,7 @@ export default function AdminDashboard() {
 
         <main className="p-4 md:p-6 lg:p-8">
           {isLoading ? (
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               <div className="animate-pulse space-y-8">
                 <div className="h-32 bg-gray-200 rounded-xl"></div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -271,7 +271,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           ) : (
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               {/* Welcome Section */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -396,7 +396,7 @@ export default function AdminDashboard() {
           )}
         </main>
         {/* System Overview Section (Bottom) */}
-        <div className="max-w-7xl mx-auto mt-10">
+        <div className="max-w-8xl mx-auto mt-10">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
             <h2 className="text-lg font-bold text-gray-900 mb-6">
               System Overview

@@ -479,7 +479,7 @@ const Page: React.FC = () => {
       <div className="flex-1 flex flex-col lg:ml-64">
         <TopHeader onSidebarToggle={() => {}} />
         <main className="flex-1 p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-8xl mx-auto">
             <div className="mb-8 lg:hidden">
               <h1 className="text-2xl font-bold text-gray-900">Submission Management</h1>
               <p className="text-gray-600 mt-1">Track and manage student submissions across all your courses.</p>
