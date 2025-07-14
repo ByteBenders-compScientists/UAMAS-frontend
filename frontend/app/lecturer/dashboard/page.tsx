@@ -585,7 +585,7 @@ const LecturerDashboard: React.FC = () => {
         <div className="flex flex-col min-h-screen">
           <TopHeader />
 
-          <main className="flex-1 p-4 lg:p-6 max-w-7xl mx-auto w-full">
+          <main className="flex-1 p-4 lg:p-6 max-w-8xl mx-auto w-full">
             <HeroSection />
 
             {/* Statistics Cards */}

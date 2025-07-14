@@ -132,7 +132,7 @@ export default function Dashboard() {
         <main className="p-4 md:p-6 lg:p-8">
           {isLoading ? (
             // Loading state
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               <div className="animate-pulse space-y-8">
                 <div className="h-32 bg-gray-200 rounded-xl"></div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -145,7 +145,7 @@ export default function Dashboard() {
             </div>
           ) : !hasContent ? (
             // Empty State
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               {/* Welcome Banner */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
@@ -254,7 +254,7 @@ export default function Dashboard() {
             </div>
           ) : (
             // Content State (when lecturer adds materials)
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               {/* This section would show actual content */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Course materials, assignments, etc. would go here */}

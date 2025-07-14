@@ -128,35 +128,31 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     
     return (
       <Link
-        key={item.path}
-        href={item.path}
-        passHref
-      >
-        <a
-          className={`
-            flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
-            ${isActive 
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium' 
-              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
-            }
-            ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
-          `}
-        >
-          <div className={`${isActive ? 'text-emerald-600' : 'text-gray-500'}`}>
-            {item.icon}
-          </div>
-          
-          {(!sidebarCollapsed || isMobileView || isTabletView) && (
-            <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{item.name}</span>
-          )}
-          
-          {(!sidebarCollapsed || isMobileView || isTabletView) && item.badge && (
-            <div className={`ml-auto ${typeof item.badge === 'number' ? 'bg-emerald-500' : 'bg-amber-500'} text-white text-xs px-2 py-0.5 rounded-full`}>
-              {item.badge}
-            </div>
-          )}
-        </a>
-      </Link>
+      key={item.path}
+      href={item.path}
+      className={`
+        flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
+        ${isActive 
+          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium' 
+          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+        }
+        ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
+      `}
+    >
+      <div className={`${isActive ? 'text-emerald-600' : 'text-gray-500'}`}>
+        {item.icon}
+      </div>
+      
+      {(!sidebarCollapsed || isMobileView || isTabletView) && (
+        <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{item.name}</span>
+      )}
+      
+      {(!sidebarCollapsed || isMobileView || isTabletView) && item.badge && (
+        <div className={`ml-auto ${typeof item.badge === 'number' ? 'bg-emerald-500' : 'bg-amber-500'} text-white text-xs px-2 py-0.5 rounded-full`}>
+          {item.badge}
+        </div>
+      )}
+    </Link>
     );
   };
 
