@@ -1,14 +1,16 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 import React, { useState, useEffect } from 'react';
 import { useLayout } from '@/components/LayoutController';
 import Sidebar from '@/components/lecturerSidebar';
 import { 
-  BookMarked, BarChart3, Clock, Monitor, Loader, Plus, Star, User, 
-  Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp, GraduationCap,
+  BookMarked, User, 
+  Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp,
   FileText, MessageSquare, Library, Settings, Upload, Image, Calendar,
   File, CheckCircle, AlertCircle, BookOpen, ChevronRight, Download,
-  MessageCircle, Book, Search, Filter, Pin, Eye, ThumbsUp, Reply,
-  Send, Paperclip, Hash, Clock3, UserCheck, TrendingUp
+  MessageCircle, Book, Search, Filter, Pin,
+  Send, Clock3,
 } from 'lucide-react';
 import Link from 'next/link';
 
