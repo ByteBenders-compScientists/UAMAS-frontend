@@ -1165,7 +1165,7 @@ const Page: React.FC = () => {
       <div className="flex-1 flex flex-col lg:ml-64">
         <TopHeader onSidebarToggle={() => setSidebarOpen(true)} onRefresh={loadData} />
 
-        <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
+        <main className="flex-1 p-6 max-w-8xl mx-auto w-full">
           {/* Search and Actions Bar */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">

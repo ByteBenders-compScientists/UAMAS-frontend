@@ -325,7 +325,7 @@ export default function page() {
       <div className="flex-1 flex flex-col lg:ml-64">
         <TopHeader onSidebarToggle={() => {}} />
         
-        <main className="flex-1 p-4 lg:p-6 max-w-7xl mx-auto w-full">
+        <main className="flex-1 p-4 lg:p-6 max-w-8xl mx-auto w-full">
           <div className="max-w-4xl mx-auto">
             {/* Profile Header */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">

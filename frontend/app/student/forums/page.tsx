@@ -230,7 +230,7 @@ export default function ForumsPage() {
               />
             </div>
           ) : (
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               {/* Search and Filters */}
               <div className="mb-8 space-y-4">
                 {/* Search Bar */}
