@@ -166,14 +166,14 @@ const AssessmentsDashboard: React.FC = () => {
   };
 
    
-  const handleCreateAssessment = async (data: any, isAI: boolean) => {
+  const handleCreateAssessment = async (data: any, isAI: boolean, docFile?: File) => {
     setLoading(true);
     try {
       const apiData = transformLegacyToApiAssessment(data);
       
       let response;
       if (isAI) {
-        response = await assessmentApi.generateAssessmentWithAI(apiData as any);
+        response = await assessmentApi.generateAssessmentWithAI(apiData as any, docFile);
       } else {
         response = await assessmentApi.createAssessment(apiData as any);
       }

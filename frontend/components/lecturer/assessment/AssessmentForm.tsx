@@ -16,7 +16,7 @@ interface AssessmentFormProps {
   selectedUnit: string;
   selectedWeek: number;
   courses: Course[];
-  onSubmit: (data: unknown, isAI: boolean) => void;
+  onSubmit: (data: unknown, isAI: boolean, docFile?: File) => void;
   onCancel: () => void;
   loading: boolean;
   isEditing?: boolean;
@@ -48,18 +48,48 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
     duration: initialData?.duration || 60
   });
 
+  const [docFile, setDocFile] = useState<File | null>(null);
+
   const selectedCourseData = courses.find(c => c.id === selectedCourse);
   const selectedUnitData = selectedCourseData?.units.find(u => u.id === selectedUnit);
 
+  const requiredFields = [
+    'title', 'type', 'description', 'topic', 'number_of_questions', 'total_marks', 'blooms_level', 'difficulty',
+  ];
+
+  const isCloseEnded = formData.questions_type === 'close-ended';
+
+  const isFormValid = () => {
+    for (const field of requiredFields) {
+      if (!formData[field as keyof typeof formData] || formData[field as keyof typeof formData] === "") {
+        return false;
+      }
+    }
+    if (isCloseEnded && (!formData.close_ended_type || formData.close_ended_type === "")) {
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = (isAI: boolean) => {
+    if (!isFormValid()) {
+      alert('Please fill in all required fields.');
+      return;
+    }
     const submissionData = {
       ...formData,
+      deadline: formData.deadline || "",
+      duration: formData.duration || "",
       course_id: selectedCourse,
       unit_id: selectedUnit,
       week: selectedWeek,
       unit_name: selectedUnitData?.name || "",
     };
-    onSubmit(submissionData, isAI);
+    if (isAI) {
+      onSubmit(submissionData, true, docFile ?? undefined);
+    } else {
+      onSubmit(submissionData, false);
+    }
   };
 
   return (
@@ -105,7 +135,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
-              Assessment Title
+              Assessment Title <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -117,7 +147,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
-              Assessment Type
+              Assessment Type <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.type}
@@ -133,7 +163,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
 
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-3">
-            Description
+            Description <span className="text-red-500">*</span>
           </label>
           <textarea
             value={formData.description}
@@ -148,7 +178,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
-              Question Type
+              Question Type <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.questions_type}
@@ -163,7 +193,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
           {formData.questions_type === "close-ended" && (
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-3">
-                Close-ended Type
+                Close-ended Type <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.close_ended_type}
@@ -182,7 +212,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
-              Topic
+              Topic <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -194,7 +224,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
-              Difficulty Level
+              Difficulty Level <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.difficulty}
@@ -211,7 +241,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
-              Number of Questions
+              Number of Questions <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -223,7 +253,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
-              Total Marks
+              Total Marks <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -235,7 +265,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
-              Bloom&#39;s Level
+              Bloom's Level <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.blooms_level}
@@ -277,6 +307,22 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               placeholder="e.g., 60"
               min="1"
             />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-3">
+              Optional Document (PDF only)
+            </label>
+            <input
+              type="file"
+              accept=".pdf"
+              onChange={e => setDocFile(e.target.files?.[0] || null)}
+              className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            />
+            {docFile && (
+              <div className="text-xs text-gray-500 mt-1">Selected: {docFile.name}</div>
+            )}
           </div>
         </div>
       </div>
