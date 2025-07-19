@@ -14,7 +14,7 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const config: RequestInit = {
     ...apiConfig,
     ...options,
@@ -26,7 +26,7 @@ async function apiRequest<T>(
 
   try {
     const response = await fetch(url, config);
-    
+
     if (!response.ok) {
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
@@ -42,7 +42,7 @@ async function apiRequest<T>(
 // Course API
 export const courseApi = {
   // Get all courses created by lecturer
-  getCourses: () => 
+  getCourses: () =>
     apiRequest<Course[]>('/auth/lecturer/courses'),
 
   // Get specific course by ID
@@ -107,12 +107,25 @@ export const assessmentApi = {
   getAssessments: () =>
     apiRequest<Assessment[]>('/bd/lecturer/assessments'),
 
-  // Generate assessment with AI
-  generateAssessmentWithAI: (assessmentData: CreateAssessmentRequest) =>
-    apiRequest<CreateAssessmentResponse>('/bd/lecturer/ai/generate-assessments', {
+  // Generate assessment with AI (with optional document upload)
+  generateAssessmentWithAI: (assessmentData: CreateAssessmentRequest, docFile?: File) => {
+    const formData = new FormData();
+    formData.append('payload', JSON.stringify(assessmentData));
+    if (docFile) {
+      formData.append('doc', docFile);
+    }
+    return fetch(`${API_BASE_URL}/bd/lecturer/ai/generate-assessments`, {
       method: 'POST',
-      body: JSON.stringify(assessmentData),
-    }),
+      credentials: 'include',
+      body: formData,
+      // Do not set Content-Type for FormData
+    }).then(async response => {
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+      return response.json();
+    });
+  },
 
   // Create assessment manually
   createAssessment: (assessmentData: CreateAssessmentRequest) =>
