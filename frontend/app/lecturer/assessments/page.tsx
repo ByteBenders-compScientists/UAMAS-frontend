@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { useLayout } from "@/components/LayoutController";
 import Sidebar from "@/components/lecturerSidebar";
 import Header from "@/components/Header";
@@ -63,16 +64,12 @@ const AssessmentsDashboard: React.FC = () => {
   const { 
     data: apiCourses, 
     loading: coursesLoading, 
-    error: coursesError,
-    refetch: refetchCourses 
-  } = useApi(() => courseApi.getCourses(), []);
+    error: coursesError  } = useApi(() => courseApi.getCourses(), []);
 
   const { 
     data: apiUnits, 
     loading: unitsLoading, 
-    error: unitsError,
-    refetch: refetchUnits 
-  } = useApi(() => unitApi.getUnits(), []);
+    error: unitsError  } = useApi(() => unitApi.getUnits(), []);
 
   const { 
     data: apiAssessments, 
@@ -168,14 +165,15 @@ const AssessmentsDashboard: React.FC = () => {
     setTimeout(() => setMessage(null), 5000);
   };
 
-  const handleCreateAssessment = async (data: any, isAI: boolean) => {
+   
+  const handleCreateAssessment = async (data: any, isAI: boolean, docFile?: File) => {
     setLoading(true);
     try {
       const apiData = transformLegacyToApiAssessment(data);
       
       let response;
       if (isAI) {
-        response = await assessmentApi.generateAssessmentWithAI(apiData as any);
+        response = await assessmentApi.generateAssessmentWithAI(apiData as any, docFile);
       } else {
         response = await assessmentApi.createAssessment(apiData as any);
       }
@@ -345,7 +343,7 @@ const AssessmentsDashboard: React.FC = () => {
               <MessageNotification message={message} />
             </AnimatePresence>
 
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               <div className="mb-6 lg:mb-8">
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Assessment Management</h1>
                 <p className="text-base lg:text-lg text-gray-600">Create, manage, and organize your assessments with AI assistance</p>
@@ -482,7 +480,7 @@ const AssessmentsDashboard: React.FC = () => {
         isOpen={editingAssessment !== null}
         onClose={() => setEditingAssessment(null)}
         title="Edit Assessment"
-        maxWidth="max-w-6xl"
+        maxWidth="max-w-8xl"
       >
         {editingAssessment && (
           <EditAssessmentModal

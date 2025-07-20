@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import {
-  BrainCircuit,
   Users,
   BookOpen,
   BarChart3,
@@ -211,7 +210,7 @@ export default function IntelliMark() {
                   "For Students",
                   "Testimonials",
                   "FAQ",
-                ].map((item, index) => (
+                ].map((item) => (
                   <motion.a
                     key={item}
                     href={`#${item.toLowerCase().replace(" ", "-")}`}
@@ -299,7 +298,7 @@ export default function IntelliMark() {
         </motion.nav>
 
         {/* Hero Section with changing images */}
-        <section className="pt-16 relative h-[90vh] overflow-hidden">
+        <section className="pt-16 relative h-[100vh] overflow-hidden">
           <div className="absolute inset-0 w-full h-full">
             <AnimatePresence mode="wait">
               <motion.div
@@ -339,7 +338,7 @@ export default function IntelliMark() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.5 }}
                   >
-                    <h1 className="text-5xl lg:text-7xl font-bold leading-tight mb-2">
+                    <h1 className="text-3xl lg:text-4xl font-bold leading-tight mt-2">
                       {heroSlides[currentHeroSlide].title}
                     </h1>
                     <p className="text-2xl text-emerald-300 font-light">
@@ -911,8 +910,8 @@ export default function IntelliMark() {
                       <p className="font-medium text-sm">Achievement</p>
                     </div>
                     <p className="text-xs text-gray-600">
-                      "Completed 5 consecutive assignments with above 90%
-                      scores!"
+                      &ldquo;Completed 5 consecutive assignments with above 90%
+                      scores!&rdquo;
                     </p>
                   </div>
                 </div>

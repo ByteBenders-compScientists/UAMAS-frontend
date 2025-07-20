@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/alt-text */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -96,7 +99,7 @@ export default function LibraryPage() {
               />
             </div>
           ) : (
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               {/* Search and Filters */}
               <div className="mb-8 space-y-4">
                 {/* Search Bar */}

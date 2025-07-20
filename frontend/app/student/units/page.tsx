@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -46,7 +48,7 @@ export default function MyUnitsPage() {
   const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [apiUnits, setApiUnits] = useState<any[] | null>(null);
+  const [apiUnits, setApiUnits] = useState<unknown[] | null>(null);
   const [allAssessments, setAllAssessments] = useState<any[]>([]);
   
   // Simulate loading state for skeleton UI
@@ -119,7 +121,7 @@ export default function MyUnitsPage() {
               />
             </div>
           ) : (
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               {/* Stats Overview */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 {/* Total Units */}

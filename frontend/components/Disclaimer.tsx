@@ -44,7 +44,7 @@ export default function Disclaimer({
               </li>
             )}
             <li>
-              The timer will start as soon as you click "I Agree" and will not be
+              The timer will start as soon as you click &ldquo;I Agree&rdquo; and will not be
               paused.
             </li>
             <li>Ensure you have a stable internet connection.</li>

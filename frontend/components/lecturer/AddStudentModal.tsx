@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { X, User, GraduationCap, Hash, Mail } from "lucide-react"
 
+// Updated Student type to match your parent component's type
 type Student = {
   id: string
   reg_number: string
@@ -14,7 +15,7 @@ type Student = {
   othernames: string
   year_of_study: number
   semester: number
-  email: string
+  email: string | undefined // This matches the parent component's type
   course: {
     id: string
     name: string
@@ -29,9 +30,9 @@ type Course = {
 }
 
 type AddStudentModalProps = {
-  student?: Student | null
+  student?: Student | null | undefined // Added undefined to match parent component
   onClose: () => void
-  onSubmit: (data: any) => void
+  onSubmit: (data: unknown) => void
 }
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api/v1';
@@ -45,7 +46,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
     year_of_study: student?.year_of_study || 1,
     semester: student?.semester || 1,
     course_id: student?.course?.id || "",
-    email: student?.email || "",
+    email: student?.email || "", // Handle undefined email
   })
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -93,7 +94,7 @@ export default function AddStudentModal({ student, onClose, onSubmit }: AddStude
         year_of_study: student.year_of_study || 1,
         semester: student.semester || 1,
         course_id: student.course?.id || "",
-        email: student.email || "",
+        email: student.email || "", // Handle undefined email
       })
     } else {
       setFormData({
