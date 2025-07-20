@@ -596,7 +596,7 @@ export default function StudentsPage() {
                   <div className="space-y-4">
                     <div className="text-sm text-gray-600">
                       Upload an Excel file (.xlsx, .xls) with student data. The file should contain columns:
-                      reg_number, firstname, surname, email, year_of_study, semester, course_id, othernames (optional)
+                      reg_number, firstname, surname, email, year_of_study, semester, course_name, othernames (optional)
                     </div>
                     
                     <button
