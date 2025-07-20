@@ -83,6 +83,26 @@ const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString(undefined, options);
 };
 
+// Download file utility
+const downloadFile = async (url: string, filename: string) => {
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to download file');
+    const blob = await res.blob();
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (err) {
+    alert('Download failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
+  }
+};
+
 const getStatusBadgeClass = (status: string): string => {
   const statusClasses: Record<string, string> = {
     'Graded': 'bg-emerald-100 text-emerald-800 border border-emerald-200',
@@ -308,6 +328,7 @@ const Page: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [selectedUnitId, setSelectedUnitId] = useState('');
+  const [downloadLoading, setDownloadLoading] = useState(false);
 
   // Fetch courses/units on mount
   useEffect(() => {
@@ -473,6 +494,29 @@ const Page: React.FC = () => {
   // Mock data for stats - replace with actual data when available
   const mockGrades: SubmissionEntry[] = [];
 
+  // Download handlers
+  const handleDownloadUnit = async () => {
+    if (!selectedUnitId) {
+      alert('Please select a unit first.');
+      return;
+    }
+    setDownloadLoading(true);
+    const url = `${apiBaseUrl}/bd/lecturer/submissions/units/${selectedUnitId}/download`;
+    await downloadFile(url, `submissions_unit_${selectedUnitId}.xlsx`);
+    setDownloadLoading(false);
+  };
+
+  const handleDownloadAssessment = async () => {
+    if (!selectedAssessmentId) {
+      alert('Please select an assessment first.');
+      return;
+    }
+    setDownloadLoading(true);
+    const url = `${apiBaseUrl}/bd/lecturer/submissions/assessments/${selectedAssessmentId}/download`;
+    await downloadFile(url, `submissions_assessment_${selectedAssessmentId}.xlsx`);
+    setDownloadLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
@@ -539,6 +583,27 @@ const Page: React.FC = () => {
                     {error && <div className="text-xs text-red-500 mt-2">{error}</div>}
                   </div>
                 </div>
+              </div>
+              {/* Download buttons below filter selects */}
+              <div className="flex flex-wrap gap-2 mt-4">
+                {selectedUnitId && (
+                  <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-60"
+                    onClick={handleDownloadUnit}
+                    disabled={downloadLoading}
+                  >
+                    {downloadLoading ? 'Downloading...' : 'Download Submissions (Unit)'}
+                  </button>
+                )}
+                {selectedAssessmentId && (
+                  <button
+                    className="bg-emerald-500 text-white px-4 py-2 rounded-lg disabled:opacity-60"
+                    onClick={handleDownloadAssessment}
+                    disabled={downloadLoading}
+                  >
+                    {downloadLoading ? 'Downloading...' : 'Download Submissions (Assessment)'}
+                  </button>
+                )}
               </div>
             </div>
 
