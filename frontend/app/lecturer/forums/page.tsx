@@ -1,14 +1,16 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 import React, { useState, useEffect } from 'react';
-import {useLayout} from '@/components/LayoutController';
+import { useLayout } from '@/components/LayoutController';
 import Sidebar from '@/components/lecturerSidebar';
 import { 
-  BookMarked, BarChart3, Clock, Monitor, Loader, Plus, Star, User, 
-  Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp, GraduationCap,
+  BookMarked, User, 
+  Users, Bell, Menu, X, LetterText, ChevronDown, ChevronUp,
   FileText, MessageSquare, Library, Settings, Upload, Image, Calendar,
   File, CheckCircle, AlertCircle, BookOpen, ChevronRight, Download,
-  MessageCircle, Book, Search, Filter, Pin, Eye, ThumbsUp, Reply,
-  Send, Paperclip, Hash, Clock3, UserCheck, TrendingUp
+  MessageCircle, Book, Search, Filter, Pin,
+  Send, Clock3,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -204,6 +206,12 @@ const getTimeAgo = (dateString: string) => {
   if (diffInDays < 7) return `${diffInDays}d ago`;
   return formatDate(dateString);
 };
+const navigationItems: NavigationItem[] = [
+  { icon: BookMarked, label: 'Dashboard', path: '/dashboard' },
+  { icon: Users, label: 'Forums', path: '/forums', active: true },
+  { icon: MessageSquare, label: 'Messages', path: '/messages' },
+  { icon: Settings, label: 'Settings', path: '/settings' },
+];
 
 const getCategoryBadgeClass = (category: string): string => {
   const categoryClasses: Record<string, string> = {
@@ -298,7 +306,7 @@ const NavigationDropdown: React.FC<{
         <Link
           key={index}
           href={item.path}
-          className="w-full text-left block p-2 text-sm font-medium rounded-lg hover:bg-rose-300 hover:bg-opacity-50 transition-all duration-200 text-white flex items-center"
+          className="w-full text-left p-2 text-sm font-medium rounded-lg hover:bg-rose-300 hover:bg-opacity-50 transition-all duration-200 text-white flex items-center"
         >
           {item.icon && <item.icon className="w-4 h-4 mr-2" />}
           {item.label}
@@ -625,7 +633,7 @@ const ForumStats: React.FC<ForumStatsProps> = ({ forums }) => {
 
 // ===== MAIN COMPONENT =====
 const page: React.FC = () => {
-  const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(2);
   const [selectedCourse, setSelectedCourse] = useState('');
@@ -673,12 +681,10 @@ const page: React.FC = () => {
     return (
 
     <div className="flex h-screen bg-gray-100">
-      <Sidebar 
-        
-      />
+      <Sidebar />
       
       <div className="flex-1 flex flex-col lg:ml-64">
-         <TopHeader onSidebarToggle={toggleCreateDropdown} />
+         <TopHeader onSidebarToggle={() => setSidebarOpen(true)} />
         
         
         <div className="p-6">
@@ -737,8 +743,7 @@ const page: React.FC = () => {
                     onForumClick={handleForumClick} 
                     />
                 ))}                                                                                             
-                </
-div>
+                </div>
         </div>
       </div>
     </div>

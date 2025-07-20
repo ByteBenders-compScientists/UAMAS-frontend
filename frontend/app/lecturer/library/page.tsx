@@ -8,7 +8,6 @@ import {
   Bell,
   Menu,
   X,
-  Text as LetterText,
   ChevronDown,
   FileText,
   Library,
@@ -29,22 +28,7 @@ import {
 // ===== CONSTANTS =====
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
-// ===== TYPES =====
-interface NavigationItem {
-  icon: React.ElementType;
-  label: string;
-  active?: boolean;
-  count?: number;
-  hasDropdown?: boolean;
-  dropdownItems?: DropdownItem[];
-  path?: string;
-}
 
-interface DropdownItem {
-  label: string;
-  path: string;
-  icon?: React.ElementType;
-}
 
 interface Note {
   id: number;
@@ -181,7 +165,7 @@ const uploadNote = async (
   courseId: number,
   unitId: number,
   formData: FormData
-): Promise<any> => {
+): Promise<unknown> => {
   try {
     const response = await fetch(
       `${API_BASE_URL}/bd/lecturer/units/${unitId}/notes`,
@@ -1181,7 +1165,7 @@ const Page: React.FC = () => {
       <div className="flex-1 flex flex-col lg:ml-64">
         <TopHeader onSidebarToggle={() => setSidebarOpen(true)} onRefresh={loadData} />
 
-        <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
+        <main className="flex-1 p-6 max-w-8xl mx-auto w-full">
           {/* Search and Actions Bar */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">

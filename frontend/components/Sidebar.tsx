@@ -3,13 +3,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion} from 'framer-motion';
 import { useLayout } from './LayoutController';
+import { easeInOut } from 'framer-motion';
 import {
   LayoutDashboard,
   BookOpen,
   ClipboardList,
-  GraduationCap,
   Calendar,
   Library,
   MessageSquare,
@@ -19,7 +19,6 @@ import {
   ChevronRight,
   User,
   X,
-  LucideIcon,
   FileText
 } from 'lucide-react';
 import Image from 'next/image';
@@ -91,20 +90,22 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     { name: 'Logout', icon: <LogOut size={20} />, path: '/logout' },
   ];
 
+ 
+  
   const sidebarVariants = {
-    desktop: {
-      width: sidebarCollapsed ? 80 : 240,
-      transition: { duration: 0.3, ease: "easeInOut" }
-    },
-    mobile: {
-      x: 0,
-      transition: { duration: 0.3, ease: "easeInOut" }
-    },
-    mobileHidden: {
-      x: "-100%",
-      transition: { duration: 0.3, ease: "easeInOut" }
-    }
-  };
+      desktop: {
+        width: sidebarCollapsed ? 80 : 240,
+        transition: { duration: 0.3, ease: easeInOut }
+      },
+      mobile: {
+        x: 0,
+        transition: { duration: 0.3, ease: easeInOut }
+      },
+      mobileHidden: {
+        x: "-100%",
+        transition: { duration: 0.3, ease: easeInOut }
+      }
+    };
 
   // Mobile/tablet overlay when sidebar is open
   const renderOverlay = () => {
@@ -127,31 +128,31 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     
     return (
       <Link
-        key={item.path}
-        href={item.path}
-        className={`
-          flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
-          ${isActive 
-            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium' 
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
-          }
-          ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
-        `}
-      >
-        <div className={`${isActive ? 'text-emerald-600' : 'text-gray-500'}`}>
-          {item.icon}
+      key={item.path}
+      href={item.path}
+      className={`
+        flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
+        ${isActive 
+          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium' 
+          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+        }
+        ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
+      `}
+    >
+      <div className={`${isActive ? 'text-emerald-600' : 'text-gray-500'}`}>
+        {item.icon}
+      </div>
+      
+      {(!sidebarCollapsed || isMobileView || isTabletView) && (
+        <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{item.name}</span>
+      )}
+      
+      {(!sidebarCollapsed || isMobileView || isTabletView) && item.badge && (
+        <div className={`ml-auto ${typeof item.badge === 'number' ? 'bg-emerald-500' : 'bg-amber-500'} text-white text-xs px-2 py-0.5 rounded-full`}>
+          {item.badge}
         </div>
-        
-        {(!sidebarCollapsed || isMobileView || isTabletView) && (
-          <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{item.name}</span>
-        )}
-        
-        {(!sidebarCollapsed || isMobileView || isTabletView) && item.badge && (
-          <div className={`ml-auto ${typeof item.badge === 'number' ? 'bg-emerald-500' : 'bg-amber-500'} text-white text-xs px-2 py-0.5 rounded-full`}>
-            {item.badge}
-          </div>
-        )}
-      </Link>
+      )}
+    </Link>
     );
   };
 

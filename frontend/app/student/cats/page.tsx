@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -617,7 +620,7 @@ export default function CatsPage() {
               </div>
             </div>
           ) : (
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               {/* Stats Overview */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <motion.div

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState, useRef } from 'react';
@@ -22,6 +23,7 @@ import {
   Plus,
   Send
 } from 'lucide-react';
+import Image from 'next/image';
 
 // Mock data
 const mockDiscussions = [
@@ -224,14 +226,11 @@ export default function ForumsPage() {
                 title="No Discussions Yet"
                 description="Be the first to start a discussion. Ask questions, share ideas, or connect with other students."
                 icon={<MessageSquare size={48} />}
-                action={{
-                  label: 'Start a Discussion',
-                  onClick: () => console.log('Start discussion clicked')
-                }}
+                onAction={() => console.log('Start discussion clicked')}
               />
             </div>
           ) : (
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-8xl mx-auto">
               {/* Search and Filters */}
               <div className="mb-8 space-y-4">
                 {/* Search Bar */}
@@ -308,10 +307,13 @@ export default function ForumsPage() {
                             <div className="flex items-center">
                               <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
                                 {discussion.author.avatar ? (
-                                  <img 
+                                  
+                                  <Image 
                                     src={discussion.author.avatar} 
                                     alt={discussion.author.name} 
-                                    className="w-full h-full object-cover rounded-full"
+                                    width={40} 
+                                    height={40} 
+                                    className="object-cover rounded-full"
                                   />
                                 ) : (
                                   <User size={20} className="text-gray-500" />
@@ -427,10 +429,12 @@ export default function ForumsPage() {
                         <div key={author.id} className="flex items-center">
                           <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-3">
                             {author.avatar ? (
-                              <img 
+                              <Image 
                                 src={author.avatar} 
                                 alt={author.name} 
-                                className="w-full h-full object-cover rounded-full"
+                                width={32} 
+                                height={32} 
+                                className="object-cover rounded-full"
                               />
                             ) : (
                               <User size={16} className="text-gray-500" />

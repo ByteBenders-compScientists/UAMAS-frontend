@@ -434,7 +434,7 @@ const navigateToDashboard = async () => {
                 transition={{ delay: 0.7 }}
                 className="text-lg opacity-95"
               >
-                Your unique profile is ready! We'll create amazing learning experiences based on your interests.
+                Your unique profile is ready! We&apos;ll create amazing learning experiences based on your interests.
               </motion.p>
             </motion.div>
           )}
@@ -488,7 +488,7 @@ const navigateToDashboard = async () => {
                   </motion.div>
                   <div>
                     <h2 className="font-bold text-gray-800 text-lg">Welcome, {user.name || "Student"}!</h2>
-                    <p className="text-emerald-600 text-sm font-medium">Let's discover your passions</p>
+                    <p className="text-emerald-600 text-sm font-medium">Let&apos;s discover your passions</p>
                   </div>
                 </div>
 
@@ -860,7 +860,7 @@ const navigateToDashboard = async () => {
         Fantastic!
       </motion.h2>
       <p className="text-gray-600 text-lg leading-relaxed">
-        Your personalized learning profile is ready! We'll use your interests to create amazing educational
+        Your personalized learning profile is ready! We&apos;ll use your interests to create amazing educational
         experiences just for you.
       </p>
     </motion.div>

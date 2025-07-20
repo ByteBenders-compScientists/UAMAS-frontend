@@ -3,17 +3,13 @@ import { motion } from "framer-motion"
 import { useLayout } from "@/components/LayoutController"
 import {
   LayoutDashboard,
-  Users,
   UserCheck,
-  GraduationCap,
-  BookOpen,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
   Menu,
   X,
-  Shield,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -44,7 +40,7 @@ const menuItems = [
 ]
 
 export default function AdminSidebar() {
-  const { sidebarCollapsed, setSidebarCollapsed, isMobileView, isTabletView, isMobileMenuOpen, setMobileMenuOpen } =
+  const { sidebarCollapsed, setSidebarCollapsed, isMobileView, isMobileMenuOpen, setMobileMenuOpen } =
     useLayout()
 
   const pathname = usePathname()
