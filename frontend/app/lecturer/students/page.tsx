@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { useLayout } from "@/components/LayoutController"
 import AdminSidebar from "@/components/lecturerSidebar"
 import Header from "@/components/Header"
 import EmptyState from "@/components/EmptyState"
 import AddStudentModal from "@/components/lecturer/AddStudentModal"
-import { Users, Plus, Search, Filter, Edit, Trash2, Eye, Download, Upload } from "lucide-react"
+import { Users, Plus, Search, Filter, Edit, Trash2, Eye, Download, Upload, X, CheckCircle, AlertCircle } from "lucide-react"
 
 type Student = {
   id: string
@@ -33,6 +33,7 @@ type Student = {
     course_id: string
   }>
 }
+
 interface ModalStudent {
   id: string
   reg_number: string
@@ -41,7 +42,7 @@ interface ModalStudent {
   othernames: string
   year_of_study: number
   semester: number
-  email: string // Make sure this matches your modal's expected type
+  email: string
   course: {
     id: string
     name: string
@@ -55,8 +56,16 @@ type Course = {
   code?: string
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+interface BulkUploadResult {
+  message: string
+  success_count: number
+  error_count: number
+  total_processed: number
+  errors?: string[]
+  note?: string
+}
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
 export default function StudentsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout()
@@ -69,6 +78,13 @@ export default function StudentsPage() {
   const [selectedCourse, setSelectedCourse] = useState("")
   const [selectedYear, setSelectedYear] = useState("")
   const [selectedSemester, setSelectedSemester] = useState("")
+  
+  // Import/Export states
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadResult, setUploadResult] = useState<BulkUploadResult | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch students from API
   const fetchStudents = async () => {
@@ -135,6 +151,134 @@ export default function StudentsPage() {
         (student.othernames && student.othernames.toLowerCase().includes(searchTerm.toLowerCase()))
       )
   )
+
+  // Handle bulk import
+  const handleImport = async (file: File) => {
+    setIsUploading(true)
+    setUploadResult(null)
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/lecturer/students/bulk-upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      })
+
+      const result = await response.json()
+      setUploadResult(result)
+
+      if (response.ok && result.success_count > 0) {
+        // Refresh students list
+        await fetchStudents()
+      }
+    } catch (error) {
+      console.error('Import error:', error)
+      setUploadResult({
+        message: 'Failed to import students',
+        success_count: 0,
+        error_count: 0,
+        total_processed: 0,
+        errors: ['Network error occurred. Please try again.']
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  // Handle export
+  const handleExport = async (format: 'csv' | 'excel' = 'csv') => {
+    setIsExporting(true)
+    
+    try {
+      // Create CSV content
+      const headers = [
+        'Registration Number',
+        'First Name',
+        'Surname', 
+        'Other Names',
+        'Email',
+        'Course Code',
+        'Course Name',
+        'Year of Study',
+        'Semester',
+        'Units Count'
+      ]
+
+      const csvRows = [
+        headers.join(','),
+        ...filteredStudents.map(student => [
+          `"${student.reg_number}"`,
+          `"${student.firstname}"`,
+          `"${student.surname}"`,
+          `"${student.othernames || ''}"`,
+          `"${student.email || ''}"`,
+          `"${student.course.code || ''}"`,
+          `"${student.course.name}"`,
+          student.year_of_study,
+          student.semester,
+          student.units?.length || 0
+        ].join(','))
+      ]
+
+      const csvContent = csvRows.join('\n')
+      
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob)
+        link.setAttribute('href', url)
+        link.setAttribute('download', `students_export_${new Date().toISOString().split('T')[0]}.csv`)
+        link.style.visibility = 'hidden'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+    } catch (error) {
+      console.error('Export error:', error)
+      alert('Failed to export students. Please try again.')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  // Download template
+  const downloadTemplate = () => {
+    const headers = [
+      'reg_number',
+      'firstname', 
+      'surname',
+      'othernames',
+      'email',
+      'year_of_study',
+      'semester',
+      'course_id'
+    ]
+
+    const templateRows = [
+      headers.join(','),
+      // Sample row
+      '"STU001","John","Doe","Michael","john.doe@email.com",1,1,"course-id-here"'
+    ]
+
+    const csvContent = templateRows.join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', 'students_import_template.csv')
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+  }
 
   const handleAddStudent = async (studentData: unknown) => {
     try {
@@ -264,13 +408,20 @@ export default function StudentsPage() {
               </div>
 
               <div className="flex items-center space-x-3 mt-4 md:mt-0">
-                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm flex items-center space-x-2">
+                <button 
+                  onClick={() => setShowImportModal(true)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm flex items-center space-x-2"
+                >
                   <Upload size={16} />
                   <span>Import</span>
                 </button>
-                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm flex items-center space-x-2">
+                <button 
+                  onClick={() => handleExport('csv')}
+                  disabled={isExporting}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm flex items-center space-x-2 disabled:opacity-50"
+                >
                   <Download size={16} />
-                  <span>Export</span>
+                  <span>{isExporting ? 'Exporting...' : 'Export'}</span>
                 </button>
                 <button
                   onClick={() => setShowAddModal(true)}
@@ -423,6 +574,131 @@ export default function StudentsPage() {
         </main>
       </motion.div>
 
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowImportModal(false)} />
+            
+            <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+              <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Import Students</h3>
+                  <button
+                    onClick={() => setShowImportModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {!uploadResult && (
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-600">
+                      Upload an Excel file (.xlsx, .xls) with student data. The file should contain columns:
+                      reg_number, firstname, surname, email, year_of_study, semester, course_id, othernames (optional)
+                    </div>
+                    
+                    <button
+                      onClick={downloadTemplate}
+                      className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
+                    >
+                      Download Template File
+                    </button>
+
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            handleImport(file)
+                          }
+                        }}
+                        className="hidden"
+                      />
+                      
+                      <Upload size={40} className="mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-600 mb-2">
+                        Click to select or drag and drop your Excel file
+                      </p>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                      >
+                        {isUploading ? 'Uploading...' : 'Select File'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {uploadResult && (
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      {uploadResult.success_count > 0 ? (
+                        <CheckCircle size={20} className="text-green-500" />
+                      ) : (
+                        <AlertCircle size={20} className="text-red-500" />
+                      )}
+                      <h4 className="font-medium">Import Results</h4>
+                    </div>
+
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                      <div className="text-sm">
+                        <span className="font-medium">Total Processed:</span> {uploadResult.total_processed}
+                      </div>
+                      <div className="text-sm text-green-600">
+                        <span className="font-medium">Successful:</span> {uploadResult.success_count}
+                      </div>
+                      <div className="text-sm text-red-600">
+                        <span className="font-medium">Errors:</span> {uploadResult.error_count}
+                      </div>
+                    </div>
+
+                    {uploadResult.errors && uploadResult.errors.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="font-medium text-red-600">Errors:</h5>
+                        <div className="max-h-40 overflow-y-auto bg-red-50 p-3 rounded text-sm">
+                          {uploadResult.errors.map((error, index) => (
+                            <div key={index} className="text-red-700 mb-1">{error}</div>
+                          ))}
+                        </div>
+                        {uploadResult.note && (
+                          <div className="text-xs text-gray-500">{uploadResult.note}</div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => {
+                          setShowImportModal(false)
+                          setUploadResult(null)
+                        }}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      >
+                        Close
+                      </button>
+                      {uploadResult.error_count > 0 && (
+                        <button
+                          onClick={() => setUploadResult(null)}
+                          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                        >
+                          Try Again
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Student Modal */}
       {showAddModal && (
         <AddStudentModal
@@ -434,7 +710,6 @@ export default function StudentsPage() {
           onSubmit={handleAddStudent}
         />
       )}
-
     </div>
   )
 }
