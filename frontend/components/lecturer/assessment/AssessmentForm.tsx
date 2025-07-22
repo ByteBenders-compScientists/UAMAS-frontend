@@ -265,7 +265,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
-              Bloom's Level <span className="text-red-500">*</span>
+              Bloom&apos;s Level <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.blooms_level}
