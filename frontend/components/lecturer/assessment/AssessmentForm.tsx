@@ -187,7 +187,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             >
               <option value="close-ended">Close-ended Questions</option>
               <option value="open-ended">Open-ended Questions</option>
-              <option value="application">Application Questions</option>
+{/*               <option value="application">Application Questions</option> */}
             </select>
           </div>
           {formData.questions_type === "close-ended" && (
