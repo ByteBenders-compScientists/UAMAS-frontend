@@ -20,11 +20,11 @@ type Student = {
   semester: number
   email?: string
   user_id?: string
-  course: {
+  courses: Array<{
     id: string
     name: string
     code?: string
-  }
+  }>
   units?: Array<{
     id: string
     unit_code: string
@@ -141,14 +141,14 @@ export default function StudentsPage() {
   // Filter students based on search term and filters
   const filteredStudents = students.filter(
     (student) =>
-      (selectedCourse === "" || student.course.id === selectedCourse) &&
+      (selectedCourse === "" || (student.courses && student.courses.some(c => c.id === selectedCourse))) &&
       (selectedYear === "" || String(student.year_of_study) === selectedYear) &&
       (selectedSemester === "" || String(student.semester) === selectedSemester) &&
       (
         student.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.reg_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (student.courses && student.courses.some(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()))) ||
         (student.othernames && student.othernames.toLowerCase().includes(searchTerm.toLowerCase()))
       )
   )
@@ -216,8 +216,8 @@ export default function StudentsPage() {
           `"${student.surname}"`,
           `"${student.othernames || ''}"`,
           `"${student.email || ''}"`,
-          `"${student.course.code || ''}"`,
-          `"${student.course.name}"`,
+          `"${student.courses && student.courses.length > 0 ? student.courses[0].code || '' : ''}"`,
+          `"${student.courses && student.courses.length > 0 ? student.courses.map(c => c.name).join('; ') : ''}"`,
           student.year_of_study,
           student.semester,
           student.units?.length || 0
@@ -515,7 +515,7 @@ export default function StudentsPage() {
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registration Number</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Units</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Year</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Semester</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -529,7 +529,11 @@ export default function StudentsPage() {
                           {student.othernames && <div className="text-xs text-gray-500">{student.othernames}</div>}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">{student.reg_number}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{student.course.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {student.units && student.units.length > 0
+                            ? student.units.map(unit => unit.unit_code).join(', ')
+                            : <span className="text-gray-400 text-xs">No units</span>}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-semibold">
                             Year {student.year_of_study}
