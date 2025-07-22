@@ -1,6 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Sidebar from '@/components/lecturerSidebar';
+import { LegacyAssessment, LegacyCourse, Message } from "../../../types/assessment";
+import { dummyCourses, dummyAssessments } from "../../../data/assessmentData";
+
 import {
   BarChart3,
   Loader,
@@ -25,7 +28,8 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
-  BookOpen
+  BookOpen,
+  GraduationCap
 } from "lucide-react";
 
 // ===== CONSTANTS =====
@@ -47,7 +51,15 @@ interface Note {
   created_at: string;
   updated_at?: string;
 }
-
+interface CourseUnitFilterProps {
+  courses: Course[];
+  units: Unit[];
+  selectedCourse: number | null;
+  selectedUnit: number | null;
+  onCourseChange: (courseId: number | null) => void;
+  onUnitChange: (unitId: number | null) => void;
+  loading?: boolean;
+}
 interface Course {
   id: number;
   name: string;
@@ -67,7 +79,18 @@ interface Unit {
   updated_at?: string;
 }
 
-// ===== API FUNCTIONS ===== (keeping your existing API functions)
+// Side Access Panel Component (from second code)
+interface SideAccessPanelProps {
+  selectedCourse: string;
+  selectedUnit: string;
+  selectedWeek: number;
+  onCourseSelect: (courseId: string) => void;
+  onUnitSelect: (unitId: string) => void;
+  onWeekSelect: (week: number) => void;
+  courses: LegacyCourse[];
+  isMinimized: boolean;
+  onToggleMinimize: () => void;
+}
 const fetchCourses = async (): Promise<Course[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/lecturer/courses`, {
@@ -243,47 +266,221 @@ const deleteNote = async (noteId: number): Promise<void> => {
   }
 };
 
-// ===== UTILITY FUNCTIONS ===== (keeping your existing utility functions)
-const formatDate = (dateString: string) => {
-  const options: Intl.DateTimeFormatOptions = {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
+  selectedCourse,
+  selectedUnit,
+  selectedWeek,
+  onCourseSelect,
+  onUnitSelect,
+  onWeekSelect,
+  courses,
+  isMinimized,
+  onToggleMinimize,
+}) => {
+  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
+
+  const toggleCourseExpanded = (courseId: string) => {
+    const newExpanded = new Set(expandedCourses);
+    if (newExpanded.has(courseId)) {
+      newExpanded.delete(courseId);
+    } else {
+      newExpanded.add(courseId);
+    }
+    setExpandedCourses(newExpanded);
   };
-  return new Date(dateString).toLocaleDateString(undefined, options);
+
+  // Auto-expand selected course
+  useEffect(() => {
+    if (selectedCourse && !expandedCourses.has(selectedCourse)) {
+      setExpandedCourses(prev => new Set([...prev, selectedCourse]));
+    }
+  }, [selectedCourse, expandedCourses]);
+
+  const selectedCourseData = courses.find(c => c.id === selectedCourse);
+  const selectedUnitData = selectedCourseData?.units.find(u => u.id === selectedUnit);
+
+  return (
+    <div className={`
+      bg-gradient-to-b from-emerald-50 to-green-50 border-r border-emerald-100 
+      transition-all duration-300 ease-in-out shadow-lg relative
+      ${isMinimized ? 'w-16' : 'w-80'}
+      h-full flex flex-col
+    `}>
+      {/* Header */}
+      <div className="p-4 border-b border-emerald-200 bg-white/50 backdrop-blur-sm flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className={`flex items-center space-x-3 ${isMinimized ? 'justify-center' : ''}`}>
+            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+              <Filter className="w-4 h-4 text-white" />
+            </div>
+            {!isMinimized && (
+              <div>
+                <h2 className="font-bold text-lg text-gray-900">Filters</h2>
+                <p className="text-sm text-gray-600">Navigate content</p>
+              </div>
+            )}
+          </div>
+          {!isMinimized && (
+            <button
+              onClick={onToggleMinimize}
+              className="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5 text-gray-600" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {isMinimized ? (
+          <div className="space-y-4">
+            <button
+              onClick={onToggleMinimize}
+              className="w-full p-2 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors"
+              title="Expand panel"
+            >
+              <ChevronRight className="w-6 h-6 mx-auto" />
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Course Selection */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <GraduationCap className="w-4 h-4 text-emerald-600" />
+                <h3 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">Courses</h3>
+              </div>
+              
+              <div className="space-y-2">
+                {courses.map((course, index) => {
+                  const isExpanded = expandedCourses.has(course.id);
+                  const isSelected = selectedCourse === course.id;
+                  
+                  return (
+                    <div key={course.id} className="space-y-1">
+                      {/* Course Item */}
+                      <div className={`
+                        rounded-xl border-2 transition-all duration-200 cursor-pointer
+                        ${isSelected 
+                          ? `bg-emerald-100 border-emerald-300 shadow-md` 
+                          : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-emerald-200'
+                        }
+                      `}>
+                        <div 
+                          onClick={() => {
+                            onCourseSelect(course.id);
+                            onUnitSelect('');
+                            onWeekSelect(0);
+                            toggleCourseExpanded(course.id);
+                          }}
+                          className="p-4"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              <div className={`w-3 h-3 rounded-full ${isSelected ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold text-gray-900 truncate">{course.name}</div>
+                                <div className="text-sm text-gray-600">{course.code}</div>
+                              </div>
+                            </div>
+                            <ChevronDown className={`
+                              w-4 h-4 text-gray-400 transform transition-transform duration-200
+                              ${isExpanded ? 'rotate-180' : ''}
+                            `} />
+                          </div>
+                        </div>
+
+                        {/* Units Dropdown */}
+                        {isExpanded && course.units.length > 0 && (
+                          <div className="border-t border-gray-200 px-4 pb-2">
+                            <div className="space-y-1 pt-2">
+                              {course.units.map((unit) => (
+                                <div
+                                  key={unit.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onUnitSelect(unit.id);
+                                    onWeekSelect(0);
+                                  }}
+                                  className={`
+                                    p-3 rounded-lg cursor-pointer transition-all duration-200 ml-4
+                                    ${selectedUnit === unit.id
+                                      ? 'bg-emerald-100 text-emerald-700 shadow-sm border border-emerald-200'
+                                      : 'hover:bg-gray-100 text-gray-700'
+                                    }
+                                  `}
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <div className={`w-2 h-2 rounded-full ${
+                                      selectedUnit === unit.id ? 'bg-emerald-500' : 'bg-gray-300'
+                                    }`} />
+                                    <div>
+                                      <div className="font-medium text-sm">{unit.name}</div>
+                                      <div className="text-xs opacity-75">{unit.code}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Week Selection */}
+            {selectedUnit && selectedUnitData && (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-4 h-4 text-emerald-600" />
+                  <h3 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">Weeks</h3>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2">
+                  {Array.isArray((selectedUnitData as any)?.weeks)
+                    ? (selectedUnitData as any).weeks.map((week: number) => (
+                        <button
+                          key={week}
+                          onClick={() => onWeekSelect(week)}
+                          className={`
+                            p-3 rounded-lg text-sm font-medium transition-all duration-200 border-2
+                            ${selectedWeek === week
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg'
+                              : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50'
+                            }
+                          `}
+                        >
+                          Week {week}
+                        </button>
+                      ))
+                    : null}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Toggle Button */}
+      {isMinimized && (
+        <div className="absolute -right-4 top-1/2 transform -translate-y-1/2">
+          <button
+            onClick={onToggleMinimize}
+            className="w-8 h-8 bg-white border border-emerald-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center hover:bg-emerald-50"
+          >
+            <ChevronRight className="w-4 h-4 text-emerald-600" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
 };
 
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 Bytes";
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
-
-const getFileTypeIcon = (fileType: string) => {
-  const icons = {
-    pdf: FileText,
-    doc: FileText,
-    docx: FileText,
-    ppt: File,
-    pptx: File,
-  };
-  return icons[fileType as keyof typeof icons] || File;
-};
-
-const getFileTypeColor = (fileType: string) => {
-  const colors = {
-    pdf: "bg-red-100 text-red-700 border-red-200",
-    doc: "bg-blue-100 text-blue-700 border-blue-200",
-    docx: "bg-blue-100 text-blue-700 border-blue-200",
-    ppt: "bg-orange-100 text-orange-700 border-orange-200",
-    pptx: "bg-orange-100 text-orange-700 border-orange-200",
-  };
-  return colors[fileType as keyof typeof colors] || "bg-gray-100 text-gray-700 border-gray-200";
-};
-
-// ===== NEW COURSE SELECTION PANEL COMPONENT =====
+// Enhanced Course Selection Panel (from first code with improvements)
 interface CourseSelectionPanelProps {
   courses: Course[];
   units: Unit[];
@@ -516,147 +713,8 @@ const CourseSelectionPanel: React.FC<CourseSelectionPanelProps> = ({
     </>
   );
 };
+  
 
-// ===== EXISTING COMPONENTS ===== (keeping your existing components with minor adjustments)
-const TopHeader: React.FC<{ 
-  onSidebarToggle: () => void; 
-  onRefresh: () => void;
-  onCourseToggle: () => void;
-  coursesPanelOpen: boolean;
-}> = ({
-  onSidebarToggle,
-  onRefresh,
-  onCourseToggle,
-  coursesPanelOpen
-}) => (
-  <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 shadow-sm">
-    <div className="flex items-center space-x-4">
-      <button
-        className="lg:hidden text-emerald-600 hover:text-emerald-800 transition-colors p-2 rounded-lg hover:bg-emerald-50"
-        onClick={onSidebarToggle}
-        aria-label="Open sidebar"
-      >
-        <Menu className="w-6 h-6" />
-      </button>
-      
-      {/* Course Panel Toggle */}
-      <button
-        onClick={onCourseToggle}
-        className={`p-2 rounded-lg transition-all duration-200 ${
-          coursesPanelOpen 
-            ? 'bg-emerald-100 text-emerald-700 shadow-sm' 
-            : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-600'
-        }`}
-        title={coursesPanelOpen ? "Close course selection" : "Open course selection"}
-      >
-        <Filter className="w-5 h-5" />
-      </button>
-      
-      <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
-          <Library className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Notes Library</h1>
-          <p className="text-sm text-gray-500 hidden sm:block">Manage your course materials</p>
-        </div>
-      </div>
-    </div>
-    
-    <div className="flex items-center space-x-3">
-      <button 
-        onClick={onRefresh}
-        className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-        title="Refresh"
-      >
-        <RefreshCw className="w-5 h-5" />
-      </button>
-      <button className="relative text-gray-500 hover:text-emerald-600 transition-colors p-2 rounded-lg hover:bg-emerald-50">
-        <Bell className="w-5 h-5" />
-        <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
-          3
-        </span>
-      </button>
-      <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
-        <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center">
-          <User className="w-4 h-4 text-white" />
-        </div>
-        <div className="hidden md:block">
-          <p className="text-sm font-semibold text-gray-900">Dr. Alex Kimani</p>
-          <p className="text-xs text-gray-500">Senior Lecturer</p>
-        </div>
-      </div>
-    </div>
-  </header>
-);
-
-// Keep your existing CourseUnitFilter, NoteCard, and UploadForm components unchanged...
-// (I'll include the simplified versions for space, but you should keep your full implementations)
-
-interface CourseUnitFilterProps {
-  courses: Course[];
-  units: Unit[];
-  selectedCourse: number | null;
-  selectedUnit: number | null;
-  onCourseChange: (courseId: number | null) => void;
-  onUnitChange: (unitId: number | null) => void;
-  loading?: boolean;
-}
-
-const CourseUnitFilter: React.FC<CourseUnitFilterProps> = ({
-  courses,
-  units,
-  selectedCourse,
-  selectedUnit,
-  onCourseChange,
-  onUnitChange,
-  loading = false,
-}) => {
-  // ... (keep your existing implementation)
-  return <div>Your existing CourseUnitFilter component</div>;
-};
-
-interface NoteCardProps {
-  note: Note;
-  course: Course;
-  unit: Unit;
-  viewMode: "grid" | "list";
-  onDownload: (noteId: number) => void;
-  onDelete: (noteId: number) => void;
-}
-
-const NoteCard: React.FC<NoteCardProps> = ({
-  note,
-  course,
-  unit,
-  viewMode,
-  onDownload,
-  onDelete,
-}) => {
-  // ... (keep your existing implementation)
-  return <div>Your existing NoteCard component</div>;
-};
-
-interface UploadFormProps {
-  courses: Course[];
-  units: Unit[];
-  onUpload: (courseId: number, unitId: number, formData: FormData) => Promise<void>;
-  onCancel: () => void;
-  loading?: boolean;
-}
-
-const UploadForm: React.FC<UploadFormProps> = ({
-  courses,
-  units,
-  onUpload,
-  onCancel,
-  loading = false,
-}) => {
-  // ... (keep your existing implementation)
-  return <div>Your existing UploadForm component</div>;
-};
-
-// ===== MAIN COMPONENT =====
 const Page: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [coursesPanelOpen, setCoursesPanelOpen] = useState(false);
@@ -814,6 +872,7 @@ const handleCourseToggle = () => {
     );
   }
 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-green-50 flex">
       {/* Mock Sidebar for spacing */}
@@ -880,6 +939,7 @@ const handleCourseToggle = () => {
               </div>
             </div>
           </div>
+   
 
           {/* Upload Form */}
           {showUploadForm && (
