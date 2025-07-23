@@ -187,7 +187,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             >
               <option value="close-ended">Close-ended Questions</option>
               <option value="open-ended">Open-ended Questions</option>
-              <option value="application">Application Questions</option>
+{/*               <option value="application">Application Questions</option> */}
             </select>
           </div>
           {formData.questions_type === "close-ended" && (
@@ -265,7 +265,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
-              Bloom's Level <span className="text-red-500">*</span>
+              Bloom&apos;s Level <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.blooms_level}
