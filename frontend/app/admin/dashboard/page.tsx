@@ -171,6 +171,8 @@ export default function AdminDashboard() {
         });
         const analyticsData = await analyticsResponse.json();
 
+        console.log(analyticsData);
+
         // Calculate total users
         const totalUsers =
           analyticsData.user_counts.admins +
@@ -221,7 +223,30 @@ export default function AdminDashboard() {
       color: "bg-emerald-500",
       trend: "up" as const,
     },
-
+    {
+      icon: <Users size={24} className="text-white" />,
+      title: "Registered Students",
+      value: stats.totalStudents,
+      change: "+3%",
+      color: "bg-blue-500",
+      trend: "up" as const,
+    },
+    {
+      icon: <BarChart3 size={24} className="text-white" />,
+      title: "Courses",
+      value: stats.totalCourses,
+      change: "+2%",
+      color: "bg-violet-500",
+      trend: "up" as const,
+    },
+    {
+      icon: <Activity size={24} className="text-white" />,
+      title: "Units",
+      value: stats.totalUnits,
+      change: "+1%",
+      color: "bg-amber-500",
+      trend: "up" as const,
+    },
   ];
 
   const quickActions = [
