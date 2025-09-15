@@ -697,7 +697,7 @@ const Page: React.FC = () => {
 
             {/* Result Modal */}
             {showResultModal && selectedResult && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-transparent">
                 <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] flex flex-col">
                   <button
                     className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
