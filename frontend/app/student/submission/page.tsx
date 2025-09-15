@@ -26,6 +26,7 @@ export default function SubmissionPage() {
       .then(data => {
         setSubmissions(Array.isArray(data) ? data : []);
         setIsLoading(false);
+        // console.log(data);
       })
       .catch(() => setIsLoading(false));
   }, []);
@@ -114,79 +115,102 @@ export default function SubmissionPage() {
             </div>
           ) : (
             <div className="max-w-4xl mx-auto space-y-6">
-              {submissions.map((submission, idx) => (
-                <motion.div
-                  key={submission.submission_id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-                >
-                  <div
-                    className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50 transition-colors"
-                    onClick={() => setExpanded(expanded === submission.submission_id ? null : submission.submission_id)}
+              {submissions.map((submission, idx) => {
+                const deadlineValue = submission?.deadline ?? submission?.due_date ?? submission?.assessment_deadline ?? submission?.closing_date ?? submission?.close_at ?? null;
+                const parsedDeadline = deadlineValue ? Date.parse(deadlineValue) : NaN;
+                const canExpand = !deadlineValue || (!Number.isNaN(parsedDeadline) && Date.now() >= parsedDeadline);
+
+                return (
+                  <motion.div
+                    key={submission.submission_id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
                   >
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-emerald-500" />
-                        {submission.topic || 'Assessment'}
-                      </h3>
-                      <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-1">
-                        <span>Assessment ID: {submission.assessment_id}</span>
-                        <span>Submission ID: {submission.submission_id}</span>
-                        <span>Blooms Level: {submission.blooms_level}</span>
-                        <span>Difficulty: {submission.difficulty}</span>
-                        <span>Questions: {submission.number_of_questions}</span>
-                        <span>Total Marks: {submission.total_marks}</span>
-                        <span>Created: {new Date(submission.created_at).toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        {submission.graded && <CheckCircle className="w-4 h-4 text-green-500" />}
-                        <span className="text-xs text-gray-400">{submission.graded ? 'Graded' : 'Not Graded'}</span>
-                      </div>
-                    </div>
-                    <div>
-                      {expanded === submission.submission_id ? (
-                        <ChevronUp className="w-6 h-6 text-gray-400" />
-                      ) : (
-                        <ChevronDown className="w-6 h-6 text-gray-400" />
-                      )}
-                    </div>
-                  </div>
-                  <AnimatePresence>
-                    {expanded === submission.submission_id && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="border-t border-gray-200 bg-gray-50 p-6"
-                      >
-                        <h4 className="text-md font-semibold text-emerald-700 mb-4">Questions & Feedback</h4>
-                        {submission.results && submission.results.length > 0 ? (
-                          <div className="space-y-4">
-                            {submission.results.map((result: any, qidx: number) => (
-                              <div key={result.id} className="bg-white rounded-lg p-4 border border-gray-100">
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="font-medium text-gray-800">Q{qidx + 1}: {result.question_text}</span>
-                                  <span className="text-xs text-gray-500">Marks: {result.marks} | Score: {result.score}</span>
-                                </div>
-                                <div className="text-xs text-gray-500 mb-1">Rubric: {result.rubric}</div>
-                                <div className="text-xs text-gray-500 mb-1">Feedback: <span className="text-gray-700">{result.feedback}</span></div>
-                                {result.correct_answer && (
-                                  <div className="text-xs text-gray-500 mb-1">Correct Answer: <span className="text-gray-700">{result.correct_answer}</span></div>
-                                )}
-                                <div className="text-xs text-gray-400">Graded at: {result.graded_at ? new Date(result.graded_at).toLocaleString() : 'N/A'}</div>
-                              </div>
-                            ))}
+                    <div
+                      className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50 transition-colors"
+                      onClick={() => {
+                        if (canExpand) {
+                          setExpanded(expanded === submission.submission_id ? null : submission.submission_id);
+                        }
+                      }}
+                    >
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-emerald-500" />
+                          {submission.topic || 'Assessment'}
+                        </h3>
+                        <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-1">
+                          <span>Assessment ID: {submission.assessment_id}</span>
+                          <span>Submission ID: {submission.submission_id}</span>
+                          <span>Blooms Level: {submission.blooms_level}</span>
+                          <span>Difficulty: {submission.difficulty}</span>
+                          <span>Questions: {submission.number_of_questions}</span>
+                          <span>Total Marks: {submission.total_marks}</span>
+                          <span>Created: {new Date(submission.created_at).toLocaleString()}</span>
+                          {deadlineValue && !Number.isNaN(parsedDeadline) && (
+                            <span>Deadline: {new Date(parsedDeadline).toLocaleString()}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          {submission.graded && <CheckCircle className="w-4 h-4 text-green-500" />}
+                          <span className="text-xs text-gray-400">{submission.graded ? 'Graded' : 'Not Graded'}</span>
+                        </div>
+                        {!canExpand && deadlineValue && (
+                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                            <Info className="w-4 h-4 text-amber-500" />
+                            <span>Answers visible after deadline.</span>
                           </div>
-                        ) : (
-                          <div className="text-gray-500 text-sm">No results/questions found for this submission.</div>
                         )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))}
+                      </div>
+                      <div>
+                        {canExpand ? (
+                          expanded === submission.submission_id ? (
+                            <ChevronUp className="w-6 h-6 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="w-6 h-6 text-gray-400" />
+                          )
+                        ) : (
+                          <Info className="w-6 h-6 text-gray-300" />
+                        )}
+                      </div>
+                    </div>
+                    <AnimatePresence>
+                      {canExpand && expanded === submission.submission_id && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="border-t border-gray-200 bg-gray-50 p-6"
+                        >
+                          <h4 className="text-md font-semibold text-emerald-700 mb-4">Questions & Feedback</h4>
+                          {submission.results && submission.results.length > 0 ? (
+                            <div className="space-y-4">
+                              {submission.results.map((result: any, qidx: number) => (
+                                <div key={result.id} className="bg-white rounded-lg p-4 border border-gray-100">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="font-medium text-gray-800">Q{qidx + 1}: {result.question_text}</span>
+                                    <span className="text-xs text-gray-500">Marks: {result.marks} | Score: {result.score}</span>
+                                  </div>
+                                  <div className="text-xs text-gray-500 mb-1">Rubric: {result.rubric}</div>
+                                  <div className="text-xs text-gray-500 mb-1">Feedback: <span className="text-gray-700">{result.feedback}</span></div>
+                                  {result.correct_answer && (
+                                    <div className="text-xs text-gray-500 mb-1">Correct Answer: <span className="text-gray-700">{result.correct_answer}</span></div>
+                                  )}
+                                  <div className="text-xs text-gray-400">Graded at: {result.graded_at ? new Date(result.graded_at).toLocaleString() : 'N/A'}</div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-gray-500 text-sm">No results/questions found for this submission.</div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
             </div>
           )}
         </main>
