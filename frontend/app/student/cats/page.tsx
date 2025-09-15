@@ -74,7 +74,8 @@ export default function CatsPage() {
         });
         if (!res.ok) throw new Error("Failed to fetch assessments");
         const data = await res.json();
-        
+
+        // console.log(data);
         // Filter only CATs
         const catsOnly = (Array.isArray(data) ? data : []).filter((assessment: any) => assessment.type === "CAT");
         setCats(catsOnly);
@@ -114,6 +115,8 @@ export default function CatsPage() {
         return "text-blue-600 bg-blue-50 border-blue-200";
       case "in-progress":
         return "text-amber-600 bg-amber-50 border-amber-200";
+      case "closed":
+        return "text-red-600 bg-red-50 border-red-200";
       default:
         return "text-gray-600 bg-gray-50 border-gray-200";
     }
@@ -127,6 +130,8 @@ export default function CatsPage() {
         return <Play size={16} />;
       case "in-progress":
         return <Pause size={16} />;
+      case "closed":
+        return <AlertCircle size={16} />;
       default:
         return <FileText size={16} />;
     }
@@ -140,14 +145,24 @@ export default function CatsPage() {
         return "Start";
       case "in-progress":
         return "In Progress";
+      case "closed":
+        return "Closed";
       default:
         return "Unknown";
     }
   };
 
+  const getEffectiveStatus = (cat: any) => {
+    const deadlineValue = cat?.deadline ?? cat?.due_date ?? cat?.closing_date ?? cat?.close_at ?? null;
+    const parsedDeadline = deadlineValue ? Date.parse(deadlineValue) : NaN;
+    const isPastDeadline = !!deadlineValue && !Number.isNaN(parsedDeadline) && Date.now() > parsedDeadline;
+    if (cat.status !== "completed" && isPastDeadline) return "closed";
+    return cat.status;
+  };
+
   const filteredCats = cats.filter((cat) => {
     if (selectedFilter === "all") return true;
-    return cat.status === selectedFilter;
+    return getEffectiveStatus(cat) === selectedFilter;
   });
 
   const averageScore =
@@ -757,7 +772,7 @@ export default function CatsPage() {
               {/* Filter Tabs */}
               <div className="mb-6">
                 <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
-                  {["all", "start", "in-progress", "completed"].map((filter) => (
+                  {["all", "start", "in-progress", "completed", "closed"].map((filter) => (
                     <button
                       key={filter}
                       onClick={() => setSelectedFilter(filter)}
@@ -812,12 +827,12 @@ export default function CatsPage() {
                               </h3>
                               <span
                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-                                  cat.status
+                                  getEffectiveStatus(cat)
                                 )}`}
                               >
-                                {getStatusIcon(cat.status)}
+                                {getStatusIcon(getEffectiveStatus(cat))}
                                 <span className="ml-1">
-                                  {getStatusText(cat.status)}
+                                  {getStatusText(getEffectiveStatus(cat))}
                                 </span>
                               </span>
                             </div>
@@ -850,7 +865,7 @@ export default function CatsPage() {
                               </div>
                             </div>
 
-                            {cat.status === "start" && (
+                            {getEffectiveStatus(cat) === "start" && (
                               <button
                                 className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                 onClick={() => handleStartCat(cat.id)}
@@ -858,7 +873,7 @@ export default function CatsPage() {
                                 Start CAT
                               </button>
                             )}
-                            {cat.status === "in-progress" && (
+                            {getEffectiveStatus(cat) === "in-progress" && (
                               <button
                                 className="mt-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
                                 onClick={() => handleStartCat(cat.id)}
@@ -866,10 +881,16 @@ export default function CatsPage() {
                                 Continue CAT
                               </button>
                             )}
-                            {cat.status === "completed" && (
+                            {getEffectiveStatus(cat) === "completed" && (
                               <div className="mt-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg">
                                 <CheckCircle size={16} className="inline mr-2" />
                                 Completed
+                              </div>
+                            )}
+                            {getEffectiveStatus(cat) === "closed" && (
+                              <div className="mt-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg">
+                                <AlertCircle size={16} className="inline mr-2" />
+                                Closed
                               </div>
                             )}
                           </div>

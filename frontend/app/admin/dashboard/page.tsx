@@ -171,7 +171,7 @@ export default function AdminDashboard() {
         });
         const analyticsData = await analyticsResponse.json();
 
-        console.log(analyticsData);
+        // console.log(analyticsData);
 
         // Calculate total users
         const totalUsers =

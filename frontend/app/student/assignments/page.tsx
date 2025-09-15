@@ -20,6 +20,7 @@ import {
   Loader2,
   Play,
   Pause,
+  AlertCircle,
 } from "lucide-react";
 import Disclaimer from "@/components/Disclaimer";
 
@@ -36,6 +37,9 @@ interface Assignment {
   close_ended_type?: string;
   number_of_questions: number;
   deadline?: string;
+  due_date?: string;
+  closing_date?: string;
+  close_at?: string;
   duration?: number;
   total_marks: number;
   questions: Question[];
@@ -131,6 +135,8 @@ export default function AssignmentsPage() {
         return "text-blue-600 bg-blue-50 border-blue-200";
       case "in-progress":
         return "text-amber-600 bg-amber-50 border-amber-200";
+      case "closed":
+        return "text-red-600 bg-red-50 border-red-200";
       default:
         return "text-gray-600 bg-gray-50 border-gray-200";
     }
@@ -144,6 +150,8 @@ export default function AssignmentsPage() {
         return <Play size={16} />;
       case "in-progress":
         return <Pause size={16} />;
+      case "closed":
+        return <AlertCircle size={16} />;
       default:
         return <FileText size={16} />;
     }
@@ -157,14 +165,24 @@ export default function AssignmentsPage() {
         return "Start";
       case "in-progress":
         return "In Progress";
+      case "closed":
+        return "Closed";
       default:
         return "Unknown";
     }
   };
 
+  const getEffectiveStatus = (assignment: Assignment) => {
+    const deadlineValue = assignment?.deadline ?? assignment?.due_date ?? assignment?.closing_date ?? assignment?.close_at ?? null;
+    const parsedDeadline = deadlineValue ? Date.parse(deadlineValue) : NaN;
+    const isPastDeadline = !!deadlineValue && !Number.isNaN(parsedDeadline) && Date.now() > parsedDeadline;
+    if (assignment.status !== "completed" && isPastDeadline) return "closed";
+    return assignment.status;
+  };
+
   const filteredAssignments = assignments.filter((assignment) => {
     if (selectedFilter === "all") return true;
-    return assignment.status === selectedFilter;
+    return getEffectiveStatus(assignment) === selectedFilter;
   });
 
   const averageScore =
@@ -789,7 +807,7 @@ export default function AssignmentsPage() {
               {/* Filter Tabs */}
               <div className="mb-6">
                 <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
-                  {["all", "start", "in-progress", "completed"].map(
+                  {["all", "start", "in-progress", "completed", "closed"].map(
                     (filter) => (
                       <button
                         key={filter}
@@ -846,12 +864,12 @@ export default function AssignmentsPage() {
                               </h3>
                               <span
                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-                                  assignment.status
+                                  getEffectiveStatus(assignment)
                                 )}`}
                               >
-                                {getStatusIcon(assignment.status)}
+                                {getStatusIcon(getEffectiveStatus(assignment))}
                                 <span className="ml-1">
-                                  {getStatusText(assignment.status)}
+                                  {getStatusText(getEffectiveStatus(assignment))}
                                 </span>
                               </span>
                             </div>
@@ -891,7 +909,7 @@ export default function AssignmentsPage() {
                               </div>
                             </div>
 
-                            {assignment.status === "start" && (
+                            {getEffectiveStatus(assignment) === "start" && (
                               <button
                                 className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                 onClick={() =>
@@ -901,7 +919,7 @@ export default function AssignmentsPage() {
                                 Start Assignment
                               </button>
                             )}
-                            {assignment.status === "in-progress" && (
+                            {getEffectiveStatus(assignment) === "in-progress" && (
                               <button
                                 className="mt-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
                                 onClick={() =>
@@ -911,13 +929,19 @@ export default function AssignmentsPage() {
                                 Continue Assignment
                               </button>
                             )}
-                            {assignment.status === "completed" && (
+                            {getEffectiveStatus(assignment) === "completed" && (
                               <div className="mt-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg">
                                 <CheckCircle
                                   size={16}
                                   className="inline mr-2"
                                 />
                                 Completed
+                              </div>
+                            )}
+                            {getEffectiveStatus(assignment) === "closed" && (
+                              <div className="mt-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg">
+                                <AlertCircle size={16} className="inline mr-2" />
+                                Closed
                               </div>
                             )}
                           </div>
