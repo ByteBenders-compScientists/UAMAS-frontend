@@ -23,6 +23,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Disclaimer from "@/components/Disclaimer";
+import { useAssessmentTimer } from "@/hooks/useAssessmentTimer";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
@@ -67,7 +68,6 @@ export default function AssignmentsPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [multipleAnswers, setMultipleAnswers] = useState<number[][]>([]);
-  const [timeLeft, setTimeLeft] = useState(0);
   const [, setIsSubmitting] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const hasFetched = useRef(false);
@@ -79,6 +79,48 @@ export default function AssignmentsPage() {
     ("text" | "image" | null)[]
   >([]);
   const [isNextLoading, setIsNextLoading] = useState(false);
+
+  // Declare handleSubmitAssignment function before using it in timer
+  const handleSubmitAssignment = async () => {
+    setIsSubmitting(true);
+    try {
+      // Stop the timer
+      timer.stopTimer();
+      
+      // Send final submission request
+      if (activeAssignment) {
+        await fetch(`${apiBaseUrl}/bd/student/assessments/${activeAssignment}/submit`, {
+          method: "GET",
+          credentials: "include",
+        });
+      }
+      // Simulate submission delay
+      setTimeout(() => {
+        setIsTakingAssignment(false);
+        setIsSubmitting(false);
+        setShowConfirmSubmit(false);
+        // Refresh the assignments list to show updated status
+        window.location.reload();
+      }, 1500);
+    } catch (err) {
+      setIsSubmitting(false);
+      // Optionally handle error
+    }
+  };
+
+  // Timer hook with backend synchronization
+  const timer = useAssessmentTimer({
+    assessmentId: activeAssignment,
+    initialDuration: assignments.find(assignment => assignment.id === activeAssignment)?.duration || 60,
+    onTimeUp: handleSubmitAssignment,
+    onAutoSubmit: () => {
+      setIsTakingAssignment(false);
+      setIsSubmitting(false);
+      setShowConfirmSubmit(false);
+      // Refresh the assignments list to show updated status
+      window.location.reload();
+    },
+  });
 
   // Fetch Assignments from unified API
   useEffect(() => {
@@ -108,22 +150,13 @@ export default function AssignmentsPage() {
     fetchAssignments();
   }, []);
 
-  // Timer for assignments with duration
+  // Handle timer state changes
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isTakingAssignment && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            handleSubmitAssignment();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    if (isTakingAssignment && !timer.isActive && timer.hasStarted) {
+      // Resume timer if assessment is active but timer is not running
+      timer.resumeTimer();
     }
-    return () => clearInterval(interval);
-  }, [isTakingAssignment, timeLeft]);
+  }, [isTakingAssignment, timer.isActive, timer.hasStarted, timer.resumeTimer]);
 
   const hasContent = assignments.length > 0;
 
@@ -205,7 +238,7 @@ export default function AssignmentsPage() {
     setShowDisclaimer(true);
   };
 
-  const proceedToAssignment = () => {
+  const proceedToAssignment = async () => {
     const assignment = assignments.find((a) => a.id === activeAssignment);
     if (!assignment) return;
 
@@ -239,7 +272,9 @@ export default function AssignmentsPage() {
         setOpenEndedAnswers([]);
         setOpenEndedImages([]);
       }
-      setTimeLeft(assignment.duration ? assignment.duration * 60 : 0);
+      
+      // Start the timer with backend synchronization
+      await timer.startTimer();
     } catch {
       setQuestions([]);
       setQuestionsType("");
@@ -268,36 +303,7 @@ export default function AssignmentsPage() {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
-  const handleSubmitAssignment = async () => {
-    setIsSubmitting(true);
-    try {
-      // Send final submission request
-      if (activeAssignment) {
-        await fetch(`${apiBaseUrl}/bd/student/assessments/${activeAssignment}/submit`, {
-          method: "GET",
-          credentials: "include",
-        });
-      }
-      // Simulate submission delay
-      setTimeout(() => {
-        setIsTakingAssignment(false);
-        setIsSubmitting(false);
-        setShowConfirmSubmit(false);
-        // In a real app, you would send the answers to the server
-      }, 1500);
-    } catch (err) {
-      setIsSubmitting(false);
-      // Optionally handle error
-    }
-  };
+  // formatTime is now provided by the timer hook
 
   const currentAssignment = assignments.find(
     (assignment) => assignment.id === activeAssignment
@@ -577,16 +583,21 @@ export default function AssignmentsPage() {
                     </div>
 
                     <div className="flex items-center space-x-4">
-                      {timeLeft > 0 && (
+                      {timer.timeRemaining > 0 && (
                         <div
                           className={`px-4 py-2 rounded-lg text-white font-medium ${
-                            timeLeft < 300 ? "bg-red-500" : "bg-blue-600"
+                            timer.timeRemaining < 300 ? "bg-red-500" : "bg-blue-600"
                           }`}
                         >
                           <div className="flex items-center">
                             <Clock size={16} className="mr-2" />
-                            <span>{formatTime(timeLeft)}</span>
+                            <span>{timer.formatTime(timer.timeRemaining)}</span>
                           </div>
+                        </div>
+                      )}
+                      {timer.error && (
+                        <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                          {timer.error}
                         </div>
                       )}
                     </div>

@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import CatQuestions from "@/components/CatQuestions";
 import Disclaimer from "@/components/Disclaimer";
+import { useAssessmentTimer } from "@/hooks/useAssessmentTimer";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
@@ -46,7 +47,6 @@ export default function CatsPage() {
   const [questions, setQuestions] = useState<any[]>([]);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [flaggedQuestions, setFlaggedQuestions] = useState<number[]>([]);
-  const [timeLeft, setTimeLeft] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const hasFetched = useRef(false);
@@ -59,6 +59,48 @@ export default function CatsPage() {
     ("text" | "image" | null)[]
   >([]);
   const [isNextLoading, setIsNextLoading] = useState(false);
+
+  // Declare handleSubmitCat function before using it in timer
+  const handleSubmitCat = async () => {
+    setIsSubmitting(true);
+    try {
+      // Stop the timer
+      timer.stopTimer();
+      
+      // Send final submission request
+      if (activeCat) {
+        await fetch(`${apiBaseUrl}/bd/student/assessments/${activeCat}/submit`, {
+          method: "GET",
+          credentials: "include",
+        });
+      }
+      // Simulate submission delay
+      setTimeout(() => {
+        setIsTakingCat(false);
+        setIsSubmitting(false);
+        setShowConfirmSubmit(false);
+        // Refresh the CATs list to show updated status
+        window.location.reload();
+      }, 1500);
+    } catch (err) {
+      setIsSubmitting(false);
+      // Optionally handle error
+    }
+  };
+
+  // Timer hook with backend synchronization
+  const timer = useAssessmentTimer({
+    assessmentId: activeCat,
+    initialDuration: cats.find(cat => cat.id === activeCat)?.duration || 60,
+    onTimeUp: handleSubmitCat,
+    onAutoSubmit: () => {
+      setIsTakingCat(false);
+      setIsSubmitting(false);
+      setShowConfirmSubmit(false);
+      // Refresh the CATs list to show updated status
+      window.location.reload();
+    },
+  });
 
   // Fetch CATs from unified API
   useEffect(() => {
@@ -88,22 +130,13 @@ export default function CatsPage() {
     fetchCats();
   }, []);
 
-  // Timer for CATs with duration
+  // Handle timer state changes
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isTakingCat && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            handleSubmitCat();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    if (isTakingCat && !timer.isActive && timer.hasStarted) {
+      // Resume timer if assessment is active but timer is not running
+      timer.resumeTimer();
     }
-    return () => clearInterval(interval);
-  }, [isTakingCat, timeLeft]);
+  }, [isTakingCat, timer.isActive, timer.hasStarted, timer.resumeTimer]);
 
   const hasContent = cats.length > 0;
 
@@ -180,7 +213,7 @@ export default function CatsPage() {
     setShowDisclaimer(true);
   };
 
-  const proceedToCat = () => {
+  const proceedToCat = async () => {
     const cat = cats.find((c) => c.id === activeCat);
     if (!cat) return;
 
@@ -213,7 +246,9 @@ export default function CatsPage() {
         setOpenEndedImages([]);
       }
       setFlaggedQuestions([]);
-      setTimeLeft((cat.duration || 60) * 60);
+      
+      // Start the timer with backend synchronization
+      await timer.startTimer();
     } catch (err) {
       setQuestions([]);
       setQuestionsType("");
@@ -250,36 +285,7 @@ export default function CatsPage() {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
-  const handleSubmitCat = async () => {
-    setIsSubmitting(true);
-    try {
-      // Send final submission request
-      if (activeCat) {
-        await fetch(`${apiBaseUrl}/bd/student/assessments/${activeCat}/submit`, {
-          method: "GET",
-          credentials: "include",
-        });
-      }
-      // Simulate submission delay
-      setTimeout(() => {
-        setIsTakingCat(false);
-        setIsSubmitting(false);
-        setShowConfirmSubmit(false);
-        // In a real app, you would send the answers to the server
-      }, 1500);
-    } catch (err) {
-      setIsSubmitting(false);
-      // Optionally handle error
-    }
-  };
+  // formatTime is now provided by the timer hook
 
   const currentCat = cats.find((cat) => cat.id === activeCat);
 
@@ -554,14 +560,19 @@ export default function CatsPage() {
                     <div className="flex items-center space-x-4">
                       <div
                         className={`px-4 py-2 rounded-lg text-white font-medium ${
-                          timeLeft < 300 ? "bg-red-500" : "bg-blue-600"
+                          timer.timeRemaining < 300 ? "bg-red-500" : "bg-blue-600"
                         }`}
                       >
                         <div className="flex items-center">
                           <Clock size={16} className="mr-2" />
-                          <span>{formatTime(timeLeft)}</span>
+                          <span>{timer.formatTime(timer.timeRemaining)}</span>
                         </div>
                       </div>
+                      {timer.error && (
+                        <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                          {timer.error}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -920,3 +931,4 @@ export default function CatsPage() {
     </div>
   );
 }
+
