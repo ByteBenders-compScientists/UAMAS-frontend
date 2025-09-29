@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
@@ -30,7 +29,6 @@ import {
 } from "lucide-react";
 import CatQuestions from "@/components/CatQuestions";
 import Disclaimer from "@/components/Disclaimer";
-import { useAssessmentTimer } from "@/hooks/useAssessmentTimer";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
@@ -59,14 +57,17 @@ export default function CatsPage() {
     ("text" | "image" | null)[]
   >([]);
   const [isNextLoading, setIsNextLoading] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Declare handleSubmitCat function before using it in timer
+  // Submit current CAT
   const handleSubmitCat = async () => {
     setIsSubmitting(true);
     try {
-      // Stop the timer
-      timer.stopTimer();
-      
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       // Send final submission request
       if (activeCat) {
         await fetch(`${apiBaseUrl}/bd/student/assessments/${activeCat}/submit`, {
@@ -88,19 +89,7 @@ export default function CatsPage() {
     }
   };
 
-  // Timer hook with backend synchronization
-  const timer = useAssessmentTimer({
-    assessmentId: activeCat,
-    initialDuration: cats.find(cat => cat.id === activeCat)?.duration || 60,
-    onTimeUp: handleSubmitCat,
-    onAutoSubmit: () => {
-      setIsTakingCat(false);
-      setIsSubmitting(false);
-      setShowConfirmSubmit(false);
-      // Refresh the CATs list to show updated status
-      window.location.reload();
-    },
-  });
+  // Removed backend-linked timer
 
   // Fetch CATs from unified API
   useEffect(() => {
@@ -130,13 +119,21 @@ export default function CatsPage() {
     fetchCats();
   }, []);
 
-  // Handle timer state changes
+  // Cleanup timer on unmount
   useEffect(() => {
-    if (isTakingCat && !timer.isActive && timer.hasStarted) {
-      // Resume timer if assessment is active but timer is not running
-      timer.resumeTimer();
-    }
-  }, [isTakingCat, timer.isActive, timer.hasStarted, timer.resumeTimer]);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   const hasContent = cats.length > 0;
 
@@ -246,9 +243,25 @@ export default function CatsPage() {
         setOpenEndedImages([]);
       }
       setFlaggedQuestions([]);
-      
-      // Start the timer with backend synchronization
-      await timer.startTimer();
+      // Start frontend-only timer
+      const initial = (cat.duration || 60) * 60;
+      setTimeRemaining(initial);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      timerRef.current = setInterval(() => {
+        setTimeRemaining(prev => {
+          const next = Math.max(0, prev - 1);
+          if (next === 0) {
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+            handleSubmitCat();
+          }
+          return next;
+        });
+      }, 1000);
     } catch (err) {
       setQuestions([]);
       setQuestionsType("");
@@ -558,19 +571,16 @@ export default function CatsPage() {
                     </div>
 
                     <div className="flex items-center space-x-4">
-                      <div
-                        className={`px-4 py-2 rounded-lg text-white font-medium ${
-                          timer.timeRemaining < 300 ? "bg-red-500" : "bg-blue-600"
-                        }`}
-                      >
-                        <div className="flex items-center">
-                          <Clock size={16} className="mr-2" />
-                          <span>{timer.formatTime(timer.timeRemaining)}</span>
-                        </div>
-                      </div>
-                      {timer.error && (
-                        <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
-                          {timer.error}
+                      {timeRemaining > 0 && (
+                        <div
+                          className={`px-4 py-2 rounded-lg text-white font-medium ${
+                            timeRemaining < 300 ? "bg-red-500" : "bg-blue-600"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <Clock size={16} className="mr-2" />
+                            <span>{formatTime(timeRemaining)}</span>
+                          </div>
                         </div>
                       )}
                     </div>
