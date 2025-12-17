@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLayout } from "@/components/LayoutController";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -56,6 +57,8 @@ interface Question {
 
 export default function AssignmentsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -79,6 +82,21 @@ export default function AssignmentsPage() {
   const [isNextLoading, setIsNextLoading] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Workspace mode B: attempt-only route.
+  // If accessed without an assessmentId, go back to the unified workspace.
+  useEffect(() => {
+    const assessmentId = searchParams.get("assessmentId");
+    if (!assessmentId) {
+      router.replace("/student/courses?action=assignments");
+      return;
+    }
+
+    if (!activeAssignment) {
+      setActiveAssignment(assessmentId);
+      setShowDisclaimer(true);
+    }
+  }, [router, searchParams, activeAssignment]);
 
   // Submit current assignment
   const handleSubmitAssignment = async () => {

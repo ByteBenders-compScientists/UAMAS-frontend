@@ -5,10 +5,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLayout } from '@/components/LayoutController';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import EmptyState from '@/components/EmptyState';
+
 import { 
   Library, 
   Search, 
@@ -28,11 +30,17 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:808
 
 export default function LibraryPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [resources, setResources] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('All');
   const [sortBy, setSortBy] = useState('recent');
   const resourcesGridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    router.replace('/student/courses?action=library');
+  }, [router, searchParams]);
 
   useEffect(() => {
     fetch(`${apiBaseUrl}/bd/student/notes`, {

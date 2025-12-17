@@ -14,6 +14,7 @@ export const getDifficultyColor = (difficulty: string) => {
       return "bg-green-50 text-green-700 border-green-200";
     case "Intermediate": 
       return "bg-yellow-50 text-yellow-700 border-yellow-200";
+    case "Advance":
     case "Advanced":
       return "bg-red-50 text-red-700 border-red-200";
     default:

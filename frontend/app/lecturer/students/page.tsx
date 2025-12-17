@@ -2,6 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { useLayout } from "@/components/LayoutController"
 import AdminSidebar from "@/components/lecturerSidebar"
@@ -70,13 +71,15 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8
 
 export default function StudentsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout()
+  const searchParams = useSearchParams()
+  const initialCourseIdFromQuery = searchParams.get("courseId") ?? ""
   const [isLoading, setIsLoading] = useState(true)
   const [students, setStudents] = useState<Student[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
-  const [selectedCourse, setSelectedCourse] = useState("")
+  const [selectedCourse, setSelectedCourse] = useState(initialCourseIdFromQuery)
   const [selectedYear, setSelectedYear] = useState("")
   const [selectedSemester, setSelectedSemester] = useState("")
   
