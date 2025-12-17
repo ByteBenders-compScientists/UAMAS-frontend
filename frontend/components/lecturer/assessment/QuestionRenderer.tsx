@@ -233,7 +233,19 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionN
   };
 
   const renderDragDrop = () => {
-    if (!Array.isArray(correctAnswer) || correctAnswer.length === 0) {
+    const rawChoices = question.choices;
+    const asParallelArrays =
+      Array.isArray(rawChoices) &&
+      rawChoices.length === 2 &&
+      Array.isArray(rawChoices[0]) &&
+      Array.isArray(rawChoices[1]);
+
+    const dragItems: string[] = asParallelArrays ? (rawChoices[0] as unknown[]).map(String) : [];
+    const dropTargets: string[] = asParallelArrays ? (rawChoices[1] as unknown[]).map(String) : [];
+
+    const placements = Array.isArray(correctAnswer) ? correctAnswer : [];
+
+    if ((dragItems.length === 0 && dropTargets.length === 0) && placements.length === 0) {
       return (
         <p className="mt-4 text-sm text-gray-600">No drag and drop items provided.</p>
       );
@@ -241,8 +253,48 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionN
 
     return (
       <div className="mt-4">
+        {(dragItems.length > 0 || dropTargets.length > 0) && (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="text-sm font-semibold text-gray-800">Drag items</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {dragItems.length > 0 ? (
+                  dragItems.map((it, idx) => (
+                    <span
+                      key={`${it}-${idx}`}
+                      className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-800 ring-1 ring-inset ring-gray-200"
+                    >
+                      {it}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-600">No items.</span>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="text-sm font-semibold text-gray-800">Drop targets</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {dropTargets.length > 0 ? (
+                  dropTargets.map((t, idx) => (
+                    <span
+                      key={`${t}-${idx}`}
+                      className="inline-flex items-center rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800 ring-1 ring-inset ring-cyan-200"
+                    >
+                      {t}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-600">No targets.</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-2">
-          {correctAnswer.map((item, index) => {
+          {placements.map((item, index) => {
             if (typeof item !== 'object' || item === null) return null;
             const { item: dragItem, target } = item as { item: string; target: string };
             return (
