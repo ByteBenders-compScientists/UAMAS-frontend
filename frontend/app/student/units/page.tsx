@@ -4,10 +4,12 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLayout } from '@/components/LayoutController';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import EmptyState from '@/components/EmptyState';
+
 import { 
   BookOpen, 
   Calendar, 
@@ -45,12 +47,21 @@ const getColorClasses = (color: string) => {
 
 export default function MyUnitsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [apiUnits, setApiUnits] = useState<unknown[] | null>(null);
   const [allAssessments, setAllAssessments] = useState<any[]>([]);
-  
+
+  useEffect(() => {
+    const standalone = searchParams.get('standalone');
+    if (standalone !== '1') {
+      router.replace('/student/courses');
+    }
+  }, [router, searchParams]);
+
   // Simulate loading state for skeleton UI
   useEffect(() => {
     const timer = setTimeout(() => {

@@ -88,28 +88,28 @@ export default function Dashboard() {
       title: "Learning Materials",
       description: "Access lecture notes, slides, and readings",
       color: "bg-emerald-500",
-      href: "/student/library"
+      href: "/student/courses?action=library"
     },
     {
       icon: <ClipboardList size={24} className="text-white" />,
       title: "Assignments",
       description: "View and submit your assignments",
       color: "bg-amber-500",
-      href: "/student/assignments"
+      href: "/student/courses?action=assignments"
     },
     {
       icon: <Award size={24} className="text-white" />,
       title: "CATS",
       description: "View and attempt your CATS (Continuous Assessment Tests)",
       color: "bg-violet-500",
-      href: "/student/cats"
+      href: "/student/courses?action=cats"
     },
     {
       icon: <FileText size={24} className="text-white" />,
       title: "Submission",
       description: "Submit your coursework and projects",
       color: "bg-blue-500",
-      href: "/student/submission"
+      href: "/student/courses?action=results"
     }
   ];
 

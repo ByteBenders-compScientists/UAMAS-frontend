@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLayout } from "@/components/LayoutController";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -34,6 +35,8 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:808
 
 export default function CatsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [cats, setCats] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +62,21 @@ export default function CatsPage() {
   const [isNextLoading, setIsNextLoading] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Workspace mode B: attempt-only route.
+  // If accessed without an assessmentId, go back to the unified workspace.
+  useEffect(() => {
+    const assessmentId = searchParams.get("assessmentId");
+    if (!assessmentId) {
+      router.replace("/student/courses?action=cats");
+      return;
+    }
+
+    if (!activeCat) {
+      setActiveCat(assessmentId);
+      setShowDisclaimer(true);
+    }
+  }, [router, searchParams, activeCat]);
 
   // Submit current CAT
   const handleSubmitCat = async () => {

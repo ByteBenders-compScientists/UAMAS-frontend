@@ -301,7 +301,7 @@ const LecturerDashboard: React.FC = () => {
       icon: PlusCircle,
       title: "Create Assessment",
       description: "Generate new assignments and CATs with AI",
-      path: "/lecturer/assessments",
+      path: "/lecturer/courses",
       color: "text-blue-600",
       iconBg: "bg-blue-100",
     },
@@ -512,7 +512,7 @@ const LecturerDashboard: React.FC = () => {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
         <button
-          onClick={() => handleNavigation("/lecturer/assessments")}
+          onClick={() => handleNavigation("/lecturer/courses")}
           className="text-emerald-600 hover:text-emerald-800 text-sm font-medium"
         >
           View All
@@ -523,7 +523,7 @@ const LecturerDashboard: React.FC = () => {
           <div
             key={assessment.id}
             className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
-            onClick={() => handleNavigation("/lecturer/assessments")}
+            onClick={() => handleNavigation("/lecturer/courses")}
           >
             <div className="p-2 rounded-lg bg-blue-100 text-blue-600 flex-shrink-0">
               <FileText className="w-4 h-4" />
@@ -547,7 +547,7 @@ const LecturerDashboard: React.FC = () => {
             <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
             <p>No recent assessments</p>
             <button
-              onClick={() => handleNavigation("/lecturer/assessments")}
+              onClick={() => handleNavigation("/lecturer/courses")}
               className="mt-2 text-emerald-600 hover:text-emerald-800 text-sm font-medium"
             >
               Create your first assessment

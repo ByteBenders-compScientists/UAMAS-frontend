@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { Save, Loader2, FileText } from 'lucide-react';
-import { LegacyCourse , LegacyAssessment, LegacyQuestion as Question } from '../../types/assessment';
+import { Course, Assessment, Question } from '../../types/assessment';
 import QuestionEditor from './QuestionsEditor';
 
 interface EditAssessmentModalProps {
-  assessment: LegacyAssessment; // Change from Assessment to LegacyAssessment
-  courses: LegacyCourse[]; // Make sure this matches your course type
+  assessment: Assessment;
+  courses: Course[];
   onUpdate: (data: any) => void;
   onCancel: () => void;
   loading: boolean;
@@ -23,7 +23,6 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
     description: assessment.description,
     type: assessment.type,
     questions_type: assessment.questions_type,
-    close_ended_type: assessment.close_ended_type || "multiple choice with one answer",
     topic: assessment.topic,
     total_marks: assessment.total_marks,
     difficulty: assessment.difficulty,
@@ -33,24 +32,7 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
     duration: assessment.duration || 60
   });
 
-  // Convert API questions to LegacyQuestion format if needed
-  const convertToLegacyQuestions = (apiQuestions: any[] | undefined): Question[] => {
-    if (!apiQuestions) return [];
-    
-    return apiQuestions.map(q => ({
-      id: q.id || crypto.randomUUID(),
-      question: q.question || q.text || '', // Handle different property names
-      type: q.type || "multiple-choice",
-      options: q.options || [],
-      correct_answer: q.correct_answer || q.answer || '',
-      marks: q.marks || 1,
-      explanation: q.explanation || ''
-    }));
-  };
-
-  const [questions, setQuestions] = useState<Question[]>(
-    convertToLegacyQuestions(assessment.questions)
-  );
+  const [questions, setQuestions] = useState<Question[]>(assessment.questions || []);
   const [activeTab, setActiveTab] = useState<'details' | 'questions'>('details');
 
   const handleQuestionUpdate = (index: number, updatedQuestion: Question) => {
@@ -150,12 +132,12 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
               <label className="block text-sm font-bold text-gray-700 mb-3">Difficulty</label>
               <select
                 value={formData.difficulty}
-                onChange={(e) => setFormData({...formData, difficulty: e.target.value as "Easy" | "Intermediate" | "Advanced"})}
+                onChange={(e) => setFormData({...formData, difficulty: e.target.value as "Easy" | "Intermediate" | "Advance"})}
                 className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
               >
                 <option value="Easy">Easy</option>
                 <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
+                <option value="Advance">Advanced</option>
               </select>
             </div>
             <div>

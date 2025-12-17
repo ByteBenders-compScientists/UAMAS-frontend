@@ -1,6 +1,7 @@
 import React from 'react';
 import { 
   Calendar, 
+  Clock,
   BookOpen, 
   ClipboardList, 
   Info, 
@@ -8,9 +9,11 @@ import {
   AlertCircle, 
   ShieldCheck,
   BookMarked,
-  FileText
+  FileText,
 } from 'lucide-react';
-import { LegacyAssessment as Assessment, LegacyCourse as Course, LegacyQuestion as Question } from '../../types/assessment';
+
+import QuestionRenderer from './assessment/QuestionRenderer'
+import { Assessment, Course, Question, QuestionType } from '../../types/assessment';
 import { formatDate, getTypeColor, getDifficultyColor, getBlooms } from '../../utils/assessmentUtils';
 
 interface ViewAssessmentModalProps {
@@ -20,7 +23,7 @@ interface ViewAssessmentModalProps {
 }
 
 const ViewAssessmentModal: React.FC<ViewAssessmentModalProps> = ({ 
-  assessment, 
+  assessment,
   courses, 
   onVerify 
 }) => {
@@ -29,61 +32,85 @@ const ViewAssessmentModal: React.FC<ViewAssessmentModalProps> = ({
   const bloomsInfo = getBlooms(assessment.blooms_level);
   const BloomsIcon = bloomsInfo.icon;
 
+  const questionTypeOptions = [
+    { value: 'open-ended' as const, label: 'Open Ended' },
+    { value: 'close-ended-multiple-single' as const, label: 'Multiple Choice (Single Answer)' },
+    { value: 'close-ended-multiple-multiple' as const, label: 'Multiple Choice (Multiple Answers)' },
+    { value: 'close-ended-bool' as const, label: 'True/False' },
+    { value: 'close-ended-matching' as const, label: 'Matching' },
+    { value: 'close-ended-ordering' as const, label: 'Ordering' },
+    { value: 'close-ended-drag-drop' as const, label: 'Drag and Drop' },
+  ] as const;
+
+  const getQuestionTypeLabel = (type: QuestionType) => {
+    return questionTypeOptions.find(opt => opt.value === type)?.label || type;
+  };
+
   return (
-    <div className="p-6">
-      <div className="flex flex-col md:flex-row md:items-start gap-6 mb-8">
+    <div className="p-6 sm:p-8">
+      <div className="flex flex-col lg:flex-row lg:items-start gap-6 mb-8">
         <div className="flex-1">
           {/* Header Info */}
-          <div className="mb-6">
-            <div className="flex flex-wrap items-center gap-3 mb-4 text-sm">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full font-medium ${getTypeColor(assessment.type)}`}>
+          <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${getTypeColor(assessment.type)}`}
+              >
                 {assessment.type}
               </span>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full font-medium ${getDifficultyColor(assessment.difficulty)}`}>
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${getDifficultyColor(assessment.difficulty)}`}
+              >
                 {assessment.difficulty}
               </span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                {assessment.questions_type === 'application' ? 'Application' : 
-                assessment.questions_type === 'open-ended' ? 'Open-ended' : 'Close-ended'}
-              </span>
+              {(assessment.questions_type || []).map((t) => (
+                <span
+                  key={t}
+                  className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-200"
+                >
+                  {getQuestionTypeLabel(t)}
+                </span>
+              ))}
             </div>
-            
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">{assessment.title}</h2>
-            
-            <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
+
+            <h2 className="text-2xl font-bold text-gray-900">{assessment.title}</h2>
+
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-600">
               {course && (
                 <div className="flex items-center">
-                  <span className={`w-3 h-3 rounded-full mr-2 ${course.color}`}></span>
-                  <span className="text-sm font-medium">{course.name}</span>
+                  <span className={`w-2.5 h-2.5 rounded-full mr-2 ${course.color}`}></span>
+                  <span className="font-medium">{course.name}</span>
                 </div>
               )}
-              <span className="text-gray-300">•</span>
-              <span className="text-sm font-medium">{unit?.name}</span>
-              <span className="text-gray-300">•</span>
-              <span className="text-sm font-medium flex items-center">
-                <Calendar className="w-4 h-4 mr-1" />
+              {unit?.unit_name && (
+                <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200">
+                  {unit.unit_name}
+                </span>
+              )}
+              <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200">
+                <Calendar className="w-4 h-4 mr-1 text-gray-500" />
                 Week {assessment.week}
               </span>
             </div>
-            
-            <p className="text-gray-700 leading-relaxed">{assessment.description}</p>
+
+            <p className="mt-4 text-sm leading-relaxed text-gray-700">{assessment.description}</p>
           </div>
           
           {/* Topic Information */}
-          <div className="bg-gray-50 rounded-xl p-5 mb-6 border border-gray-200">
-            <h3 className="font-bold text-gray-900 mb-3 flex items-center">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm mb-6">
+            <h3 className="font-bold text-gray-900 mb-4 flex items-center">
               <BookOpen className="w-5 h-5 mr-2 text-emerald-600" />
               Topic Details
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <div className="text-sm text-gray-500 font-medium">Main Topic</div>
-                <div className="font-semibold text-gray-900">{assessment.topic}</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Main topic</div>
+                <div className="mt-1 font-semibold text-gray-900">{assessment.topic}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500 font-medium">Bloom&#39;s Taxonomy Level</div>
-                <div className="font-semibold text-gray-900 flex items-center">
-                  <div className={`p-1.5 rounded-md ${bloomsInfo.bg} mr-2`}>
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bloom&#39;s level</div>
+                <div className="mt-1 font-semibold text-gray-900 flex items-center">
+                  <div className={`p-1.5 rounded-lg ${bloomsInfo.bg} mr-2 ring-1 ring-inset ring-gray-200`}>
                     <BloomsIcon className={`w-4 h-4 ${bloomsInfo.color}`} />
                   </div>
                   {assessment.blooms_level}
@@ -94,58 +121,64 @@ const ViewAssessmentModal: React.FC<ViewAssessmentModalProps> = ({
         </div>
         
         {/* Stats & Meta Info */}
-        <div className="md:w-72 space-y-5">
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-5 border border-emerald-200">
-            <h3 className="font-bold text-emerald-900 mb-4 flex items-center text-sm">
-              <ClipboardList className="w-4 h-4 mr-2" />
-              Assessment Details
+        <div className="lg:w-80 space-y-5">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="font-bold text-gray-900 mb-4 flex items-center text-sm">
+              <ClipboardList className="w-4 h-4 mr-2 text-emerald-600" />
+              Key Metrics
             </h3>
             <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-emerald-800">Questions</span>
-                <span className="font-bold text-emerald-900">{assessment.number_of_questions}</span>
+              <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200">
+                <span className="text-sm font-medium text-gray-700">Questions</span>
+                <span className="text-sm font-bold text-gray-900">{assessment.number_of_questions}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-emerald-800">Total Marks</span>
-                <span className="font-bold text-emerald-900">{assessment.total_marks}</span>
+              <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200">
+                <span className="text-sm font-medium text-gray-700">Total Marks</span>
+                <span className="text-sm font-bold text-gray-900">{assessment.total_marks}</span>
               </div>
               {assessment.duration && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-emerald-800">Duration</span>
-                  <span className="font-bold text-emerald-900">{assessment.duration} min</span>
+                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200">
+                  <span className="flex items-center text-sm font-medium text-gray-700">
+                    <Clock className="mr-2 h-4 w-4 text-gray-500" />
+                    Duration
+                  </span>
+                  <span className="text-sm font-bold text-gray-900">{assessment.duration} min</span>
                 </div>
               )}
               {assessment.deadline && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-emerald-800">Deadline</span>
-                  <span className="font-bold text-emerald-900">{formatDate(assessment.deadline)}</span>
+                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200">
+                  <span className="text-sm font-medium text-gray-700">Deadline</span>
+                  <span className="text-sm font-bold text-gray-900">{formatDate(assessment.deadline)}</span>
                 </div>
               )}
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-5 border border-gray-200">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-4 flex items-center text-sm">
-              <Info className="w-4 h-4 mr-2" />
-              Status Information
+              <Info className="w-4 h-4 mr-2 text-gray-600" />
+              Status
             </h3>
             <div className="space-y-3">
-              <div className="flex items-center">
-                {assessment.verified ? (
-                  <div className="flex items-center text-green-600 bg-green-50 px-3 py-2 rounded-lg w-full">
+              {assessment.verified ? (
+                <div className="flex items-center justify-between rounded-xl bg-green-50 px-4 py-3 ring-1 ring-inset ring-green-200">
+                  <div className="flex items-center text-green-700">
                     <CheckCircle2 className="w-5 h-5 mr-2" />
                     <span className="font-semibold">Verified</span>
                   </div>
-                ) : (
-                  <div className="flex items-center text-yellow-600 bg-yellow-50 px-3 py-2 rounded-lg w-full">
+                </div>
+              ) : (
+                <div className="flex items-center justify-between rounded-xl bg-yellow-50 px-4 py-3 ring-1 ring-inset ring-yellow-200">
+                  <div className="flex items-center text-yellow-800">
                     <AlertCircle className="w-5 h-5 mr-2" />
-                    <span className="font-semibold">Pending Verification</span>
+                    <span className="font-semibold">Pending verification</span>
                   </div>
-                )}
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-600">Created</span>
-                <span className="text-sm text-gray-900">{formatDate(assessment.created_at)}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200">
+                <span className="text-sm font-medium text-gray-700">Created</span>
+                <span className="text-sm font-semibold text-gray-900">{formatDate(assessment.created_at)}</span>
               </div>
             </div>
           </div>
@@ -154,7 +187,7 @@ const ViewAssessmentModal: React.FC<ViewAssessmentModalProps> = ({
           {!assessment.verified && (
             <button
               onClick={() => onVerify(assessment.id)}
-              className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center transition-colors"
+              className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-2xl shadow-lg flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
             >
               <ShieldCheck className="w-5 h-5 mr-2" />
               Verify Assessment
@@ -165,94 +198,32 @@ const ViewAssessmentModal: React.FC<ViewAssessmentModalProps> = ({
       
       {/* Questions Section */}
       <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-5 flex items-center">
-          <BookMarked className="w-5 h-5 mr-2 text-emerald-600" />
-          Assessment Questions
-        </h3>
+        <div className="flex justify-between items-center mb-5">
+          <h3 className="text-xl font-bold text-gray-900 flex items-center">
+            <BookMarked className="w-5 h-5 mr-2 text-emerald-600" />
+            Assessment Questions
+          </h3>
+          <div className="flex items-center text-sm text-gray-500">
+            <span className="bg-gray-100 px-3 py-1.5 rounded-full font-medium ring-1 ring-inset ring-gray-200">
+              {assessment.questions?.length || 0} question{assessment.questions?.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        </div>
         
         <div className="space-y-6">
           {assessment.questions && assessment.questions.length > 0 ? (
             assessment.questions.map((question: Question, index: number) => (
-              <div key={question.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                <div className="flex justify-between items-start mb-4">
-                  <h4 className="font-semibold text-gray-900">Question {index + 1}</h4>
-                  <span className="bg-emerald-50 text-emerald-700 text-xs font-medium px-2 py-1 rounded">
-                    {question.marks} marks
-                  </span>
-                </div>
-                <p className="text-gray-700 mb-4">{question.question}</p>
-                
-                {question.type === "multiple-choice" && question.options && (
-                  <div className="space-y-3 ml-4">
-                    {question.options.map((option, optionIndex) => (
-                      <div key={optionIndex} className="flex items-center">
-                        <div className={`w-5 h-5 rounded-full border-2 mr-3 ${
-                          question.correct_answer === option 
-                            ? 'border-emerald-500 bg-emerald-500' 
-                            : 'border-gray-300'
-                        }`}></div>
-                        <span className={`${
-                          question.correct_answer === option 
-                            ? 'text-emerald-700 font-medium' 
-                            : 'text-gray-700'
-                        }`}>
-                          {option}
-                          {question.correct_answer === option && ' (Correct)'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {question.type === "true-false" && (
-                  <div className="space-y-3 ml-4">
-                    {['True', 'False'].map((option) => (
-                      <div key={option} className="flex items-center">
-                        <div className={`w-5 h-5 rounded-full border-2 mr-3 ${
-                          question.correct_answer === option 
-                            ? 'border-emerald-500 bg-emerald-500' 
-                            : 'border-gray-300'
-                        }`}></div>
-                        <span className={`${
-                          question.correct_answer === option 
-                            ? 'text-emerald-700 font-medium' 
-                            : 'text-gray-700'
-                        }`}>
-                          {option}
-                          {question.correct_answer === option && ' (Correct)'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {question.type === "open-ended" && (
-                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <p className="text-gray-500 italic">Open-ended question - Answer area for students</p>
-                  </div>
-                )}
-                
-                {question.type === "application" && (
-                  <div className="space-y-3">
-                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 font-medium">Instructions:</p>
-                      <p className="text-gray-600">Students should provide practical implementation or solution.</p>
-                    </div>
-                  </div>
-                )}
-
-                {question.explanation && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-sm font-medium text-blue-800 mb-1">Explanation:</p>
-                    <p className="text-sm text-blue-700">{question.explanation}</p>
-                  </div>
-                )}
-              </div>
+              <QuestionRenderer 
+                key={question.id} 
+                question={question}
+                questionNumber={index + 1} 
+              />
             ))
           ) : (
-            <div className="text-center py-8">
+            <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
               <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No questions available</p>
+              <p className="text-gray-500">No questions available for this assessment</p>
+              <p className="text-sm text-gray-400 mt-1">Add questions to create an assessment</p>
             </div>
           )}
         </div>

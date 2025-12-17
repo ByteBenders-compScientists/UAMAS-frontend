@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   BarChart3,
   Loader,
@@ -1163,12 +1164,23 @@ const NoteCard: React.FC<{
 
 // Main Page Component
 const LibraryPage: React.FC = () => {
+  const searchParams = useSearchParams();
+  const initialCourseParam = searchParams.get("courseId");
+  const initialUnitParam = searchParams.get("unitId");
+  const initialWeekParam = searchParams.get("week");
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sideAccessOpen, setSideAccessOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
-  const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
-  const [selectedWeek, setSelectedWeek] = useState<number>(0);
+  const [selectedCourse, setSelectedCourse] = useState<number | null>(
+    initialCourseParam ? Number(initialCourseParam) : null
+  );
+  const [selectedUnit, setSelectedUnit] = useState<number | null>(
+    initialUnitParam ? Number(initialUnitParam) : null
+  );
+  const [selectedWeek, setSelectedWeek] = useState<number>(
+    initialWeekParam ? Number(initialWeekParam) : 0
+  );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showUploadForm, setShowUploadForm] = useState(false);
 

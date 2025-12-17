@@ -1,10 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { BookMarked, ClipboardList, FileCheck, CheckCircle } from 'lucide-react';
-import { LegacyAssessment } from '../../types/assessment'; // Change this import
+import { Assessment } from '../../types/assessment';
 
 interface StatsCardsProps {
-  assessments: LegacyAssessment[]; // Change this type
+  assessments: Assessment[];
 }
 
 const StatsCards: React.FC<StatsCardsProps> = ({ assessments }) => {

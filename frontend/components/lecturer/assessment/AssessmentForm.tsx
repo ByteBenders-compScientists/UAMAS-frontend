@@ -6,12 +6,23 @@ import {
   Wand2, 
   User, 
   Check, 
-  Loader2
+  Loader2,
+  X,
+  ChevronDown
 } from 'lucide-react';
-import { Assessment,LegacyCourse as Course } from '../../../types/assessment';
+import { Assessment, Course } from '../../../types/assessment';
+
+type QuestionType = 
+  | 'open-ended'
+  | 'close-ended-multiple-single'
+  | 'close-ended-multiple-multiple'
+  | 'close-ended-bool'
+  | 'close-ended-matching'
+  | 'close-ended-ordering'
+  | 'close-ended-drag-drop';
 
 interface AssessmentFormProps {
-  initialData?: Assessment;
+  initialData?: Omit<Assessment, 'questions_type'> & { questions_type?: string[] };
   selectedCourse: string;
   selectedUnit: string;
   selectedWeek: number;
@@ -21,6 +32,7 @@ interface AssessmentFormProps {
   loading: boolean;
   isEditing?: boolean;
 }
+
 
 const AssessmentForm: React.FC<AssessmentFormProps> = ({ 
   initialData, 
@@ -37,8 +49,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
     title: initialData?.title || "",
     description: initialData?.description || "",
     type: initialData?.type || "CAT",
-    questions_type: initialData?.questions_type || "close-ended" as "close-ended" | "open-ended" | "application",
-    close_ended_type: initialData?.close_ended_type || "multiple choice with one answer",
+    questions_type: (initialData?.questions_type || []) as QuestionType[],
     topic: initialData?.topic || "",
     total_marks: initialData?.total_marks || 30,
     difficulty: initialData?.difficulty || "Intermediate",
@@ -48,7 +59,35 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
     duration: initialData?.duration || 60
   });
 
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [docFile, setDocFile] = useState<File | null>(null);
+
+  const questionTypeOptions = [
+    { value: 'open-ended' as const, label: 'Open Ended' },
+    { value: 'close-ended-multiple-single' as const, label: 'Multiple Choice (Single Answer)' },
+    { value: 'close-ended-multiple-multiple' as const, label: 'Multiple Choice (Multiple Answers)' },
+    { value: 'close-ended-bool' as const, label: 'True/False' },
+    { value: 'close-ended-matching' as const, label: 'Matching' },
+    { value: 'close-ended-ordering' as const, label: 'Ordering' },
+    { value: 'close-ended-drag-drop' as const, label: 'Drag and Drop' },
+  ] as const;
+
+  const toggleQuestionType = (type: QuestionType) => {
+    setFormData(prev => ({
+      ...prev,
+      questions_type: prev.questions_type.includes(type)
+        ? prev.questions_type.filter((t: QuestionType) => t !== type)
+        : [...prev.questions_type, type]
+    }));
+  };
+
+  const removeQuestionType = (type: QuestionType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFormData(prev => ({
+      ...prev,
+      questions_type: prev.questions_type.filter((t: QuestionType) => t !== type)
+    }));
+  };
 
   const selectedCourseData = courses.find(c => c.id === selectedCourse);
   const selectedUnitData = selectedCourseData?.units.find(u => u.id === selectedUnit);
@@ -57,18 +96,26 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
     'title', 'type', 'description', 'topic', 'number_of_questions', 'total_marks', 'blooms_level', 'difficulty',
   ];
 
-  const isCloseEnded = formData.questions_type === 'close-ended';
-
   const isFormValid = () => {
     for (const field of requiredFields) {
-      if (!formData[field as keyof typeof formData] || formData[field as keyof typeof formData] === "") {
+      if (!formData[field as keyof typeof formData] || 
+          formData[field as keyof typeof formData] === "" ||
+          (field === 'questions_type' && formData.questions_type.length === 0)) {
         return false;
       }
     }
-    if (isCloseEnded && (!formData.close_ended_type || formData.close_ended_type === "")) {
-      return false;
-    }
     return true;
+  };
+
+  const handleQuestionTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOptions = Array.from(
+      e.target.selectedOptions, 
+      option => option.value as QuestionType
+    );
+    setFormData(prev => ({
+      ...prev,
+      questions_type: selectedOptions
+    }));
   };
 
   const handleSubmit = (isAI: boolean) => {
@@ -83,7 +130,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
       course_id: selectedCourse,
       unit_id: selectedUnit,
       week: selectedWeek,
-      unit_name: selectedUnitData?.name || "",
+      unit_name: selectedUnitData?.unit_name || "",
     };
     if (isAI) {
       onSubmit(submissionData, true, docFile ?? undefined);
@@ -123,7 +170,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               {selectedCourseData?.name}
             </span>
             <span className="text-gray-400">•</span>
-            <span className="text-emerald-700 font-semibold">{selectedUnitData?.name}</span>
+            <span className="text-emerald-700 font-semibold">{selectedUnitData?.unit_name}</span>
             <span className="text-gray-400">•</span>
             <span className="text-emerald-700 font-semibold">Week {selectedWeek}</span>
           </div>
@@ -176,37 +223,82 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
 
         {/* Question Configuration */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
-              Question Type <span className="text-red-500">*</span>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Question Types
+              <span className="text-red-500 ml-1">*</span>
             </label>
-            <select
-              value={formData.questions_type}
-              onChange={(e) => setFormData({...formData, questions_type: e.target.value as "close-ended" | "open-ended" | "application"})}
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            >
-              <option value="close-ended">Close-ended Questions</option>
-              <option value="open-ended">Open-ended Questions</option>
-{/*               <option value="application">Application Questions</option> */}
-            </select>
-          </div>
-          {formData.questions_type === "close-ended" && (
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-3">
-                Close-ended Type <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.close_ended_type}
-                onChange={(e) => setFormData({...formData, close_ended_type: e.target.value})}
-                className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            
+            {/* Selected Tags */}
+            {formData.questions_type.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {formData.questions_type.map((type) => {
+                  const option = questionTypeOptions.find(opt => opt.value === type);
+                  return (
+                    <span 
+                      key={type}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                    >
+                      {option?.label || type}
+                      <button
+                        type="button"
+                        onClick={(e) => removeQuestionType(type, e)}
+                        className="ml-1.5 text-blue-600 hover:text-blue-800 focus:outline-none"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            
+            {/* Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full p-2.5 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 flex justify-between items-center"
               >
-                <option value="multiple choice with one answer">Multiple Choice (Single)</option>
-                <option value="multiple choice with multiple answers">Multiple Choice (Multiple)</option>
-                <option value="true/false">True/False</option>
-                <option value="matching">Matching</option>
-              </select>
+                <span className="text-gray-700">
+                  {formData.questions_type.length > 0 
+                    ? `Selected: ${formData.questions_type.length}` 
+                    : 'Select question types...'}
+                </span>
+                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? 'transform rotate-180' : ''}`} />
+              </button>
+              
+              {isDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                  <div className="py-1">
+                    {questionTypeOptions.map((option) => (
+                      <div
+                        key={option.value}
+                        className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 flex items-center ${
+                          formData.questions_type.includes(option.value) ? 'bg-blue-50' : ''
+                        }`}
+                        onClick={() => {
+                          toggleQuestionType(option.value);
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                          checked={formData.questions_type.includes(option.value)}
+                          onChange={() => {}} // Handled by the parent div
+                        />
+                        <span className="ml-2">{option.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+            
+            <p className="mt-1 text-xs text-gray-500">
+              Click to select multiple question types
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -233,7 +325,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             >
               <option value="Easy">Easy</option>
               <option value="Intermediate">Intermediate</option>
-              <option value="Advanced">Advanced</option>
+              <option value="Advance">Advanced</option>
             </select>
           </div>
         </div>
