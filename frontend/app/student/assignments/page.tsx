@@ -23,6 +23,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Disclaimer from "@/components/Disclaimer";
+import type { QuestionType } from "@/types/assessment";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
@@ -33,7 +34,7 @@ interface Assignment {
   topic: string;
   type: string;
   status: string;
-  questions_type: string;
+  questions_type: string | QuestionType[];
   close_ended_type?: string;
   number_of_questions: number;
   deadline?: string;
@@ -49,8 +50,8 @@ interface Assignment {
 interface Question {
   id: string;
   text: string;
-  type: string;
-  choices?: string[];
+  type: QuestionType;
+  choices?: (string | string[])[];
   marks: number;
   status?: 'answered' | 'not answered';
 }
@@ -69,13 +70,14 @@ export default function AssignmentsPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [multipleAnswers, setMultipleAnswers] = useState<number[][]>([]);
+  const [orderingAnswers, setOrderingAnswers] = useState<string[][]>([]);
+  const [matchingAnswers, setMatchingAnswers] = useState<Record<string, string>[]>([]);
+  const [dragDropAnswers, setDragDropAnswers] = useState<Record<string, string>[]>([]);
   const [, setIsSubmitting] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const hasFetched = useRef(false);
   const [openEndedAnswers, setOpenEndedAnswers] = useState<string[]>([]);
   const [openEndedImages, setOpenEndedImages] = useState<(File | null)[]>([]);
-  const [questionsType, setQuestionsType] = useState<string>("");
-  const [closeEndedType, setCloseEndedType] = useState<string>("");
   const [openEndedInputModes, setOpenEndedInputModes] = useState<
     ("text" | "image" | null)[]
   >([]);
@@ -84,18 +86,11 @@ export default function AssignmentsPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Workspace mode B: attempt-only route.
-  // If accessed without an assessmentId, go back to the unified workspace.
+  // Attempt flow moved to workspace. Redirect legacy deep links back to workspace.
   useEffect(() => {
     const assessmentId = searchParams.get("assessmentId");
-    if (!assessmentId) {
-      router.replace("/student/courses?action=assignments");
-      return;
-    }
-
-    if (!activeAssignment) {
-      setActiveAssignment(assessmentId);
-      setShowDisclaimer(true);
-    }
+    if (!assessmentId) return;
+    router.replace(`/student/courses?action=assignments&assessmentId=${encodeURIComponent(assessmentId)}`);
   }, [router, searchParams, activeAssignment]);
 
   // Submit current assignment
@@ -265,28 +260,25 @@ export default function AssignmentsPage() {
       // Use the questions from the assessment data
       const questions = assignment.questions || [];
       setQuestions(questions);
-      setQuestionsType(assignment.questions_type);
-      setCloseEndedType(assignment.close_ended_type || "");
 
-      if (assignment.questions_type === "open-ended") {
-        setOpenEndedAnswers(Array(questions.length).fill(""));
-        setOpenEndedImages(Array(questions.length).fill(null));
-        setOpenEndedInputModes(Array(questions.length).fill(null));
-        setSelectedAnswers([]);
-        setMultipleAnswers([]);
-      } else {
-        if (
-          assignment.close_ended_type === "multiple choice with multiple answers"
-        ) {
-          setMultipleAnswers(Array(questions.length).fill([]));
-          setSelectedAnswers([]);
-        } else {
-          setSelectedAnswers(Array(questions.length).fill(-1));
-          setMultipleAnswers([]);
-        }
-        setOpenEndedAnswers([]);
-        setOpenEndedImages([]);
-      }
+      setSelectedAnswers(Array(questions.length).fill(-1));
+      setMultipleAnswers(Array(questions.length).fill([]));
+      setOpenEndedAnswers(Array(questions.length).fill(""));
+      setOpenEndedImages(Array(questions.length).fill(null));
+      setOpenEndedInputModes(Array(questions.length).fill(null));
+
+      setOrderingAnswers(
+        questions.map((q) => {
+          if (q.type === "close-ended-ordering") {
+            const choices = (q.choices || []).filter((c): c is string => typeof c === "string");
+            return [...choices];
+          }
+          return [];
+        })
+      );
+      setMatchingAnswers(questions.map(() => ({})));
+      setDragDropAnswers(questions.map(() => ({})));
+
       const initial = (assignment.duration || 60) * 60;
       setTimeRemaining(initial);
       if (timerRef.current) {
@@ -307,30 +299,26 @@ export default function AssignmentsPage() {
       }, 1000);
     } catch {
       setQuestions([]);
-      setQuestionsType("");
-      setCloseEndedType("");
     }
   };
 
-  const handleAnswerSelect = (questionIndex: number, optionIndex: number) => {
-    if (closeEndedType === "multiple choice with multiple answers") {
-      const newAnswers = [...multipleAnswers];
-      if (!newAnswers[questionIndex]) {
-        newAnswers[questionIndex] = [];
-      }
-      if (newAnswers[questionIndex].includes(optionIndex)) {
-        newAnswers[questionIndex] = newAnswers[questionIndex].filter(
-          (idx) => idx !== optionIndex
-        );
-      } else {
-        newAnswers[questionIndex] = [...newAnswers[questionIndex], optionIndex];
-      }
-      setMultipleAnswers(newAnswers);
-    } else {
-      const newAnswers = [...selectedAnswers];
-      newAnswers[questionIndex] = optionIndex;
-      setSelectedAnswers(newAnswers);
+  const handleSingleAnswerSelect = (questionIndex: number, optionIndex: number) => {
+    const newAnswers = [...selectedAnswers];
+    newAnswers[questionIndex] = optionIndex;
+    setSelectedAnswers(newAnswers);
+  };
+
+  const handleMultipleAnswerToggle = (questionIndex: number, optionIndex: number) => {
+    const newAnswers = [...multipleAnswers];
+    if (!newAnswers[questionIndex]) {
+      newAnswers[questionIndex] = [];
     }
+    if (newAnswers[questionIndex].includes(optionIndex)) {
+      newAnswers[questionIndex] = newAnswers[questionIndex].filter((idx) => idx !== optionIndex);
+    } else {
+      newAnswers[questionIndex] = [...newAnswers[questionIndex], optionIndex];
+    }
+    setMultipleAnswers(newAnswers);
   };
 
   // formatTime is now provided by the timer hook
@@ -340,48 +328,71 @@ export default function AssignmentsPage() {
   );
 
   const getAnsweredCount = () => {
-    if (questionsType === "close-ended") {
-      if (closeEndedType === "multiple choice with multiple answers") {
-        return multipleAnswers.filter((a) => a && a.length > 0).length;
-      } else {
-        return selectedAnswers.filter((a) => a !== -1).length;
-      }
-    } else if (questionsType === "open-ended") {
-      return questions.reduce((count, _, index) => {
-        const textAnswer = openEndedAnswers[index]?.trim();
-        const imageAnswer = openEndedImages[index];
-        if (textAnswer || imageAnswer) {
-          return count + 1;
+    return questions.reduce((count, q, index) => {
+      const isAnswered = (() => {
+        switch (q.type) {
+          case "open-ended": {
+            const textAnswer = openEndedAnswers[index]?.trim();
+            const imageAnswer = openEndedImages[index];
+            return !!textAnswer || !!imageAnswer;
+          }
+          case "close-ended-multiple-single":
+          case "close-ended-bool":
+            return selectedAnswers[index] !== -1;
+          case "close-ended-multiple-multiple":
+            return (multipleAnswers[index] || []).length > 0;
+          case "close-ended-ordering":
+            return (orderingAnswers[index] || []).length > 0;
+          case "close-ended-matching": {
+            const mapping = matchingAnswers[index] || {};
+            return Object.keys(mapping).length > 0 && Object.values(mapping).every((v) => !!v);
+          }
+          case "close-ended-drag-drop": {
+            const mapping = dragDropAnswers[index] || {};
+            return Object.keys(mapping).length > 0 && Object.values(mapping).every((v) => !!v);
+          }
+          default:
+            return false;
         }
-        return count;
-      }, 0);
-    }
-    return 0;
+      })();
+
+      return count + (isAnswered ? 1 : 0);
+    }, 0);
   };
 
   const isCurrentQuestionAnswered = () => {
     if (questions.length === 0) return false;
 
-    if (questionsType === "open-ended") {
-      const textAnswer = openEndedAnswers[currentQuestion]?.trim();
-      const imageAnswer = openEndedImages[currentQuestion];
-      return !!textAnswer || !!imageAnswer;
-    } else {
-      // 'close-ended'
-      if (closeEndedType === "multiple choice with multiple answers") {
-        return (
-          multipleAnswers[currentQuestion] &&
-          multipleAnswers[currentQuestion].length > 0
-        );
-      } else {
-        return selectedAnswers[currentQuestion] !== -1;
+    const q = questions[currentQuestion];
+    switch (q.type) {
+      case "open-ended": {
+        const textAnswer = openEndedAnswers[currentQuestion]?.trim();
+        const imageAnswer = openEndedImages[currentQuestion];
+        return !!textAnswer || !!imageAnswer;
       }
+      case "close-ended-multiple-single":
+      case "close-ended-bool":
+        return selectedAnswers[currentQuestion] !== -1;
+      case "close-ended-multiple-multiple":
+        return (multipleAnswers[currentQuestion] || []).length > 0;
+      case "close-ended-ordering":
+        return (orderingAnswers[currentQuestion] || []).length > 0;
+      case "close-ended-matching": {
+        const mapping = matchingAnswers[currentQuestion] || {};
+        return Object.keys(mapping).length > 0 && Object.values(mapping).every((v) => !!v);
+      }
+      case "close-ended-drag-drop": {
+        const mapping = dragDropAnswers[currentQuestion] || {};
+        return Object.keys(mapping).length > 0 && Object.values(mapping).every((v) => !!v);
+      }
+      default:
+        return false;
     }
   };
 
   // Question rendering component
   const renderQuestion = (question: Question, index: number) => {
-    if (questionsType === "open-ended") {
+    if (question.type === "open-ended") {
       const handleInputModeChange = (mode: "text" | "image") => {
         const newModes = [...openEndedInputModes];
         newModes[index] = mode;
@@ -465,46 +476,360 @@ export default function AssignmentsPage() {
           )}
         </div>
       );
-    } else {
-      // Close-ended questions
-      const choices = question.choices || [];
+    }
+
+    if (question.type === "close-ended-bool") {
+      const boolOptions = ["True", "False"];
+      const selected = selectedAnswers[index];
       return (
-        <div className="space-y-3">
-          <h3 className="text-lg font-medium text-gray-900">
-            Question {index + 1}: {question.text}
-          </h3>
+        <div className="space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Question {index + 1}: {question.text}
+            </h3>
+            <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {boolOptions.map((label, choiceIndex) => {
+              const active = selected === choiceIndex;
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => handleSingleAnswerSelect(index, choiceIndex)}
+                  className={`p-4 rounded-xl border text-left transition-colors ${
+                    active
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 bg-white hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="font-medium text-gray-900">{label}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    if (question.type === "close-ended-multiple-single" || question.type === "close-ended-multiple-multiple") {
+      // Close-ended questions
+      const rawChoices = question.choices || [];
+      const choices = rawChoices.filter((c): c is string => typeof c === "string");
+      const isMultiple = question.type === "close-ended-multiple-multiple";
+      return (
+        <div className="space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Question {index + 1}: {question.text}
+            </h3>
+            <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
+          </div>
           <div className="space-y-2">
-            {choices.map((choice: string, choiceIndex: number) => (
-              <label
-                key={choiceIndex}
-                className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+            {choices.map((choice: string, choiceIndex: number) => {
+              const checked = isMultiple
+                ? multipleAnswers[index]?.includes(choiceIndex) || false
+                : selectedAnswers[index] === choiceIndex;
+              return (
+                <label
+                  key={choiceIndex}
+                  className={`flex items-center p-4 border rounded-xl cursor-pointer transition-colors ${
+                    checked ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <input
+                    type={isMultiple ? "checkbox" : "radio"}
+                    name={isMultiple ? undefined : `question-${index}`}
+                    checked={checked}
+                    onChange={() =>
+                      isMultiple
+                        ? handleMultipleAnswerToggle(index, choiceIndex)
+                        : handleSingleAnswerSelect(index, choiceIndex)
+                    }
+                    className="mr-3"
+                  />
+                  <span className="text-gray-800">{choice}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    if (question.type === "close-ended-ordering") {
+      const rawChoices = question.choices || [];
+      const baseChoices = rawChoices.filter((c): c is string => typeof c === "string");
+      const currentOrder = (orderingAnswers[index] && orderingAnswers[index].length > 0)
+        ? orderingAnswers[index]
+        : baseChoices;
+
+      const move = (from: number, to: number) => {
+        const next = [...currentOrder];
+        const [item] = next.splice(from, 1);
+        next.splice(to, 0, item);
+        const nextAll = [...orderingAnswers];
+        nextAll[index] = next;
+        setOrderingAnswers(nextAll);
+      };
+
+      return (
+        <div className="space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Question {index + 1}: {question.text}
+            </h3>
+            <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
+          </div>
+          <div className="space-y-2">
+            {currentOrder.map((item, itemIndex) => (
+              <div
+                key={`${item}-${itemIndex}`}
+                className="flex items-center justify-between gap-3 p-3 border border-gray-200 rounded-xl bg-white"
               >
-                <input
-                  type={
-                    closeEndedType === "multiple choice with multiple answers"
-                      ? "checkbox"
-                      : "radio"
-                  }
-                  name={
-                    closeEndedType === "multiple choice with multiple answers"
-                      ? undefined
-                      : `question-${index}`
-                  }
-                  checked={
-                    closeEndedType === "multiple choice with multiple answers"
-                      ? multipleAnswers[index]?.includes(choiceIndex) || false
-                      : selectedAnswers[index] === choiceIndex
-                  }
-                  onChange={() => handleAnswerSelect(index, choiceIndex)}
-                  className="mr-3"
-                />
-                <span className="text-gray-700">{choice}</span>
-              </label>
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center text-sm font-semibold">
+                    {itemIndex + 1}
+                  </div>
+                  <div className="text-gray-900">{item}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => move(itemIndex, Math.max(0, itemIndex - 1))}
+                    disabled={itemIndex === 0}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Up
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => move(itemIndex, Math.min(currentOrder.length - 1, itemIndex + 1))}
+                    disabled={itemIndex === currentOrder.length - 1}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Down
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       );
     }
+
+    if (question.type === "close-ended-matching") {
+      const rawChoices = question.choices || [];
+
+      const isPairs =
+        Array.isArray(rawChoices) &&
+        rawChoices.length > 0 &&
+        rawChoices.every((c) => Array.isArray(c) && (c as unknown[]).length === 2);
+
+      const asParallelArrays =
+        Array.isArray(rawChoices) &&
+        rawChoices.length === 2 &&
+        Array.isArray(rawChoices[0]) &&
+        Array.isArray(rawChoices[1]);
+
+      const leftItems: string[] = (() => {
+        if (asParallelArrays) return (rawChoices[0] as string[]).map(String);
+        if (isPairs) return (rawChoices as string[][]).map((p) => String(p[0]));
+        return [];
+      })();
+
+      const rightItems: string[] = (() => {
+        if (asParallelArrays) return (rawChoices[1] as string[]).map(String);
+        if (isPairs) {
+          const rights = (rawChoices as string[][]).map((p) => String(p[1]));
+          return Array.from(new Set(rights));
+        }
+        return [];
+      })();
+
+      const mapping = matchingAnswers[index] || {};
+      const update = (item: string, target: string) => {
+        const nextAll = [...matchingAnswers];
+        nextAll[index] = { ...mapping, [item]: target };
+        setMatchingAnswers(nextAll);
+      };
+
+      return (
+        <div className="space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Question {index + 1}: {question.text}
+            </h3>
+            <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="text-sm font-semibold text-gray-700">Items</div>
+              {leftItems.map((item) => (
+                <div key={item} className="p-3 rounded-xl border border-gray-200 bg-white">
+                  <div className="text-gray-900 font-medium mb-2">{item}</div>
+                  <select
+                    value={mapping[item] || ""}
+                    onChange={(e) => update(item, e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="" disabled>
+                      Select a match
+                    </option>
+                    {rightItems.map((target) => (
+                      <option key={target} value={target}>
+                        {target}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm font-semibold text-gray-700">Matches</div>
+              <div className="p-3 rounded-xl border border-gray-200 bg-gray-50">
+                {leftItems.length === 0 ? (
+                  <div className="text-sm text-gray-600">No matching data provided.</div>
+                ) : (
+                  <div className="space-y-2">
+                    {leftItems.map((item) => (
+                      <div key={item} className="flex items-center justify-between text-sm">
+                        <div className="text-gray-800">{item}</div>
+                        <div className="text-gray-700 font-medium">{mapping[item] || "—"}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (question.type === "close-ended-drag-drop") {
+      const rawChoices = question.choices || [];
+      const asParallelArrays =
+        Array.isArray(rawChoices) &&
+        rawChoices.length === 2 &&
+        Array.isArray(rawChoices[0]) &&
+        Array.isArray(rawChoices[1]);
+
+      const flatChoices = rawChoices.filter((c): c is string => typeof c === "string").map(String);
+      const splitIndex = flatChoices.length > 1 ? Math.floor(flatChoices.length / 2) : 0;
+
+      const items = asParallelArrays
+        ? (rawChoices[0] as string[]).map(String)
+        : flatChoices.length > 0
+          ? flatChoices.slice(0, splitIndex)
+          : [];
+      const targets = asParallelArrays
+        ? (rawChoices[1] as string[]).map(String)
+        : flatChoices.length > 0
+          ? flatChoices.slice(splitIndex)
+          : [];
+
+      const mapping = dragDropAnswers[index] || {};
+      const usedItems = new Set(Object.values(mapping).filter(Boolean));
+      const availableItems = items.filter((it) => !usedItems.has(it));
+
+      const onDropToTarget = (target: string, item: string) => {
+        const nextAll = [...dragDropAnswers];
+        nextAll[index] = { ...mapping, [target]: item };
+        setDragDropAnswers(nextAll);
+      };
+
+      const clearTarget = (target: string) => {
+        const nextAll = [...dragDropAnswers];
+        const next = { ...mapping };
+        delete next[target];
+        nextAll[index] = next;
+        setDragDropAnswers(nextAll);
+      };
+
+      return (
+        <div className="space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Question {index + 1}: {question.text}
+            </h3>
+            <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl border border-gray-200 bg-white">
+              <div className="text-sm font-semibold text-gray-700 mb-3">Drag items</div>
+              <div className="flex flex-wrap gap-2">
+                {availableItems.map((item) => (
+                  <div
+                    key={item}
+                    draggable
+                    onDragStart={(e) => e.dataTransfer.setData("text/plain", item)}
+                    className="px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 cursor-grab active:cursor-grabbing"
+                  >
+                    <span className="text-sm text-gray-900">{item}</span>
+                  </div>
+                ))}
+                {availableItems.length === 0 && (
+                  <div className="text-sm text-gray-600">All items placed.</div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl border border-gray-200 bg-white">
+              <div className="text-sm font-semibold text-gray-700 mb-3">Drop targets</div>
+              <div className="space-y-2">
+                {targets.map((target) => {
+                  const placed = mapping[target];
+                  return (
+                    <div
+                      key={target}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const item = e.dataTransfer.getData("text/plain");
+                        if (item) onDropToTarget(target, item);
+                      }}
+                      className={`p-3 rounded-xl border transition-colors ${
+                        placed ? "border-blue-500 bg-blue-50" : "border-dashed border-gray-300 bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{target}</div>
+                          <div className="text-sm text-gray-700">{placed || "Drop an item here"}</div>
+                        </div>
+                        {placed && (
+                          <button
+                            type="button"
+                            onClick={() => clearTarget(target)}
+                            className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-white"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                {targets.length === 0 && (
+                  <div className="text-sm text-gray-600">No drag-drop data provided.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        <h3 className="text-lg font-medium text-gray-900">
+          Question {index + 1}: {question.text}
+        </h3>
+        <div className="text-sm text-gray-600">Unsupported question type.</div>
+      </div>
+    );
   };
 
   // Submit answer for the current question
@@ -516,20 +841,7 @@ export default function AssignmentsPage() {
     let textAnswer = "";
     let imageFile = null;
 
-    if (questionsType === "close-ended") {
-      if (closeEndedType === "multiple choice with multiple answers") {
-        // Multiple answers as comma-separated string
-        textAnswer = (multipleAnswers[questionIndex] || [])
-          .map((idx) => question.choices?.[idx] || "")
-          .filter(Boolean)
-          .join(",");
-      } else {
-        // Single answer
-        textAnswer = question.choices?.[selectedAnswers[questionIndex]] || "";
-      }
-      formData.append("answer_type", "text");
-      formData.append("text_answer", textAnswer);
-    } else if (questionsType === "open-ended") {
+    if (question.type === "open-ended") {
       const inputMode = openEndedInputModes[questionIndex];
       if (inputMode === "text") {
         answerType = "text";
@@ -544,6 +856,54 @@ export default function AssignmentsPage() {
           formData.append("image", imageFile);
         }
       }
+    } else {
+      const rawChoices = question.choices || [];
+      const choices = rawChoices.filter((c): c is string => typeof c === "string");
+
+      switch (question.type) {
+        case "close-ended-multiple-single": {
+          textAnswer = choices[selectedAnswers[questionIndex]] || "";
+          break;
+        }
+        case "close-ended-multiple-multiple": {
+          textAnswer = (multipleAnswers[questionIndex] || [])
+            .map((idx) => choices[idx] || "")
+            .filter(Boolean)
+            .join(",");
+          break;
+        }
+        case "close-ended-bool": {
+          const selected = selectedAnswers[questionIndex];
+          textAnswer = selected === 0 ? "True" : selected === 1 ? "False" : "";
+          break;
+        }
+        case "close-ended-ordering": {
+          const order = orderingAnswers[questionIndex] || [];
+          textAnswer = JSON.stringify(order);
+          break;
+        }
+        case "close-ended-matching": {
+          const mapping = matchingAnswers[questionIndex] || {};
+          const pairs = Object.entries(mapping)
+            .filter(([, target]) => !!target)
+            .map(([item, target]) => ({ item, target }));
+          textAnswer = JSON.stringify(pairs);
+          break;
+        }
+        case "close-ended-drag-drop": {
+          const mapping = dragDropAnswers[questionIndex] || {};
+          const placements = Object.entries(mapping)
+            .filter(([, item]) => !!item)
+            .map(([target, item]) => ({ item, target }));
+          textAnswer = JSON.stringify(placements);
+          break;
+        }
+        default:
+          textAnswer = "";
+      }
+
+      formData.append("answer_type", "text");
+      formData.append("text_answer", textAnswer);
     }
 
     try {
@@ -911,7 +1271,7 @@ export default function AssignmentsPage() {
                             </div>
 
                             <p className="text-sm text-gray-600 mb-3">
-                              {assignment.topic} • {assignment.questions_type} •{" "}
+                              {assignment.topic} • {Array.isArray(assignment.questions_type) ? assignment.questions_type.join(", ") : assignment.questions_type} •{" "}
                               {assignment.number_of_questions} questions
                             </p>
 
@@ -966,13 +1326,17 @@ export default function AssignmentsPage() {
                               </button>
                             )}
                             {getEffectiveStatus(assignment) === "completed" && (
-                              <div className="mt-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg">
-                                <CheckCircle
-                                  size={16}
-                                  className="inline mr-2"
-                                />
-                                Completed
-                              </div>
+                              <button
+                                type="button"
+                                className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                onClick={() =>
+                                  router.push(
+                                    `/student/courses?action=results&assessmentId=${encodeURIComponent(assignment.id)}`
+                                  )
+                                }
+                              >
+                                Open Assignment
+                              </button>
                             )}
                             {getEffectiveStatus(assignment) === "closed" && (
                               <div className="mt-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg">

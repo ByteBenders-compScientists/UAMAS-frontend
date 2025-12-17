@@ -28,6 +28,7 @@ import {
   ListChecks,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Disclaimer from "@/components/Disclaimer";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
@@ -321,11 +322,16 @@ export default function StudentCoursesWorkspace() {
   const [assessments, setAssessments] = useState<StudentAssessment[]>([]);
   const [assessmentsLoading, setAssessmentsLoading] = useState(true);
 
+  const [pendingAssessment, setPendingAssessment] = useState<StudentAssessment | null>(null);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+
   const [resources, setResources] = useState<StudentResource[]>([]);
   const [resourcesLoading, setResourcesLoading] = useState(true);
 
   const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
+
+  const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
 
   useEffect(() => {
     const action = (searchParams.get("action") || "").toLowerCase();
@@ -333,6 +339,46 @@ export default function StudentCoursesWorkspace() {
       setActiveAction(action);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const assessmentId = searchParams.get("assessmentId");
+    if (!assessmentId) return;
+    const action = (searchParams.get("action") || "").toLowerCase();
+    if (action === "results" || action === "library") return;
+    const found = assessments.find((a) => String(a.id) === String(assessmentId)) || null;
+    if (found) {
+      setPendingAssessment(found);
+      setShowDisclaimer(true);
+    }
+  }, [searchParams, assessments]);
+
+  useEffect(() => {
+    const action = (searchParams.get("action") || "").toLowerCase();
+    if (action !== "results") return;
+
+    const assessmentId = searchParams.get("assessmentId");
+    if (!assessmentId) return;
+
+    const selectedUnitLocal =
+      units.find((u) => String(u.id) === String(selectedUnitId)) || null;
+    const submissionsHaveUnitIdentifiersLocal = submissions.some((s) => hasUnitIdentifiers(s));
+    const visibleSubmissionsLocal = submissionsHaveUnitIdentifiersLocal
+      ? submissions.filter((s) => matchesSelectedUnit(s, selectedUnitLocal))
+      : submissions;
+
+    const match = visibleSubmissionsLocal
+      .slice()
+      .sort((a, b) => {
+        const at = Date.parse(a.created_at || "") || 0;
+        const bt = Date.parse(b.created_at || "") || 0;
+        return bt - at;
+      })
+      .find((s) => String(s.assessment_id) === String(assessmentId));
+
+    if (match) {
+      setExpandedSubmissionId(String(match.submission_id || match.id || ""));
+    }
+  }, [searchParams, submissions, units, selectedUnitId]);
 
   useEffect(() => {
     if (isMobileView) setIsAccessMinimized(true);
@@ -419,6 +465,16 @@ export default function StudentCoursesWorkspace() {
     [resources, selectedUnit]
   );
 
+  const submissionsHaveUnitIdentifiers = useMemo(
+    () => submissions.some((s) => hasUnitIdentifiers(s)),
+    [submissions]
+  );
+
+  const filteredSubmissions = useMemo(
+    () => submissions.filter((s) => matchesSelectedUnit(s, selectedUnit)),
+    [submissions, selectedUnit]
+  );
+
   const resourcesHaveUnitIdentifiers = useMemo(
     () => resources.some((r) => hasUnitIdentifiers(r)),
     [resources]
@@ -430,22 +486,27 @@ export default function StudentCoursesWorkspace() {
   };
 
   const startAssessment = (assessment: StudentAssessment) => {
-    const type = (assessment.type || "").toLowerCase();
-    if (type === "cat") {
-      router.push(`/student/cats?assessmentId=${encodeURIComponent(assessment.id)}`);
+    const status = String(assessment.status || "").toLowerCase();
+    if (status === "completed") {
+      router.push(`/student/courses?action=results&assessmentId=${encodeURIComponent(assessment.id)}`);
       return;
     }
-    if (type === "assignment") {
-      router.push(`/student/assignments?assessmentId=${encodeURIComponent(assessment.id)}`);
-      return;
-    }
+    setPendingAssessment(assessment);
+    setShowDisclaimer(true);
   };
 
-  const totalSubmissions = submissions.length;
-  const gradedSubmissions = submissions.filter((s) => s.graded).length;
-  const pendingSubmissions = submissions.filter((s) => !s.graded).length;
-  const totalQuestions = submissions.reduce((acc, s) => acc + (Array.isArray(s.results) ? s.results.length : 0), 0);
-  const allScores = submissions.flatMap((s) => (Array.isArray(s.results) ? s.results.map((r: any) => r.score ?? 0) : []));
+  const visibleSubmissions = submissionsHaveUnitIdentifiers ? filteredSubmissions : submissions;
+
+  const totalSubmissions = visibleSubmissions.length;
+  const gradedSubmissions = visibleSubmissions.filter((s) => s.graded).length;
+  const pendingSubmissions = visibleSubmissions.filter((s) => !s.graded).length;
+  const totalQuestions = visibleSubmissions.reduce(
+    (acc, s) => acc + (Array.isArray(s.results) ? s.results.length : 0),
+    0
+  );
+  const allScores = visibleSubmissions.flatMap((s) =>
+    Array.isArray(s.results) ? s.results.map((r: any) => r.score ?? 0) : []
+  );
   const averageScore = allScores.length > 0 ? allScores.reduce((a, b) => a + b, 0) / allScores.length : 0;
   const highestScore = allScores.length > 0 ? Math.max(...allScores) : 0;
 
@@ -462,6 +523,23 @@ export default function StudentCoursesWorkspace() {
         <Header title="My Units Workspace" showWeekSelector={false} />
 
         <main className="h-[calc(100vh-64px)] flex">
+          {showDisclaimer && pendingAssessment && (
+            <Disclaimer
+              title={pendingAssessment.title || pendingAssessment.topic || "Assessment"}
+              numberOfQuestions={pendingAssessment.number_of_questions || 0}
+              duration={pendingAssessment.duration}
+              onAgree={() => {
+                const id = pendingAssessment.id;
+                setShowDisclaimer(false);
+                router.push(`/student/attempt?assessmentId=${encodeURIComponent(id)}`);
+              }}
+              onCancel={() => {
+                setShowDisclaimer(false);
+                setPendingAssessment(null);
+                router.push("/student/dashboard");
+              }}
+            />
+          )}
           <UnitSidePanel
             units={units}
             selectedUnitId={selectedUnitId}
@@ -696,7 +774,7 @@ export default function StudentCoursesWorkspace() {
                         <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
                           Loading results...
                         </div>
-                      ) : submissions.length === 0 ? (
+                      ) : visibleSubmissions.length === 0 ? (
                         <EmptyState
                           title="No results yet"
                           description="Your submitted assessments will appear here once available."
@@ -750,10 +828,210 @@ export default function StudentCoursesWorkspace() {
                           </div>
 
                           <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                            <div className="text-sm font-semibold text-gray-900">Results are currently shown across all units.</div>
-                            <div className="mt-1 text-sm text-gray-600">
-                              If your submissions API includes unit identifiers in the future, we can filter these by the selected unit as well.
+                            <div className="text-sm font-semibold text-gray-900">
+                              {submissionsHaveUnitIdentifiers
+                                ? "Results are filtered by the selected unit."
+                                : "Results are currently shown across all units."}
                             </div>
+                            <div className="mt-1 text-sm text-gray-600">
+                              {submissionsHaveUnitIdentifiers
+                                ? "Select a different unit to view its submissions and feedback."
+                                : "If your submissions API includes unit identifiers, we can filter these by the selected unit."}
+                            </div>
+                          </div>
+
+                          <div className="mt-6 space-y-4">
+                            {visibleSubmissions
+                              .slice()
+                              .sort((a, b) => {
+                                const at = Date.parse(a.created_at || "") || 0;
+                                const bt = Date.parse(b.created_at || "") || 0;
+                                return bt - at;
+                              })
+                              .map((s) => {
+                                const submissionId = String(s.submission_id || s.id || "");
+                                const results = Array.isArray(s.results) ? s.results : [];
+                                const totalMarks = results.reduce((acc: number, r: any) => acc + (Number(r.marks) || 0), 0);
+                                const totalScore = results.reduce((acc: number, r: any) => acc + (Number(r.score) || 0), 0);
+                                const expanded = expandedSubmissionId === submissionId;
+                                const title =
+                                  String(s.topic || "").trim() ||
+                                  String(s.title || "").trim() ||
+                                  "Submission";
+
+                                const questionsCount = Number(s.number_of_questions ?? results.length ?? 0);
+                                const deadlineValue = s.deadline ?? s.due_date ?? s.closing_date ?? s.close_at ?? null;
+                                const parsedDeadline = deadlineValue ? Date.parse(deadlineValue) : NaN;
+                                const hasDeadline = !!deadlineValue && !Number.isNaN(parsedDeadline);
+                                const isLocked = hasDeadline && Date.now() < parsedDeadline;
+
+                                const formatValue = (value: any) => {
+                                  if (value === null || value === undefined) return "";
+                                  if (Array.isArray(value)) return value.map((v) => String(v)).join(", ");
+                                  if (typeof value === "object") return JSON.stringify(value);
+                                  return String(value);
+                                };
+
+                                return (
+                                  <div
+                                    key={submissionId}
+                                    className="rounded-2xl border border-gray-200 bg-white shadow-sm"
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => setExpandedSubmissionId(expanded ? null : submissionId)}
+                                      className="w-full px-6 py-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                                    >
+                                      <div className="min-w-0 text-left">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <div className="text-base font-semibold text-gray-900 truncate">{title}</div>
+                                          <span
+                                            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${
+                                              s.graded
+                                                ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                                : "bg-amber-50 text-amber-800 ring-amber-200"
+                                            }`}
+                                          >
+                                            {s.graded ? (isLocked ? "Graded (Locked)" : "Graded") : "Pending"}
+                                          </span>
+                                          {hasDeadline && (
+                                            <span
+                                              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${
+                                                isLocked
+                                                  ? "bg-red-50 text-red-700 ring-red-200"
+                                                  : "bg-gray-50 text-gray-700 ring-gray-200"
+                                              }`}
+                                            >
+                                              Deadline: {new Date(parsedDeadline).toLocaleString()}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                                          <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                            Questions: {questionsCount}
+                                          </span>
+                                          <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                            Score: {totalScore} / {totalMarks}
+                                          </span>
+                                          {!!s.created_at && (
+                                            <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                              {new Date(s.created_at).toLocaleString()}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center justify-end gap-2">
+                                        <ChevronDown
+                                          className={`h-5 w-5 text-gray-400 transition-transform ${
+                                            expanded ? "rotate-180" : "rotate-0"
+                                          }`}
+                                        />
+                                      </div>
+                                    </button>
+
+                                    {expanded && (
+                                      <div className="border-t border-gray-100 px-6 py-5 space-y-4">
+                                        {isLocked ? (
+                                          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                                            <div className="flex items-start gap-3">
+                                              <AlertCircle className="h-5 w-5 text-amber-700 mt-0.5" />
+                                              <div>
+                                                <div className="text-sm font-semibold text-amber-900">
+                                                  Detailed feedback will be available after the deadline.
+                                                </div>
+                                                <div className="mt-1 text-sm text-amber-900">
+                                                  This submission has a deadline. Question-level details (correct answers, rubric, and feedback) will become visible on:
+                                                  <span className="font-semibold"> {new Date(parsedDeadline).toLocaleString()}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ) : results.length === 0 ? (
+                                          <div className="text-sm text-gray-600">No question results provided.</div>
+                                        ) : (
+                                          <div className="space-y-4">
+                                            {results.map((r: any, idx: number) => {
+                                              const questionText = String(r.question_text || "Question");
+                                              const score = Number(r.score) || 0;
+                                              const marks = Number(r.marks) || 0;
+                                              const feedback = String(r.feedback || "");
+                                              const correct = r.correct_answer;
+                                              const rubric = String(r.rubric || "");
+
+                                              return (
+                                                <div
+                                                  key={String(r.id || r.question_id || idx)}
+                                                  className="rounded-2xl border border-gray-200 bg-white p-5"
+                                                >
+                                                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                                    <div className="min-w-0">
+                                                      <div className="text-sm font-semibold text-gray-900">
+                                                        Q{idx + 1}. {questionText}
+                                                      </div>
+                                                      {!!r.blooms_level && (
+                                                        <div className="mt-1 text-xs text-gray-500">
+                                                          Bloom&apos;s: {String(r.blooms_level)}
+                                                        </div>
+                                                      )}
+                                                    </div>
+                                                    <div className="shrink-0">
+                                                      <span
+                                                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${
+                                                          score >= marks
+                                                            ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                                            : score > 0
+                                                              ? "bg-amber-50 text-amber-800 ring-amber-200"
+                                                              : "bg-red-50 text-red-700 ring-red-200"
+                                                        }`}
+                                                      >
+                                                        {score} / {marks}
+                                                      </span>
+                                                    </div>
+                                                  </div>
+
+                                                  {!!correct && (
+                                                    <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                                                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                        Correct answer
+                                                      </div>
+                                                      <div className="mt-2 text-sm text-gray-800 whitespace-pre-wrap">
+                                                        {formatValue(correct)}
+                                                      </div>
+                                                    </div>
+                                                  )}
+
+                                                  {!!feedback && (
+                                                    <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                                                      <div className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                                                        Feedback
+                                                      </div>
+                                                      <div className="mt-2 text-sm text-emerald-900 whitespace-pre-wrap">
+                                                        {feedback}
+                                                      </div>
+                                                    </div>
+                                                  )}
+
+                                                  {!!rubric && (
+                                                    <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
+                                                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                        Rubric
+                                                      </div>
+                                                      <div className="mt-2 text-sm text-gray-800 whitespace-pre-wrap">
+                                                        {rubric}
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
                           </div>
                         </>
                       )}
@@ -836,20 +1114,6 @@ export default function StudentCoursesWorkspace() {
                       )}
                     </div>
                   )}
-
-                  <div className="mt-10 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5">
-                        <Info className="h-5 w-5 text-gray-500" />
-                      </div>
-                      <div>
-                        <div className="text-sm font-semibold text-gray-900">Attempt mode (B)</div>
-                        <div className="mt-1 text-sm text-gray-600">
-                          Starting a CAT/Assignment opens the dedicated attempt page. Listing and filtering stays in this workspace.
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>

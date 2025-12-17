@@ -174,6 +174,15 @@ const AssessmentsDashboard: React.FC = () => {
     return items;
   };
 
+  const handleQuestionCountUpdate = (assessmentId: string, nextCount: number) => {
+    setAssessments((prev) =>
+      prev.map((a) => (a.id === assessmentId ? { ...a, number_of_questions: nextCount } : a))
+    );
+    setEditingAssessment((prev) =>
+      prev && prev.id === assessmentId ? { ...prev, number_of_questions: nextCount } : prev
+    );
+  };
+
   const showMessage = (type: 'success' | 'error' | 'info', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 5000);
@@ -719,6 +728,7 @@ const AssessmentsDashboard: React.FC = () => {
             onUpdate={handleUpdateAssessment}
             onCancel={() => setEditingAssessment(null)}
             loading={loading}
+            onQuestionCountUpdate={handleQuestionCountUpdate}
           />
         )}
       </Modal>

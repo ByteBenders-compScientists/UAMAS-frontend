@@ -334,7 +334,38 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
   };
 
   const renderDragDrop = () => {
-    const items: { item: string; target: string }[] = Array.isArray(editedQuestion.correct_answer)
+    const rawChoices = editedQuestion.choices;
+    const asParallelArrays =
+      Array.isArray(rawChoices) &&
+      rawChoices.length === 2 &&
+      Array.isArray(rawChoices[0]) &&
+      Array.isArray(rawChoices[1]);
+
+    const flatChoices = Array.isArray(rawChoices)
+      ? rawChoices.filter((c): c is string => typeof c === 'string').map(String)
+      : [];
+    const splitIndex = flatChoices.length > 1 ? Math.floor(flatChoices.length / 2) : 0;
+
+    const dragItems = asParallelArrays
+      ? (rawChoices[0] as unknown[]).map(String)
+      : flatChoices.length > 0
+        ? flatChoices.slice(0, splitIndex)
+        : [];
+    const dropTargets = asParallelArrays
+      ? (rawChoices[1] as unknown[]).map(String)
+      : flatChoices.length > 0
+        ? flatChoices.slice(splitIndex)
+        : [];
+
+    const setDragItems = (nextItems: string[]) => {
+      setEditedQuestion({ ...editedQuestion, choices: [nextItems, dropTargets] });
+    };
+
+    const setDropTargets = (nextTargets: string[]) => {
+      setEditedQuestion({ ...editedQuestion, choices: [dragItems, nextTargets] });
+    };
+
+    const placements: { item: string; target: string }[] = Array.isArray(editedQuestion.correct_answer)
       ? (editedQuestion.correct_answer as unknown[]).map(v => {
           if (typeof v !== 'object' || v === null) return { item: '', target: '' };
           const obj = v as { item?: unknown; target?: unknown };
@@ -342,25 +373,109 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         })
       : [];
 
-    const setAt = (idx: number, nextItem: { item: string; target: string }) => {
-      const next = [...items];
-      next[idx] = nextItem;
+    const setAt = (idx: number, nextPlacement: { item: string; target: string }) => {
+      const next = [...placements];
+      next[idx] = nextPlacement;
       setEditedQuestion({ ...editedQuestion, correct_answer: next });
     };
 
     const add = () => {
-      setEditedQuestion({ ...editedQuestion, correct_answer: [...items, { item: '', target: '' }] });
+      setEditedQuestion({ ...editedQuestion, correct_answer: [...placements, { item: '', target: '' }] });
     };
 
     const remove = (idx: number) => {
-      setEditedQuestion({ ...editedQuestion, correct_answer: items.filter((_, i) => i !== idx) });
+      setEditedQuestion({ ...editedQuestion, correct_answer: placements.filter((_, i) => i !== idx) });
     };
 
     return (
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Drag & Drop Pairs</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Drag & Drop</label>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-semibold text-gray-700">Drag items</div>
+              <button
+                type="button"
+                onClick={() => setDragItems([...dragItems, ''])}
+                className="text-sm text-emerald-700 hover:text-emerald-800"
+              >
+                Add item
+              </button>
+            </div>
+            <div className="space-y-2">
+              {dragItems.map((it, i) => (
+                <div key={i} className="flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={it}
+                    onChange={(e) => {
+                      const next = [...dragItems];
+                      next[i] = e.target.value;
+                      setDragItems(next);
+                    }}
+                    className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    placeholder="Item"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setDragItems(dragItems.filter((_, idx) => idx !== i))}
+                    className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              {dragItems.length === 0 && (
+                <div className="text-sm text-gray-600">No drag items.</div>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-semibold text-gray-700">Drop targets</div>
+              <button
+                type="button"
+                onClick={() => setDropTargets([...dropTargets, ''])}
+                className="text-sm text-emerald-700 hover:text-emerald-800"
+              >
+                Add target
+              </button>
+            </div>
+            <div className="space-y-2">
+              {dropTargets.map((t, i) => (
+                <div key={i} className="flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={t}
+                    onChange={(e) => {
+                      const next = [...dropTargets];
+                      next[i] = e.target.value;
+                      setDropTargets(next);
+                    }}
+                    className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    placeholder="Target"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setDropTargets(dropTargets.filter((_, idx) => idx !== i))}
+                    className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              {dropTargets.length === 0 && (
+                <div className="text-sm text-gray-600">No drop targets.</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="text-sm font-semibold text-gray-700 mb-2">Correct placements</div>
         <div className="space-y-2">
-          {items.map((it, i) => (
+          {placements.map((it, i) => (
             <div key={i} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-center">
               <input
                 type="text"
