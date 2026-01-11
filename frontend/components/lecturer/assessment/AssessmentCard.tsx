@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Assessment, Course, QuestionType } from '../../../types/assessment';
 
-import { formatDate, getDifficultyColor, getTypeColor, getBlooms } from '../../../utils/assessmentUtils';
+import { formatDate, formatDateTime, getDifficultyColor, getTypeColor, getBlooms } from '../../../utils/assessmentUtils';
 
 interface AssessmentCardProps {
   assessment: Assessment;
@@ -153,12 +153,13 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <span className="text-xs font-medium text-gray-500 flex items-center">
-            <Clock className="w-3.5 h-3.5 mr-1" />
-            {formatDate(assessment.created_at)}
-          </span>
-          <div className="flex space-x-1">
+        <div className="pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-gray-500 flex items-center">
+              <Clock className="w-3.5 h-3.5 mr-1" />
+              {formatDate(assessment.created_at)}
+            </span>
+            <div className="flex space-x-1">
             <button
               onClick={() => onView(assessment)}
               className="flex items-center p-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
@@ -186,6 +187,13 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
               <Trash className="w-4 h-4" />
             </button>
           </div>
+          </div>
+          {(assessment).schedule_date && (
+            <div className="flex items-center text-xs font-medium text-emerald-600 mt-2">
+              <Calendar className="w-3.5 h-3.5 mr-1" />
+              Scheduled: {formatDateTime((assessment).schedule_date)}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

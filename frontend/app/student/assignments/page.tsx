@@ -41,6 +41,7 @@ interface Assignment {
   due_date?: string;
   closing_date?: string;
   close_at?: string;
+  schedule_date?: string;
   duration?: number;
   total_marks: number;
   questions: Question[];
@@ -90,7 +91,7 @@ export default function AssignmentsPage() {
   useEffect(() => {
     const assessmentId = searchParams.get("assessmentId");
     if (!assessmentId) return;
-    router.replace(`/student/courses?action=assignments&assessmentId=${encodeURIComponent(assessmentId)}`);
+    router.replace(`/student/unitworkspace?action=assignments&assessmentId=${encodeURIComponent(assessmentId)}`);
   }, [router, searchParams, activeAssignment]);
 
   // Submit current assignment
@@ -223,6 +224,14 @@ export default function AssignmentsPage() {
     return assignment.status;
   };
 
+  const isAssessmentLockedBySchedule = (assessment: Assignment) => {
+    if (!assessment.schedule_date) return false;
+    
+    const scheduleDate = new Date(assessment.schedule_date);
+    const now = new Date();
+    return scheduleDate > now;
+  };
+
   const filteredAssignments = assignments.filter((assignment) => {
     if (selectedFilter === "all") return true;
     return getEffectiveStatus(assignment) === selectedFilter;
@@ -243,6 +252,10 @@ export default function AssignmentsPage() {
   const handleStartAssignment = async (assignmentId: string) => {
     const assignment = assignments.find((a) => a.id === assignmentId);
     if (!assignment) return;
+
+    if (isAssessmentLockedBySchedule(assignment)) {
+      return;
+    }
 
     setActiveAssignment(assignmentId);
     setShowDisclaimer(true);
@@ -1288,6 +1301,15 @@ export default function AssignmentsPage() {
                                 </span>
                               </div>
 
+                              {assignment.schedule_date && (
+                                <div className="flex items-center">
+                                  <Clock size={16} className="mr-1" />
+                                  <span>
+                                    Opens: {new Date(assignment.schedule_date).toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+
                               {assignment.duration && (
                                 <div className="flex items-center">
                                   <Clock size={16} className="mr-1" />
@@ -1305,45 +1327,72 @@ export default function AssignmentsPage() {
                               </div>
                             </div>
 
-                            {getEffectiveStatus(assignment) === "start" && (
-                              <button
-                                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                onClick={() =>
-                                  handleStartAssignment(assignment.id)
-                                }
-                              >
-                                Start Assignment
-                              </button>
-                            )}
-                            {getEffectiveStatus(assignment) === "in-progress" && (
-                              <button
-                                className="mt-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-                                onClick={() =>
-                                  handleStartAssignment(assignment.id)
-                                }
-                              >
-                                Continue Assignment
-                              </button>
-                            )}
-                            {getEffectiveStatus(assignment) === "completed" && (
-                              <button
-                                type="button"
-                                className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                                onClick={() =>
-                                  router.push(
-                                    `/student/courses?action=results&assessmentId=${encodeURIComponent(assignment.id)}`
-                                  )
-                                }
-                              >
-                                Open Assignment
-                              </button>
-                            )}
-                            {getEffectiveStatus(assignment) === "closed" && (
-                              <div className="mt-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg">
-                                <AlertCircle size={16} className="inline mr-2" />
-                                Closed
-                              </div>
-                            )}
+                            {(() => {
+                              const isLockedBySchedule = isAssessmentLockedBySchedule(assignment);
+                              const effectiveStatus = getEffectiveStatus(assignment);
+                              
+                              if (isLockedBySchedule) {
+                                return (
+                                  <div className="mt-2 px-4 py-2 bg-amber-100 text-amber-800 rounded-lg">
+                                    <Clock size={16} className="inline mr-2" />
+                                    Scheduled - Opens {new Date(assignment.schedule_date!).toLocaleString()}
+                                  </div>
+                                );
+                              }
+                              
+                              if (effectiveStatus === "start") {
+                                return (
+                                  <button
+                                    className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    onClick={() =>
+                                      handleStartAssignment(assignment.id)
+                                    }
+                                  >
+                                    Start Assignment
+                                  </button>
+                                );
+                              }
+                              
+                              if (effectiveStatus === "in-progress") {
+                                return (
+                                  <button
+                                    className="mt-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                                    onClick={() =>
+                                      handleStartAssignment(assignment.id)
+                                    }
+                                  >
+                                    Continue Assignment
+                                  </button>
+                                );
+                              }
+                              
+                              if (effectiveStatus === "completed") {
+                                return (
+                                  <button
+                                    type="button"
+                                    className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                    onClick={() =>
+                                      router.push(
+                                        `/student/unitworkspace?action=results&assessmentId=${encodeURIComponent(assignment.id)}`
+                                      )
+                                    }
+                                  >
+                                    Open Assignment
+                                  </button>
+                                );
+                              }
+                              
+                              if (effectiveStatus === "closed") {
+                                return (
+                                  <div className="mt-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg">
+                                    <AlertCircle size={16} className="inline mr-2" />
+                                    Closed
+                                  </div>
+                                );
+                              }
+                              
+                              return null;
+                            })()}
                           </div>
                         </div>
                       </motion.div>

@@ -58,7 +58,7 @@ export default function MyUnitsPage() {
   useEffect(() => {
     const standalone = searchParams.get('standalone');
     if (standalone !== '1') {
-      router.replace('/student/courses');
+      router.replace('/student/unitworkspace');
     }
   }, [router, searchParams]);
 

@@ -16,13 +16,13 @@ import {
   ChevronRight,
   ChevronDown,
   Play,
-  ExternalLink,
+  // ExternalLink,
   Download,
   Eye,
   CheckCircle,
   Clock,
   AlertCircle,
-  Info,
+  // Info,
   BarChart3,
   TrendingUp,
   ListChecks,
@@ -43,7 +43,7 @@ type StudentUnit = {
   course_name?: string;
 };
 
-type StudentAssessment = Record<string, any> & {
+type StudentAssessment = Record<string, string | number | boolean | undefined> & {
   id: string;
   type?: string;
   title?: string;
@@ -56,11 +56,12 @@ type StudentAssessment = Record<string, any> & {
   due_date?: string;
   closing_date?: string;
   close_at?: string;
+  schedule_date?: string;
   unit_id?: string;
   unit_name?: string;
 };
 
-type StudentResource = Record<string, any> & {
+type StudentResource = Record<string, string | number | boolean | undefined> & {
   id: string;
   title?: string;
   unit_name?: string;
@@ -70,12 +71,12 @@ type StudentResource = Record<string, any> & {
   created_at: string;
 };
 
-type StudentSubmission = Record<string, any> & {
+type StudentSubmission = Record<string, string | number | boolean | undefined> & {
   submission_id: string;
   assessment_id: string;
   graded?: boolean;
   created_at: string;
-  results?: any[];
+  results?: (string | number | boolean | undefined)[];
 };
 
 function getUnitLabel(unit: StudentUnit) {
@@ -86,7 +87,25 @@ function getUnitCode(unit: StudentUnit) {
   return unit.unit_code || unit.code || "";
 }
 
-function matchesSelectedUnit(item: Record<string, any>, selectedUnit: StudentUnit | null) {
+function isAssessmentLockedBySchedule(assessment: StudentAssessment) {
+  if (!assessment.schedule_date) return false;
+  
+  const scheduleDate = new Date(assessment.schedule_date);
+  const now = new Date();
+  return scheduleDate > now;
+}
+
+type UnitItem = Record<string, string | number | boolean | undefined | { id?: string; unit_name?: string; name?: string; unit_code?: string; code?: string }> & {
+  unit_id?: string;
+  unitId?: string;
+  unit_name?: string;
+  unitName?: string;
+  unit_code?: string;
+  unitCode?: string;
+  unit?: { id?: string; unit_name?: string; name?: string; unit_code?: string; code?: string };
+};
+
+function matchesSelectedUnit(item: UnitItem, selectedUnit: StudentUnit | null) {
   if (!selectedUnit) return true;
 
   const selectedId = selectedUnit.id;
@@ -109,7 +128,7 @@ function matchesSelectedUnit(item: Record<string, any>, selectedUnit: StudentUni
   return false;
 }
 
-function hasUnitIdentifiers(item: Record<string, any>) {
+function hasUnitIdentifiers(item: UnitItem) {
   const possibleUnitId = String(item.unit_id ?? item.unitId ?? item.unit?.id ?? "").trim();
   if (possibleUnitId) return true;
 
@@ -308,7 +327,7 @@ function UnitSidePanel({
   );
 }
 
-export default function StudentCoursesWorkspace() {
+export default function StudentUnitWorkspace() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -482,15 +501,20 @@ export default function StudentCoursesWorkspace() {
 
   const onChangeAction = (action: ActiveAction) => {
     setActiveAction(action);
-    router.replace(`/student/courses?action=${action}`);
+    router.replace(`/student/unitworkspace?action=${action}`);
   };
 
   const startAssessment = (assessment: StudentAssessment) => {
     const status = String(assessment.status || "").toLowerCase();
     if (status === "completed") {
-      router.push(`/student/courses?action=results&assessmentId=${encodeURIComponent(assessment.id)}`);
+      router.push(`/student/unitworkspace?action=results&assessmentId=${encodeURIComponent(assessment.id)}`);
       return;
     }
+    
+    if (isAssessmentLockedBySchedule(assessment)) {
+      return;
+    }
+    
     setPendingAssessment(assessment);
     setShowDisclaimer(true);
   };
@@ -505,7 +529,7 @@ export default function StudentCoursesWorkspace() {
     0
   );
   const allScores = visibleSubmissions.flatMap((s) =>
-    Array.isArray(s.results) ? s.results.map((r: any) => r.score ?? 0) : []
+    Array.isArray(s.results) ? s.results.map((r: string | number | boolean | undefined) => Number(r?.score ?? 0)) : []
   );
   const averageScore = allScores.length > 0 ? allScores.reduce((a, b) => a + b, 0) / allScores.length : 0;
   const highestScore = allScores.length > 0 ? Math.max(...allScores) : 0;
@@ -618,6 +642,7 @@ export default function StudentCoursesWorkspace() {
                             const deadlineValue = cat?.deadline ?? cat?.due_date ?? cat?.closing_date ?? cat?.close_at ?? null;
                             const parsedDeadline = deadlineValue ? Date.parse(deadlineValue) : NaN;
                             const isPastDeadline = !!deadlineValue && !Number.isNaN(parsedDeadline) && Date.now() > parsedDeadline;
+                            const isLockedBySchedule = isAssessmentLockedBySchedule(cat);
                             const status = cat.status || "";
 
                             return (
@@ -641,9 +666,21 @@ export default function StudentCoursesWorkspace() {
                                           {cat.duration} min
                                         </span>
                                       )}
+                                      {!!cat.schedule_date && (
+                                        <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+                                          <Clock className="mr-1 h-3.5 w-3.5" />
+                                          Opens: {new Date(cat.schedule_date).toLocaleString()}
+                                        </span>
+                                      )}
                                       {!!deadlineValue && !Number.isNaN(parsedDeadline) && (
                                         <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
                                           Deadline: {new Date(parsedDeadline).toLocaleString()}
+                                        </span>
+                                      )}
+                                      {isLockedBySchedule && (
+                                        <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                                          <Clock className="mr-1 h-3.5 w-3.5" />
+                                          Scheduled
                                         </span>
                                       )}
                                       {isPastDeadline && (
@@ -663,10 +700,15 @@ export default function StudentCoursesWorkspace() {
                                   <div className="flex items-center gap-2">
                                     <button
                                       onClick={() => startAssessment(cat)}
-                                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+                                      disabled={isLockedBySchedule}
+                                      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
+                                        isLockedBySchedule
+                                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                          : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                      }`}
                                     >
                                       <Play className="h-4 w-4" />
-                                      Open
+                                      {isLockedBySchedule ? "Locked" : "Open"}
                                     </button>
                                   </div>
                                 </div>
@@ -702,6 +744,7 @@ export default function StudentCoursesWorkspace() {
                             const deadlineValue = a?.deadline ?? a?.due_date ?? a?.closing_date ?? a?.close_at ?? null;
                             const parsedDeadline = deadlineValue ? Date.parse(deadlineValue) : NaN;
                             const isPastDeadline = !!deadlineValue && !Number.isNaN(parsedDeadline) && Date.now() > parsedDeadline;
+                            const isLockedBySchedule = isAssessmentLockedBySchedule(a);
                             const status = a.status || "";
 
                             return (
@@ -725,9 +768,21 @@ export default function StudentCoursesWorkspace() {
                                           {a.duration} min
                                         </span>
                                       )}
+                                      {!!a.schedule_date && (
+                                        <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+                                          <Clock className="mr-1 h-3.5 w-3.5" />
+                                          Opens: {new Date(a.schedule_date).toLocaleString()}
+                                        </span>
+                                      )}
                                       {!!deadlineValue && !Number.isNaN(parsedDeadline) && (
                                         <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
                                           Deadline: {new Date(parsedDeadline).toLocaleString()}
+                                        </span>
+                                      )}
+                                      {isLockedBySchedule && (
+                                        <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                                          <Clock className="mr-1 h-3.5 w-3.5" />
+                                          Scheduled
                                         </span>
                                       )}
                                       {isPastDeadline && (
@@ -747,10 +802,15 @@ export default function StudentCoursesWorkspace() {
                                   <div className="flex items-center gap-2">
                                     <button
                                       onClick={() => startAssessment(a)}
-                                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+                                      disabled={isLockedBySchedule}
+                                      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
+                                        isLockedBySchedule
+                                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                          : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                      }`}
                                     >
                                       <Play className="h-4 w-4" />
-                                      Open
+                                      {isLockedBySchedule ? "Locked" : "Open"}
                                     </button>
                                   </div>
                                 </div>
@@ -851,8 +911,8 @@ export default function StudentCoursesWorkspace() {
                               .map((s) => {
                                 const submissionId = String(s.submission_id || s.id || "");
                                 const results = Array.isArray(s.results) ? s.results : [];
-                                const totalMarks = results.reduce((acc: number, r: any) => acc + (Number(r.marks) || 0), 0);
-                                const totalScore = results.reduce((acc: number, r: any) => acc + (Number(r.score) || 0), 0);
+                                const totalMarks = results.reduce((acc: number, r: string | number | boolean | undefined) => acc + (Number(r?.marks ?? 0) || 0), 0);
+                                const totalScore = results.reduce((acc: number, r: string | number | boolean | undefined) => acc + (Number(r?.score ?? 0) || 0), 0);
                                 const expanded = expandedSubmissionId === submissionId;
                                 const title =
                                   String(s.topic || "").trim() ||
@@ -865,7 +925,7 @@ export default function StudentCoursesWorkspace() {
                                 const hasDeadline = !!deadlineValue && !Number.isNaN(parsedDeadline);
                                 const isLocked = hasDeadline && Date.now() < parsedDeadline;
 
-                                const formatValue = (value: any) => {
+                                const formatValue = (value: string | number | boolean | undefined) => {
                                   if (value === null || value === undefined) return "";
                                   if (Array.isArray(value)) return value.map((v) => String(v)).join(", ");
                                   if (typeof value === "object") return JSON.stringify(value);

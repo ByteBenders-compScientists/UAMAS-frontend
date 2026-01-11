@@ -22,7 +22,7 @@ type QuestionType =
   | 'close-ended-drag-drop';
 
 interface AssessmentFormProps {
-  initialData?: Omit<Assessment, 'questions_type'> & { questions_type?: string[] };
+  initialData?: Omit<Assessment, 'questions_type'> & { questions_type?: string[]; schedule_date?: string | null };
   selectedCourse: string;
   selectedUnit: string;
   selectedWeek: number;
@@ -56,7 +56,8 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
     number_of_questions: initialData?.number_of_questions || 15,
     blooms_level: initialData?.blooms_level || "Remember",
     deadline: initialData?.deadline || "",
-    duration: initialData?.duration || 60
+    duration: initialData?.duration || 60,
+    schedule_date: initialData?.schedule_date || ""
   });
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -107,17 +108,6 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
     return true;
   };
 
-  const handleQuestionTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedOptions = Array.from(
-      e.target.selectedOptions, 
-      option => option.value as QuestionType
-    );
-    setFormData(prev => ({
-      ...prev,
-      questions_type: selectedOptions
-    }));
-  };
-
   const handleSubmit = (isAI: boolean) => {
     if (!isFormValid()) {
       alert('Please fill in all required fields.');
@@ -127,6 +117,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
       ...formData,
       deadline: formData.deadline || "",
       duration: formData.duration || "",
+      schedule_date: formData.schedule_date || "",
       course_id: selectedCourse,
       unit_id: selectedUnit,
       week: selectedWeek,
@@ -387,6 +378,19 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
             />
           </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-3">
+              Schedule Date (Optional)
+            </label>
+            <input
+              type="datetime-local"
+              value={formData.schedule_date}
+              onChange={(e) => setFormData({...formData, schedule_date: e.target.value})}
+              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
               Duration (minutes)

@@ -55,6 +55,7 @@ export interface Assessment {
   blooms_level: 'Remember' | 'Understand' | 'Apply' | 'Analyze' | 'Evaluate' | 'Create';
   deadline?: string | null;
   duration?: number | null;
+  schedule_date?: string | null;
   course_id: string;
   unit_id: string;
   week: number;

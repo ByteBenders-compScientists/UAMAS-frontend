@@ -270,6 +270,16 @@ const AssessmentsDashboard: React.FC = () => {
         prev.map(a => a.id === id ? { ...a, verified: true } : a)
       );
       
+      // Update viewingAssessment if it's currently open
+      if (viewingAssessment && viewingAssessment.id === id) {
+        setViewingAssessment({ ...viewingAssessment, verified: true });
+      }
+      
+      // Update editingAssessment if it's currently open
+      if (editingAssessment && editingAssessment.id === id) {
+        setEditingAssessment({ ...editingAssessment, verified: true });
+      }
+      
       showMessage('success', `Assessment "${response.title}" verified successfully!`);
     } catch (error) {
       console.error('Verify assessment error:', error);

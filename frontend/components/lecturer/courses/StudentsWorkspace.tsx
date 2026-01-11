@@ -4,14 +4,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   Download,
-  Edit,
   Eye,
   Search,
   Trash2,
-  Upload,
   Users,
 } from "lucide-react";
-import AddStudentModal from "@/components/lecturer/AddStudentModal";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
@@ -33,22 +30,6 @@ type Student = {
   }>;
 };
 
-interface ModalStudent {
-  id: string;
-  reg_number: string;
-  firstname: string;
-  surname: string;
-  othernames: string;
-  year_of_study: number;
-  semester: number;
-  email: string;
-  course: {
-    id: string;
-    name: string;
-    code?: string;
-  };
-}
-
 type Course = {
   id: string;
   name: string;
@@ -68,11 +49,7 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-
   const [isExporting, setIsExporting] = useState(false);
-  const [showImportInfo, setShowImportInfo] = useState(false);
 
   const contextCourse = useMemo(
     () => courses.find((c) => c.id === selectedCourseId),
@@ -183,44 +160,6 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
     }
   };
 
-  const handleAddStudent = async (studentData: unknown) => {
-    try {
-      if (selectedStudent) {
-        const response = await fetch(
-          `${API_BASE_URL}/auth/lecturer/students/${selectedStudent.id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify(studentData),
-          }
-        );
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to update student");
-        }
-      } else {
-        const response = await fetch(
-          `${API_BASE_URL}/auth/lecturer/students`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify(studentData),
-          }
-        );
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to add student");
-        }
-      }
-      await fetchStudents();
-      setShowAddModal(false);
-      setSelectedStudent(null);
-    } catch (err) {
-      throw err;
-    }
-  };
 
   const handleDeleteStudent = async (id: string) => {
     if (
@@ -297,13 +236,6 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowImportInfo((v) => !v)}
-            className="inline-flex items-center px-3 py-2 text-xs rounded-lg bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100"
-          >
-            <Upload className="w-4 h-4 mr-1" />
-            Import info
-          </button>
-          <button
             onClick={handleExport}
             disabled={isExporting || filteredStudents.length === 0}
             className="inline-flex items-center px-3 py-2 text-xs rounded-lg bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 disabled:opacity-50"
@@ -311,28 +243,8 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
             <Download className="w-4 h-4 mr-1" />
             {isExporting ? "Exporting..." : "Export CSV"}
           </button>
-          <button
-            onClick={() => {
-              setSelectedStudent(null);
-              setShowAddModal(true);
-            }}
-            className="inline-flex items-center px-3 py-2 text-xs rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
-          >
-            Add student
-          </button>
         </div>
       </div>
-
-      {showImportInfo && (
-        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-xs text-emerald-800 flex space-x-2">
-          <AlertCircle className="w-4 h-4 mt-0.5" />
-          <p>
-            Bulk import is available on the full Students page. For the Courses
-            workspace, you can quickly add or manage individual students in the
-            selected course.
-          </p>
-        </div>
-      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-xs text-red-700 flex space-x-2">
@@ -423,15 +335,6 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => {
-                          setSelectedStudent(s);
-                          setShowAddModal(true);
-                        }}
-                        className="p-1.5 text-blue-600 hover:text-blue-800"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
                         onClick={() => handleDeleteStudent(s.id)}
                         className="p-1.5 text-red-600 hover:text-red-800"
                       >
@@ -446,17 +349,6 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
         </div>
       </div>
 
-      {/* Add/Edit Student Modal */}
-      {showAddModal && (
-        <AddStudentModal
-          student={selectedStudent as ModalStudent | null}
-          onClose={() => {
-            setShowAddModal(false);
-            setSelectedStudent(null);
-          }}
-          onSubmit={handleAddStudent}
-        />
-      )}
     </div>
   );
 };

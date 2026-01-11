@@ -79,7 +79,7 @@ export default function CatsPage() {
   useEffect(() => {
     const assessmentId = searchParams.get("assessmentId");
     if (!assessmentId) return;
-    router.replace(`/student/courses?action=cats&assessmentId=${encodeURIComponent(assessmentId)}`);
+    router.replace(`/student/unitworkspace?action=cats&assessmentId=${encodeURIComponent(assessmentId)}`);
   }, [router, searchParams, activeCat]);
 
   // Submit current CAT
@@ -212,6 +212,14 @@ export default function CatsPage() {
     return cat.status;
   };
 
+  const isAssessmentLockedBySchedule = (assessment: any) => {
+    if (!assessment.schedule_date) return false;
+    
+    const scheduleDate = new Date(assessment.schedule_date);
+    const now = new Date();
+    return scheduleDate > now;
+  };
+
   const filteredCats = cats.filter((cat) => {
     if (selectedFilter === "all") return true;
     return getEffectiveStatus(cat) === selectedFilter;
@@ -227,6 +235,10 @@ export default function CatsPage() {
   const handleStartCat = async (catId: string) => {
     const cat = cats.find((c) => c.id === catId);
     if (!cat) return;
+
+    if (isAssessmentLockedBySchedule(cat)) {
+      return;
+    }
 
     setActiveCat(catId);
     setShowDisclaimer(true);
@@ -1252,6 +1264,15 @@ export default function CatsPage() {
                                 </span>
                               </div>
 
+                              {cat.schedule_date && (
+                                <div className="flex items-center">
+                                  <Clock size={16} className="mr-1" />
+                                  <span>
+                                    Opens: {new Date(cat.schedule_date).toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+
                               {cat.duration && (
                                 <div className="flex items-center">
                                   <Clock size={16} className="mr-1" />
@@ -1267,41 +1288,68 @@ export default function CatsPage() {
                               </div>
                             </div>
 
-                            {getEffectiveStatus(cat) === "start" && (
-                              <button
-                                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                onClick={() => handleStartCat(cat.id)}
-                              >
-                                Start CAT
-                              </button>
-                            )}
-                            {getEffectiveStatus(cat) === "in-progress" && (
-                              <button
-                                className="mt-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-                                onClick={() => handleStartCat(cat.id)}
-                              >
-                                Continue CAT
-                              </button>
-                            )}
-                            {getEffectiveStatus(cat) === "completed" && (
-                              <button
-                                type="button"
-                                className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                                onClick={() =>
-                                  router.push(
-                                    `/student/courses?action=results&assessmentId=${encodeURIComponent(cat.id)}`
-                                  )
-                                }
-                              >
-                                Open CAT
-                              </button>
-                            )}
-                            {getEffectiveStatus(cat) === "closed" && (
-                              <div className="mt-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg">
-                                <AlertCircle size={16} className="inline mr-2" />
-                                Closed
-                              </div>
-                            )}
+                            {(() => {
+                              const isLockedBySchedule = isAssessmentLockedBySchedule(cat);
+                              const effectiveStatus = getEffectiveStatus(cat);
+                              
+                              if (isLockedBySchedule) {
+                                return (
+                                  <div className="mt-2 px-4 py-2 bg-amber-100 text-amber-800 rounded-lg">
+                                    <Clock size={16} className="inline mr-2" />
+                                    Scheduled - Opens {new Date(cat.schedule_date!).toLocaleString()}
+                                  </div>
+                                );
+                              }
+                              
+                              if (effectiveStatus === "start") {
+                                return (
+                                  <button
+                                    className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    onClick={() => handleStartCat(cat.id)}
+                                  >
+                                    Start CAT
+                                  </button>
+                                );
+                              }
+                              
+                              if (effectiveStatus === "in-progress") {
+                                return (
+                                  <button
+                                    className="mt-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                                    onClick={() => handleStartCat(cat.id)}
+                                  >
+                                    Continue CAT
+                                  </button>
+                                );
+                              }
+                              
+                              if (effectiveStatus === "completed") {
+                                return (
+                                  <button
+                                    type="button"
+                                    className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                    onClick={() =>
+                                      router.push(
+                                        `/student/unitworkspace?action=results&assessmentId=${encodeURIComponent(cat.id)}`
+                                      )
+                                    }
+                                  >
+                                    Open CAT
+                                  </button>
+                                );
+                              }
+                              
+                              if (effectiveStatus === "closed") {
+                                return (
+                                  <div className="mt-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg">
+                                    <AlertCircle size={16} className="inline mr-2" />
+                                    Closed
+                                  </div>
+                                );
+                              }
+                              
+                              return null;
+                            })()}
                           </div>
                         </div>
                       </motion.div>

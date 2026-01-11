@@ -73,7 +73,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
 
   const navItems: NavItemType[] = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/student/dashboard' },
-    { name: 'My Workspace', icon: <BookOpen size={20} />, path: '/student/courses' },
+    { name: 'My Workspace', icon: <BookOpen size={20} />, path: '/student/unitworkspace' },
     { name: 'Forums', icon: <MessageSquare size={20} />, path: '/student/forums', badge: 'New' },
   ];
 
