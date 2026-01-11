@@ -39,7 +39,7 @@ export default function LibraryPage() {
   const resourcesGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    router.replace('/student/courses?action=library');
+    router.replace('/student/unitworkspace?action=library');
   }, [router, searchParams]);
 
   useEffect(() => {

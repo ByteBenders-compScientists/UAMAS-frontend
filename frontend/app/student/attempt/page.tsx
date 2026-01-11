@@ -59,7 +59,7 @@ export default function AttemptPage() {
 
   useEffect(() => {
     if (!assessmentId) {
-      router.replace("/student/courses");
+      router.replace("/student/unitworkspace");
       return;
     }
 
@@ -739,7 +739,7 @@ export default function AttemptPage() {
           </div>
           <button
             type="button"
-            onClick={() => router.replace("/student/courses")}
+            onClick={() => router.replace("/student/unitworkspace")}
             className="mt-4 w-full px-4 py-2 bg-gray-900 text-white rounded-lg"
           >
             Back to Workspace

@@ -14,7 +14,7 @@ import {
 
 import QuestionRenderer from './assessment/QuestionRenderer'
 import { Assessment, Course, Question, QuestionType } from '../../types/assessment';
-import { formatDate, getTypeColor, getDifficultyColor, getBlooms } from '../../utils/assessmentUtils';
+import { formatDate, formatDateTime, getTypeColor, getDifficultyColor, getBlooms } from '../../utils/assessmentUtils';
 
 interface ViewAssessmentModalProps {
   assessment: Assessment;
@@ -149,6 +149,15 @@ const ViewAssessmentModal: React.FC<ViewAssessmentModalProps> = ({
                 <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200">
                   <span className="text-sm font-medium text-gray-700">Deadline</span>
                   <span className="text-sm font-bold text-gray-900">{formatDate(assessment.deadline)}</span>
+                </div>
+              )}
+              {assessment.schedule_date && (
+                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200">
+                  <span className="flex items-center text-sm font-medium text-gray-700">
+                    <Calendar className="mr-2 h-4 w-4 text-gray-500" />
+                    Schedule Date
+                  </span>
+                  <span className="text-sm font-bold text-gray-900">{formatDateTime(assessment.schedule_date)}</span>
                 </div>
               )}
             </div>

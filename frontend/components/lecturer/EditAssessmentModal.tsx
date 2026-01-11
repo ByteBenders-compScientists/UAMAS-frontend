@@ -32,7 +32,8 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
     number_of_questions: assessment.number_of_questions,
     blooms_level: assessment.blooms_level,
     deadline: assessment.deadline || "",
-    duration: assessment.duration || 60
+    duration: assessment.duration || 60,
+    schedule_date: (assessment as any).schedule_date || ""
   });
 
   const [questions, setQuestions] = useState<Question[]>(assessment.questions || []);
@@ -404,6 +405,18 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                 onChange={(e) => setFormData({...formData, duration: parseInt(e.target.value)})}
                 className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                 min="1"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-3">Schedule Date (Optional)</label>
+              <input
+                type="datetime-local"
+                value={formData.schedule_date}
+                onChange={(e) => setFormData({...formData, schedule_date: e.target.value})}
+                className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
               />
             </div>
           </div>
