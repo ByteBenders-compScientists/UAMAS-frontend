@@ -245,8 +245,8 @@ export interface Unit {
   level: number;
   semester: number;
   course_id: string;
+  unique_join_code?: string;
 }
-
 
 export interface BaseQuestion {
   id: string;

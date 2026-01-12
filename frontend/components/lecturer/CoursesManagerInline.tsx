@@ -9,7 +9,7 @@ import type {
   UpdateUnitRequest,
   Unit,
 } from "@/services/api";
-import { Plus, Edit, Trash2, Save, X, ChevronDown, ChevronUp, BookOpen, GraduationCap, Bookmark, Calendar, Layers } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, ChevronDown, ChevronUp, BookOpen, GraduationCap, Bookmark, Calendar, Layers, Copy } from 'lucide-react';
 import { courseApi, unitApi } from "@/services/api";
 
 type Course = {
@@ -18,7 +18,11 @@ type Course = {
   name: string;
   department: string;
   school: string;
-  units: Unit[];
+  units: LocalUnit[];
+};
+
+type LocalUnit = Unit & {
+  unique_join_code?: string;
 };
 
 export default function CoursesManagerInline() {
@@ -32,7 +36,7 @@ export default function CoursesManagerInline() {
   // UI state for accordion + inline unit forms
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
   const [addingUnitForCourse, setAddingUnitForCourse] = useState<string | null>(null);
-  const [editingUnit, setEditingUnit] = useState<{ courseId: string; unit: Unit } | null>(null);
+  const [editingUnit, setEditingUnit] = useState<{ courseId: string; unit: LocalUnit } | null>(null);
   const [unitForm, setUnitForm] = useState<Partial<CreateUnitRequest & { id?: string }>>({});
   const [unitSubmitting, setUnitSubmitting] = useState(false);
 
@@ -101,7 +105,7 @@ export default function CoursesManagerInline() {
     setUnitForm({ course_id: courseId, unit_code: "", unit_name: "", level: 100, semester: 1 });
   };
 
-  const startEditUnit = (courseId: string, unit: Unit) => {
+  const startEditUnit = (courseId: string, unit: LocalUnit) => {
     setEditingUnit({ courseId, unit });
     setUnitForm({ id: unit.id, course_id: courseId, unit_code: unit.unit_code, unit_name: unit.unit_name, level: unit.level, semester: unit.semester });
   };
@@ -319,6 +323,28 @@ export default function CoursesManagerInline() {
                                   <span className="mx-1"> • </span>
                                   <span>Sem {u.semester}</span>
                                 </span>
+                                {u.unique_join_code && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-50 text-violet-700">
+                                    <span className="font-mono tracking-wide">
+                                      Join: {u.unique_join_code}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard
+                                          .writeText(u.unique_join_code || "")
+                                          .catch(() => {
+                                            // Silently ignore clipboard errors
+                                          });
+                                      }}
+                                      className="ml-1 inline-flex items-center px-1 py-0.5 rounded hover:bg-violet-100 text-violet-700"
+                                      title="Copy join code"
+                                    >
+                                      <Copy size={10} />
+                                    </button>
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
