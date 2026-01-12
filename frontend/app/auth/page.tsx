@@ -216,7 +216,7 @@ export default function AuthPage() {
         role: signupRole,
       })
 
-      console.log("body request sent: ", body)
+      // console.log("body request sent: ", body)
 
       const data = await response.json()
 
