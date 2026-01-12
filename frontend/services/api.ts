@@ -104,7 +104,7 @@ export const unitApi = {
 // Assessment API
 export const assessmentApi = {
   // Get all assessments created by lecturer
-  getAssessments: () =>
+  getAssessments: () => 
     apiRequest<Assessment[]>('/bd/lecturer/assessments'),
 
   // Generate assessment with AI (with optional document upload)
@@ -228,13 +228,13 @@ export const notesApi = {
 };
 
 // Type definitions based on API documentation
-export interface Course {
-  color: unknown;
+interface Course {
   id: string;
   name: string;
   code: string;
   department: string;
   school: string;
+  color: string;  // Change from 'unknown' to 'string'
   units: Unit[];
 }
 
@@ -247,6 +247,32 @@ export interface Unit {
   course_id: string;
 }
 
+
+export interface BaseQuestion {
+  id: string;
+  assessment_id: string;
+  text: string;
+  type: QuestionType;
+  choices?: (string | string[])[];
+  correct_answer?: string | string[] | { item: string; target: string }[] | string[][];
+  marks: number;
+  rubric?: string;
+  created_at: string;
+  question?: string; // For backward compatibility
+}
+
+export interface Question extends BaseQuestion {
+  // Alias for backward compatibility
+  question?: string;
+  text: string;
+  // More specific type for correct_answer based on question type
+  correct_answer?: 
+    | string // for open-ended
+    | string[] // for multiple-single, multiple-multiple, ordering
+    | { item: string; target: string }[] // for drag-drop
+    | string[][]; // for matching
+}
+
 export interface Assessment {
   id: string;
   title: string;
@@ -255,8 +281,7 @@ export interface Assessment {
   type: 'CAT' | 'Assignment' | 'Case Study';
   unit_id: string;
   course_id: string;
-  questions_type: 'close-ended' | 'open-ended';
-  close_ended_type?: string;
+  questions_type: QuestionType[];
   topic: string;
   total_marks: number;
   difficulty: 'Easy' | 'Intermediate' | 'Advance';
@@ -271,18 +296,6 @@ export interface Assessment {
   level: number;
   semester: number;
   questions: Question[];
-}
-
-export interface Question {
-  id: string;
-  text: string;
-  marks: number;
-  type: 'close-ended' | 'open-ended';
-  rubric: string;
-  correct_answer?: string[] | null;
-  choices?: string[] | null;
-  assessment_id: string;
-  created_at: string;
 }
 
 export interface Student {
@@ -363,14 +376,22 @@ export interface UpdateUnitRequest {
   course_id: string;
 }
 
+export type QuestionType = 
+  | 'open-ended'
+  | 'close-ended-multiple-single'
+  | 'close-ended-multiple-multiple'
+  | 'close-ended-bool'
+  | 'close-ended-matching'
+  | 'close-ended-ordering'
+  | 'close-ended-drag-drop';
+
 export interface CreateAssessmentRequest {
   title: string;
   description: string;
   week: number;
   type: 'CAT' | 'Assignment' | 'Case Study';
   unit_id: string;
-  questions_type: 'close-ended' | 'open-ended';
-  close_ended_type?: string;
+  questions_type: QuestionType[];
   topic: string;
   total_marks: number;
   difficulty: 'Easy' | 'Intermediate' | 'Advance';
@@ -395,7 +416,7 @@ export interface VerifyAssessmentResponse {
 export interface CreateQuestionRequest {
   text: string;
   marks: number;
-  type: 'close-ended' | 'open-ended';
+  type: QuestionType;
   rubric: string;
   correct_answer?: string;
   choices?: string;

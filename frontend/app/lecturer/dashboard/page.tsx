@@ -20,6 +20,7 @@ import {
   PlusCircle,
   ClipboardList,
   Library,
+  Copy,
 } from "lucide-react";
 import Sidebar from "@/components/lecturerSidebar";
 import { useLayout } from "@/components/LayoutController";
@@ -301,14 +302,14 @@ const LecturerDashboard: React.FC = () => {
       icon: PlusCircle,
       title: "Create Assessment",
       description: "Generate new assignments and CATs with AI",
-      path: "/lecturer/assessments",
+      path: "/lecturer/courses",
       color: "text-blue-600",
       iconBg: "bg-blue-100",
     },
     {
       icon: Users,
       title: "Manage Students",
-      description: "Add and manage your students",
+      description: "View students who have joined your units",
       path: "/lecturer/students",
       color: "text-green-600",
       iconBg: "bg-green-100",
@@ -478,6 +479,82 @@ const LecturerDashboard: React.FC = () => {
     </div>
   );
 
+  const UnitsJoinCodeSection: React.FC = () => {
+    const unitsWithCourse = courses.flatMap((course) =>
+      (course.units || []).map((unit) => ({ course, unit }))
+    );
+
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Unit Join Codes</h2>
+          <button
+            onClick={() => handleNavigation("/lecturer/course")}
+            className="text-emerald-600 hover:text-emerald-800 text-sm font-medium"
+          >
+            Manage units
+          </button>
+        </div>
+        {unitsWithCourse.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 text-sm">
+            <p>No units found.</p>
+            <p className="mt-1">
+              Create courses and units in Course Management to generate join codes for students.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3 max-h-72 overflow-y-auto">
+            {unitsWithCourse.slice(0, 8).map(({ course, unit }) => (
+              <div
+                key={unit.id}
+                className="flex items-start justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-gray-900 truncate">
+                    {unit.unit_code}  b7 {unit.unit_name}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">
+                    {course.code}  b7 {course.name}
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {(
+                      (unit as unknown as { unique_join_code?: string }).unique_join_code
+                    ) ? (
+                      <span className="font-mono text-xs">
+                        Join code: {(unit as unknown as { unique_join_code?: string }).unique_join_code}
+                      </span>
+                    ) : (
+                      <span className="italic text-gray-400">
+                        Join code not available yet
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {(
+                  (unit as unknown as { unique_join_code?: string }).unique_join_code
+                ) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const code = (unit as unknown as { unique_join_code?: string }).unique_join_code || "";
+                      navigator.clipboard.writeText(code).catch(() => {
+                        return;
+                      });
+                    }}
+                    className="ml-3 inline-flex items-center px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100"
+                  >
+                    <Copy className="w-3 h-3 mr-1" />
+                    Copy
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const QuickActionCard: React.FC<{ action: QuickActionCard }> = ({
     action,
   }) => (
@@ -512,7 +589,7 @@ const LecturerDashboard: React.FC = () => {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
         <button
-          onClick={() => handleNavigation("/lecturer/assessments")}
+          onClick={() => handleNavigation("/lecturer/courses")}
           className="text-emerald-600 hover:text-emerald-800 text-sm font-medium"
         >
           View All
@@ -523,7 +600,7 @@ const LecturerDashboard: React.FC = () => {
           <div
             key={assessment.id}
             className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
-            onClick={() => handleNavigation("/lecturer/assessments")}
+            onClick={() => handleNavigation("/lecturer/courses")}
           >
             <div className="p-2 rounded-lg bg-blue-100 text-blue-600 flex-shrink-0">
               <FileText className="w-4 h-4" />
@@ -547,7 +624,7 @@ const LecturerDashboard: React.FC = () => {
             <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
             <p>No recent assessments</p>
             <button
-              onClick={() => handleNavigation("/lecturer/assessments")}
+              onClick={() => handleNavigation("/lecturer/courses")}
               className="mt-2 text-emerald-600 hover:text-emerald-800 text-sm font-medium"
             >
               Create your first assessment
@@ -595,20 +672,11 @@ const LecturerDashboard: React.FC = () => {
               ))}
             </div>
 
-            {/* Quick Actions */}
-            <div className="mb-6 lg:mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 lg:mb-6">
-                Quick Actions
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
-                {quickActions.map((action, index) => (
-                  <QuickActionCard key={index} action={action} />
-                ))}
-              </div>
+            {/* Units join codes & Recent Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <UnitsJoinCodeSection />
+              <RecentActivitySection />
             </div>
-
-            {/* Recent Activity */}
-            <RecentActivitySection />
           </main>
         </div>
       </div>

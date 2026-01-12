@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useLayout } from '@/components/LayoutController';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
-import EmptyState from '@/components/EmptyState';
+// import EmptyState from '@/components/EmptyState';
 import { 
   BookOpen, 
   ClipboardList, 
@@ -18,23 +18,28 @@ import {
   ArrowRight,
   BookMarked,
   FileText,
-  LucideIcon
+  LucideIcon,
+  KeyRound,
+  CheckCircle2,
+  AlertCircle,
+  X
 } from 'lucide-react';
-import { getCurrentWeek } from '@/utils/WeekSelector';
+// import { getCurrentWeek } from '@/utils/WeekSelector';
 import Link from 'next/link';
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.waltertayarg.me/api/v1"
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"
 
 type QuickLinkProps = {
   icon: React.ReactNode;
   title: string;
   description: string;
   color: string;
-  href: string;
+  href?: string;
+  onClick?: () => void;
 };
 
-const QuickLink = ({ icon, title, description, color, href }: QuickLinkProps) => (
-  <Link href={href} className="block">
+const QuickLink = ({ icon, title, description, color, href, onClick }: QuickLinkProps) => {
+  const content = (
     <div className={`bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group`}>
       <div className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
         {icon}
@@ -46,8 +51,14 @@ const QuickLink = ({ icon, title, description, color, href }: QuickLinkProps) =>
         <ArrowRight size={14} className="ml-1" />
       </div>
     </div>
-  </Link>
-);
+  );
+
+  if (onClick) {
+    return <div onClick={onClick} className="block">{content}</div>;
+  }
+
+  return href ? <Link href={href} className="block">{content}</Link> : <div className="block">{content}</div>;
+};
 
 export default function Dashboard() {
   const { 
@@ -59,6 +70,11 @@ export default function Dashboard() {
   const [hasContent, setHasContent] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<{ name: string; surname: string; reg_number: string } | null>(null);
+  const [showJoinUnitModal, setShowJoinUnitModal] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinError, setJoinError] = useState("");
+  const [joinSuccess, setJoinSuccess] = useState("");
 
   useEffect(() => {
     // Simulate loading data
@@ -82,34 +98,94 @@ export default function Dashboard() {
       .catch(() => {});
   }, []);
 
+  const handleJoinUnit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!joinCode.trim()) {
+      setJoinError("Join code is required");
+      return;
+    }
+
+    setIsJoining(true);
+    setJoinError("");
+    setJoinSuccess("");
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/auth/join-unit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ join_code: joinCode.trim() }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        const unit = data.unit;
+        setJoinSuccess(
+          unit && unit.unit_name
+            ? `You have successfully joined ${unit.unit_name} (${unit.unit_code || "unit"}).`
+            : data.message || "You have successfully joined the unit."
+        );
+        setJoinCode("");
+        // Close modal after 2 seconds on success
+        setTimeout(() => {
+          setShowJoinUnitModal(false);
+          setJoinSuccess("");
+        }, 2000);
+      } else {
+        setJoinError(
+          data.error ||
+          data.message ||
+          (res.status === 404
+            ? "No unit was found for that join code. Please check with your lecturer."
+            : "Could not join unit. Please check the code and try again.")
+        );
+      }
+    } catch (err) {
+      console.error("Join unit error", err);
+      setJoinError("Network error. Please check your connection and try again.");
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
   const quickLinks = [
     {
       icon: <BookOpen size={24} className="text-white" />,
       title: "Learning Materials",
       description: "Access lecture notes, slides, and readings",
       color: "bg-emerald-500",
-      href: "/student/library"
+      href: "/student/unitworkspace?action=library"
     },
     {
       icon: <ClipboardList size={24} className="text-white" />,
       title: "Assignments",
       description: "View and submit your assignments",
       color: "bg-amber-500",
-      href: "/student/assignments"
+      href: "/student/unitworkspace?action=assignments"
     },
     {
       icon: <Award size={24} className="text-white" />,
       title: "CATS",
       description: "View and attempt your CATS (Continuous Assessment Tests)",
       color: "bg-violet-500",
-      href: "/student/cats"
+      href: "/student/unitworkspace?action=cats"
     },
     {
       icon: <FileText size={24} className="text-white" />,
       title: "Submission",
       description: "Submit your coursework and projects",
       color: "bg-blue-500",
-      href: "/student/submission"
+      href: "/student/unitworkspace?action=results"
+    },
+    {
+      icon: <Users size={24} className="text-white" />,
+      title: "Join Unit by Code",
+      description: "Use a join code from your lecturer to join a class",
+      color: "bg-rose-500",
+      onClick: () => setShowJoinUnitModal(true)
     }
   ];
 
@@ -272,6 +348,121 @@ export default function Dashboard() {
           )}
         </main>
       </motion.div>
+
+      {/* Join Unit Modal */}
+      {showJoinUnitModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div 
+              className="fixed inset-0 bg-black/50 transition-opacity"
+              onClick={() => {
+                setShowJoinUnitModal(false);
+                setJoinCode("");
+                setJoinError("");
+                setJoinSuccess("");
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6 md:p-8"
+            >
+              <button
+                onClick={() => {
+                  setShowJoinUnitModal(false);
+                  setJoinCode("");
+                  setJoinError("");
+                  setJoinSuccess("");
+                }}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-rose-100 border border-rose-200 flex items-center justify-center">
+                  <KeyRound className="w-6 h-6 text-rose-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">
+                    Join a unit
+                  </p>
+                  <h2 className="text-xl font-semibold text-gray-900">Enter join code</h2>
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-600 mb-6">
+                Ask your lecturer for the unit join code and paste it below. Once you join, the
+                unit will appear in your courses and assessments.
+              </p>
+
+              <form onSubmit={handleJoinUnit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Unit join code
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                      placeholder="e.g. ABCD1234"
+                      className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      maxLength={16}
+                      disabled={isJoining}
+                    />
+                    <KeyRound className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+
+                {joinError && (
+                  <div className="flex items-start space-x-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                    <p>{joinError}</p>
+                  </div>
+                )}
+
+                {joinSuccess && (
+                  <div className="flex items-start space-x-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                    <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                    <p>{joinSuccess}</p>
+                  </div>
+                )}
+
+                <div className="flex space-x-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowJoinUnitModal(false);
+                      setJoinCode("");
+                      setJoinError("");
+                      setJoinSuccess("");
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isJoining || !joinCode.trim()}
+                    className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isJoining ? (
+                      <span className="flex items-center justify-center">
+                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Joining...
+                      </span>
+                    ) : (
+                      "Join Unit"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,9 +9,6 @@ import { easeInOut } from 'framer-motion';
 import {
   LayoutDashboard,
   BookOpen,
-  ClipboardList,
-  Calendar,
-  Library,
   MessageSquare,
   Settings,
   LogOut,
@@ -19,8 +16,8 @@ import {
   ChevronRight,
   User,
   X,
-  FileText
 } from 'lucide-react';
+
 import Image from 'next/image';
 
 interface SidebarProps {
@@ -76,11 +73,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
 
   const navItems: NavItemType[] = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/student/dashboard' },
-    { name: 'My CATs', icon: <BookOpen size={20} />, path: '/student/cats' },
-    { name: 'Assignments', icon: <ClipboardList size={20} />, path: '/student/assignments', badge: 3 },
-    { name: 'Results', icon: <FileText size={20} />, path: '/student/submission' },
-    { name: 'My Units', icon: <Calendar size={20} />, path: '/student/units' },
-    { name: 'Library', icon: <Library size={20} />, path: '/student/library' },
+    { name: 'My Workspace', icon: <BookOpen size={20} />, path: '/student/unitworkspace' },
     { name: 'Forums', icon: <MessageSquare size={20} />, path: '/student/forums', badge: 'New' },
   ];
 

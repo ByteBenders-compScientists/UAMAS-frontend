@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 import React, { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { useLayout } from "@/components/LayoutController";
 import Sidebar from "@/components/lecturerSidebar";
@@ -12,11 +13,13 @@ import {
   GraduationCap,
   BookOpen,
   Calendar,
-  Filter
+  Filter,
+  Users,
+  Layers3
 } from "lucide-react";
 
 // Import modularized components
-import { LegacyAssessment, LegacyCourse, Message } from "../../../types/assessment";
+import { Assessment, Course, Message } from "../../../types/assessment";
 import { dummyCourses, dummyAssessments } from "../../../data/assessmentData";
 import Modal from "@/components/ui/Modal";
 import Breadcrumb from "@/components/ui/Breadcrumb";
@@ -30,13 +33,16 @@ import MobileNav from "@/components/lecturer/navigation/MobileNav";
 import ViewAssessmentModal from "@/components/lecturer/ViewAssessmentModal";
 import EditAssessmentModal from "@/components/lecturer/EditAssessmentModal";
 import DeleteAssessmentModal from "@/components/lecturer/DeleteAssessmentModal";
+import LibraryWorkspace from "@/components/lecturer/courses/LibraryWorkspace";
+import SubmissionsWorkspace from "@/components/lecturer/courses/SubmissionsWorkspace";
+import StudentsWorkspace from "@/components/lecturer/courses/StudentsWorkspace";
+import CoursesManagerInline from "@/components/lecturer/CoursesManagerInline";
 
 // API imports
 import { courseApi, unitApi, assessmentApi } from "../../../services/api";
 import { useApi } from "../../../hooks/useApi";
 import { 
   transformCourseToUI, 
-  transformCourseToLegacy, 
   transformAssessmentToLegacy,
   transformLegacyToApiAssessment,
   groupUnitsByCourse 
@@ -44,21 +50,28 @@ import {
 
 const AssessmentsDashboard: React.FC = () => {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const pathname = usePathname();
+
+  // Shared course / unit / week context for all course tools
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedUnit, setSelectedUnit] = useState("");
   const [selectedWeek, setSelectedWeek] = useState(0);
+
+  // Which tool the lecturer is currently using under Courses
+  type ActiveAction = "assessments" | "library" | "submissions" | "students" | "manage";
+  const [activeAction, setActiveAction] = useState<ActiveAction>("assessments");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isAccessMinimized, setIsAccessMinimized] = useState(false);
-  const [assessments, setAssessments] = useState<LegacyAssessment[]>([]);
-  const [courses, setCourses] = useState<LegacyCourse[]>(dummyCourses);
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [message, setMessage] = useState<Message | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   
   // Modal states
-  const [viewingAssessment, setViewingAssessment] = useState<LegacyAssessment | null>(null);
-  const [editingAssessment, setEditingAssessment] = useState<LegacyAssessment | null>(null);
-  const [deletingAssessment, setDeletingAssessment] = useState<LegacyAssessment | null>(null);
+  const [viewingAssessment, setViewingAssessment] = useState<Assessment | null>(null);
+  const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(null);
+  const [deletingAssessment, setDeletingAssessment] = useState<Assessment | null>(null);
 
   // API hooks
   const { 
@@ -86,8 +99,7 @@ const AssessmentsDashboard: React.FC = () => {
           transformCourseToUI(course, index)
         );
         const groupedCourses = groupUnitsByCourse(coursesWithColors, apiUnits);
-        const legacyCourses = groupedCourses.map(transformCourseToLegacy);
-        setCourses(legacyCourses);
+        setCourses(groupedCourses);
       } catch (error) {
         console.error('Error transforming courses:', error);
         showMessage('error', 'Failed to load courses. Using offline data.');
@@ -135,8 +147,10 @@ const AssessmentsDashboard: React.FC = () => {
 
   // Get breadcrumb items
   const getBreadcrumbItems = () => {
+    const rootLabel = pathname?.startsWith("/lecturer/courses") ? "Courses" : "Assessments";
+    const rootHref = pathname?.startsWith("/lecturer/courses") ? "/lecturer/courses" : "/lecturer/assessments";
     const items = [
-      { label: "Assessments", icon: BookMarked, href: "#" }
+      { label: rootLabel, icon: BookMarked, href: rootHref }
     ];
 
     if (selectedCourse) {
@@ -147,7 +161,7 @@ const AssessmentsDashboard: React.FC = () => {
         if (selectedUnit) {
           const unit = course.units.find(u => u.id === selectedUnit);
           if (unit) {
-            items.push({ label: unit.name, icon: BookOpen, href: "#" });
+            items.push({ label: unit.unit_name, icon: BookOpen, href: "#" });
             
             if (selectedWeek > 0) {
               items.push({ label: `Week ${selectedWeek}`, icon: Calendar, href: "#" });
@@ -158,6 +172,15 @@ const AssessmentsDashboard: React.FC = () => {
     }
 
     return items;
+  };
+
+  const handleQuestionCountUpdate = (assessmentId: string, nextCount: number) => {
+    setAssessments((prev) =>
+      prev.map((a) => (a.id === assessmentId ? { ...a, number_of_questions: nextCount } : a))
+    );
+    setEditingAssessment((prev) =>
+      prev && prev.id === assessmentId ? { ...prev, number_of_questions: nextCount } : prev
+    );
   };
 
   const showMessage = (type: 'success' | 'error' | 'info', text: string) => {
@@ -247,6 +270,16 @@ const AssessmentsDashboard: React.FC = () => {
         prev.map(a => a.id === id ? { ...a, verified: true } : a)
       );
       
+      // Update viewingAssessment if it's currently open
+      if (viewingAssessment && viewingAssessment.id === id) {
+        setViewingAssessment({ ...viewingAssessment, verified: true });
+      }
+      
+      // Update editingAssessment if it's currently open
+      if (editingAssessment && editingAssessment.id === id) {
+        setEditingAssessment({ ...editingAssessment, verified: true });
+      }
+      
       showMessage('success', `Assessment "${response.title}" verified successfully!`);
     } catch (error) {
       console.error('Verify assessment error:', error);
@@ -255,6 +288,81 @@ const AssessmentsDashboard: React.FC = () => {
   };
 
   const canCreateAssessment = selectedCourse && selectedUnit && selectedWeek > 0;
+
+  // Switch between tools within the Courses workspace
+  const handleGoToLibrary = () => {
+    if (!canCreateAssessment) return;
+    setActiveAction("library");
+  };
+
+  const handleGoToSubmissions = () => {
+    if (!selectedCourse || !selectedUnit) return;
+    setActiveAction("submissions");
+  };
+
+  const handleGoToStudents = () => {
+    if (!selectedCourse) return;
+    setActiveAction("students");
+  };
+
+  const handleGoToCourseManagement = () => {
+    // Open inline manager within the Courses workspace instead of navigating away
+    setActiveAction("manage");
+  };
+
+  // Determine whether the currently selected action has the required selection
+  const hasRequiredSelection = (() => {
+    switch (activeAction) {
+      case "assessments":
+      case "library":
+        return selectedCourse && selectedUnit && selectedWeek > 0;
+      case "submissions":
+        return selectedCourse && selectedUnit;
+      case "students":
+        return selectedCourse;
+      case "manage":
+        return true; // manage doesn't require any selection
+      default:
+        return false;
+    }
+  })();
+
+  const getInstructions = () => {
+    switch (activeAction) {
+      case "assessments":
+      case "library":
+        return {
+          title: "Get Started in Courses workspace",
+          desc: "Select a course, unit, and week, then choose Assessments or Library above.",
+          steps: [
+            { icon: GraduationCap, label: "Choose a course" },
+            { icon: BookOpen, label: "Select a unit" },
+            { icon: Calendar, label: "Pick a week" },
+          ],
+        };
+      case "submissions":
+        return {
+          title: "Open Submissions",
+          desc: "Select a course and a unit to view submissions for that unit.",
+          steps: [
+            { icon: GraduationCap, label: "Choose a course" },
+            { icon: BookOpen, label: "Select a unit" },
+          ],
+        };
+      case "students":
+        return {
+          title: "View Students",
+          desc: "Select a course to view enrolled students.",
+          steps: [{ icon: GraduationCap, label: "Choose a course" }],
+        };
+      default:
+        return {
+          title: "Get Started in Courses workspace",
+          desc: "Select the required context above.",
+          steps: [],
+        };
+    }
+  };
 
   // Calculate sidebar width for proper positioning
   const getSidebarWidth = () => {
@@ -321,18 +429,50 @@ const AssessmentsDashboard: React.FC = () => {
         />
 
         <div className="flex-1 overflow-auto">
-          <Header title="Assessments" showWeekSelector={false} />
+          {/* This is the central Courses workspace; actions are chosen inside */}
+          <Header title="Courses" showWeekSelector={false} />
 
           <main className="p-4 lg:p-6">
-            {/* Mobile Filter Button */}
-            <div className="flex justify-between items-center mb-4 md:hidden">
-              <h1 className="text-xl font-bold text-gray-900">Assessments</h1>
-              <button
-                onClick={() => setMobileNavOpen(true)}
-                className="p-2 bg-white border border-gray-200 rounded-lg shadow-sm text-emerald-600"
-              >
-                <Filter className="w-5 h-5" />
-              </button>
+            {/* Mobile: course filters + action chips */}
+            <div className="flex flex-col gap-3 mb-4 md:hidden">
+              <div className="flex justify-between items-center">
+                <h1 className="text-xl font-bold text-gray-900">Courses</h1>
+                <button
+                  onClick={() => setMobileNavOpen(true)}
+                  className="p-2 bg-white border border-gray-200 rounded-lg shadow-sm text-emerald-600"
+                >
+                  <Filter className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={handleGoToLibrary}
+                  disabled={!canCreateAssessment}
+                  className="px-3 py-2 text-xs font-semibold rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Open Library for this week
+                </button>
+                <button
+                  onClick={handleGoToSubmissions}
+                  disabled={!selectedCourse || !selectedUnit}
+                  className="px-3 py-2 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  View Submissions for this unit
+                </button>
+                <button
+                  onClick={handleGoToStudents}
+                  disabled={!selectedCourse}
+                  className="px-3 py-2 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Students in this course
+                </button>
+                <button
+                  onClick={handleGoToCourseManagement}
+                  className="px-3 py-2 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 bg-white"
+                >
+                  Manage Courses & Units
+                </button>
+              </div>
             </div>
             
             {/* Breadcrumb */}
@@ -344,109 +484,218 @@ const AssessmentsDashboard: React.FC = () => {
             </AnimatePresence>
 
             <div className="max-w-8xl mx-auto">
-              <div className="mb-6 lg:mb-8">
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Assessment Management</h1>
-                <p className="text-base lg:text-lg text-gray-600">Create, manage, and organize your assessments with AI assistance</p>
+              {/* Desktop: page heading + primary actions selector */}
+              <div className="mb-4 lg:mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                    Courses workspace
+                  </h1>
+                  <p className="text-base lg:text-lg text-gray-600">
+                    Select a course, unit, and week, then choose what you want to work on.
+                  </p>
+                </div>
+                <div className="hidden md:flex flex-wrap gap-3">
+                  <button
+                    onClick={handleGoToLibrary}
+                    disabled={!canCreateAssessment}
+                    className="px-4 py-2 text-sm font-semibold rounded-xl border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Open Library for this course / unit / week
+                  </button>
+                  <button
+                    onClick={handleGoToSubmissions}
+                    disabled={!selectedCourse || !selectedUnit}
+                    className="px-4 py-2 text-sm font-semibold rounded-xl border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    View Submissions for this unit
+                  </button>
+                  <button
+                    onClick={handleGoToStudents}
+                    disabled={!selectedCourse}
+                    className="px-4 py-2 text-sm font-semibold rounded-xl border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    <Users className="w-4 h-4" />
+                    Students in this course
+                  </button>
+                  <button
+                    onClick={handleGoToCourseManagement}
+                    className="px-4 py-2 text-sm font-semibold rounded-xl border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  >
+                    <Layers3 className="w-4 h-4" />
+                    Manage Courses & Units
+                  </button>
+                </div>
               </div>
 
-              {!canCreateAssessment ? (
-                <div className="text-center py-12 lg:py-16">
-                  <div className="max-w-md mx-auto">
-                    <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                      <Settings className="w-10 h-10 lg:w-12 lg:h-12 text-emerald-600" />
-                    </div>
-                    <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-3">Get Started</h3>
-                    <p className="text-base lg:text-lg text-gray-600 mb-6">
-                      Select a course, unit, and week to view and create assessments
-                    </p>
-                    <div className="space-y-3 text-sm text-gray-500">
-                      <div className="flex items-center justify-center p-3 bg-white rounded-xl shadow-sm border border-gray-200">
-                        <span className="mr-3 w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold">1</span>
-                        <GraduationCap className="w-4 h-4 mr-2 text-emerald-600" />
-                        <span className="font-semibold">Choose a course</span>
-                      </div>
-                      <div className="flex items-center justify-center p-3 bg-white rounded-xl shadow-sm border border-gray-200">
-                        <span className="mr-3 w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold">2</span>
-                        <BookOpen className="w-4 h-4 mr-2 text-emerald-600" />
-                        <span className="font-semibold">Select a unit</span>
-                      </div>
-                      <div className="flex items-center justify-center p-3 bg-white rounded-xl shadow-sm border border-gray-200">
-                        <span className="mr-3 w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold">3</span>
-                        <Calendar className="w-4 h-4 mr-2 text-emerald-600" />
-                        <span className="font-semibold">Pick a week</span>
-                      </div>
-                    </div>
-                  </div>
+              {/* Action switcher for what should be loaded under this course context */}
+              <div className="mb-6 border-b border-gray-200">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setActiveAction("assessments")}
+                    className={`px-4 py-2 text-sm rounded-t-lg border-b-2 transition-colors ${
+                      activeAction === "assessments"
+                        ? "border-emerald-500 text-emerald-700 font-semibold"
+                        : "border-transparent text-gray-600 hover:text-emerald-700 hover:border-emerald-200"
+                    }`}
+                  >
+                    Assessments
+                  </button>
+                  <button
+                    onClick={handleGoToLibrary}
+                    disabled={!canCreateAssessment}
+                    className={`px-4 py-2 text-sm rounded-t-lg border-b-2 transition-colors ${
+                      activeAction === "library"
+                        ? "border-emerald-500 text-emerald-700 font-semibold"
+                        : "border-transparent text-gray-600 hover:text-emerald-700 hover:border-emerald-200"
+                    } ${!canCreateAssessment ? "opacity-40 cursor-not-allowed" : ""}`}
+                  >
+                    Library
+                  </button>
+                  <button
+                    onClick={handleGoToSubmissions}
+                    disabled={!selectedCourse || !selectedUnit}
+                    className={`px-4 py-2 text-sm rounded-t-lg border-b-2 transition-colors ${
+                      activeAction === "submissions"
+                        ? "border-emerald-500 text-emerald-700 font-semibold"
+                        : "border-transparent text-gray-600 hover:text-emerald-700 hover:border-emerald-200"
+                    } ${!selectedCourse || !selectedUnit ? "opacity-40 cursor-not-allowed" : ""}`}
+                  >
+                    Submissions
+                  </button>
+                  <button
+                    onClick={handleGoToStudents}
+                    disabled={!selectedCourse}
+                    className={`px-4 py-2 text-sm rounded-t-lg border-b-2 transition-colors ${
+                      activeAction === "students"
+                        ? "border-emerald-500 text-emerald-700 font-semibold"
+                        : "border-transparent text-gray-600 hover:text-emerald-700 hover:border-emerald-200"
+                    } ${!selectedCourse ? "opacity-40 cursor-not-allowed" : ""}`}
+                  >
+                    Students
+                  </button>
                 </div>
-              ) : (
-                <>
-                  {/* Creation Form State - Hide everything else when creating */}
-                  {showCreateForm ? (
-                    <div className="mb-6">
-                      <AssessmentForm
-                        selectedCourse={selectedCourse}
-                        selectedUnit={selectedUnit}
-                        selectedWeek={selectedWeek}
-                        courses={courses}
-                        onSubmit={handleCreateAssessment}
-                        onCancel={() => setShowCreateForm(false)}
-                        loading={loading}
-                      />
-                    </div>
-                  ) : (
-                    <>
-                      <StatsCards assessments={filteredAssessments} />
+              </div>
 
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                        <div>
-                          <h2 className="text-xl lg:text-2xl font-bold text-gray-900">
-                            Assessments for Week {selectedWeek}
-                          </h2>
-                          <p className="text-base text-gray-600 mt-1">
-                            {filteredAssessments.length} assessment{filteredAssessments.length !== 1 ? 's' : ''} found
-                          </p>
+              {/* MAIN BODY - depends on selected action */}
+              {!hasRequiredSelection ? (
+                (() => {
+                  const info = getInstructions();
+                  return (
+                    <div className="text-center py-12 lg:py-16">
+                      <div className="max-w-md mx-auto">
+                        <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                          <Settings className="w-10 h-10 lg:w-12 lg:h-12 text-emerald-600" />
                         </div>
-                        <button
-                          onClick={() => setShowCreateForm(true)}
-                          className="flex items-center px-5 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-bold shadow-lg"
-                        >
-                          <Plus className="w-5 h-5 mr-2" />
-                          Create Assessment
-                        </button>
-                      </div>
-
-                      {filteredAssessments.length === 0 ? (
-                        <div className="text-center py-12 lg:py-16 bg-white rounded-xl border border-gray-200 shadow">
-                          <BookMarked className="w-16 h-16 lg:w-20 lg:h-20 text-gray-300 mx-auto mb-5" />
-                          <h3 className="text-xl font-bold text-gray-600 mb-3">No assessments yet</h3>
-                          <p className="text-base text-gray-500 mb-6">
-                            Create your first assessment for this week to get started
-                          </p>
-                          <button
-                            onClick={() => setShowCreateForm(true)}
-                            className="flex items-center px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-bold mx-auto shadow"
-                          >
-                            <Plus className="w-5 h-5 mr-2" />
-                            Create First Assessment
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                          {filteredAssessments.map((assessment, index) => (
-                            <AssessmentCard
-                              key={assessment.id}
-                              assessment={assessment}
-                              courses={courses}
-                              onEdit={setEditingAssessment}
-                              onDelete={setDeletingAssessment}
-                              onView={setViewingAssessment}
-                              onVerify={handleVerifyAssessment}
-                              index={index}
-                            />
+                        <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-3">{info.title}</h3>
+                        <p className="text-base lg:text-lg text-gray-600 mb-6">{info.desc}</p>
+                        <div className="space-y-3 text-sm text-gray-500">
+                          {info.steps.map((s, i) => (
+                            <div key={i} className="flex items-center justify-center p-3 bg-white rounded-xl shadow-sm border border-gray-200">
+                              <span className="mr-3 w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold">{i + 1}</span>
+                              <s.icon className="w-4 h-4 mr-2 text-emerald-600" />
+                              <span className="font-semibold">{s.label}</span>
+                            </div>
                           ))}
                         </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              ) : (
+                <>
+                  {activeAction === "assessments" && (
+                    <>
+                      {/* Creation Form State - Hide everything else when creating */}
+                      {showCreateForm ? (
+                        <div className="mb-6">
+                          <AssessmentForm
+                            selectedCourse={selectedCourse}
+                            selectedUnit={selectedUnit}
+                            selectedWeek={selectedWeek}
+                            courses={courses}
+                            onSubmit={handleCreateAssessment}
+                            onCancel={() => setShowCreateForm(false)}
+                            loading={loading}
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <StatsCards assessments={filteredAssessments} />
+
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                            <div>
+                              <h2 className="text-xl lg:text-2xl font-bold text-gray-900">
+                                Assessments for Week {selectedWeek}
+                              </h2>
+                              <p className="text-base text-gray-600 mt-1">
+                                {filteredAssessments.length} assessment{filteredAssessments.length !== 1 ? 's' : ''} found
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => setShowCreateForm(true)}
+                              className="flex items-center px-5 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-bold shadow-lg"
+                            >
+                              <Plus className="w-5 h-5 mr-2" />
+                              Create Assessment
+                            </button>
+                          </div>
+
+                          {filteredAssessments.length === 0 ? (
+                            <div className="text-center py-12 lg:py-16 bg-white rounded-xl border border-gray-200 shadow">
+                              <BookMarked className="w-16 h-16 lg:w-20 lg:h-20 text-gray-300 mx-auto mb-5" />
+                              <h3 className="text-xl font-bold text-gray-600 mb-3">No assessments yet</h3>
+                              <p className="text-base text-gray-500 mb-6">
+                                Create your first assessment for this week to get started
+                              </p>
+                              <button
+                                onClick={() => setShowCreateForm(true)}
+                                className="flex items-center px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-bold mx-auto shadow"
+                              >
+                                <Plus className="w-5 h-5 mr-2" />
+                                Create First Assessment
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                              {filteredAssessments.map((assessment, index) => (
+                                <AssessmentCard
+                                  key={assessment.id}
+                                  assessment={assessment}
+                                  courses={courses}
+                                  onEdit={setEditingAssessment}
+                                  onDelete={setDeletingAssessment}
+                                  onView={setViewingAssessment}
+                                  onVerify={handleVerifyAssessment}
+                                  index={index}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </>
                       )}
                     </>
+                  )}
+
+                  {activeAction === "library" && (
+                    <LibraryWorkspace
+                      selectedCourseId={selectedCourse}
+                      selectedUnitId={selectedUnit}
+                      selectedWeek={selectedWeek}
+                    />
+                  )}
+
+                  {activeAction === "submissions" && (
+                    <SubmissionsWorkspace
+                      selectedCourseId={selectedCourse}
+                      selectedUnitId={selectedUnit}
+                    />
+                  )}
+
+                  {activeAction === "students" && (
+                    <StudentsWorkspace selectedCourseId={selectedCourse} />
+                  )}
+                  {activeAction === "manage" && (
+                    <CoursesManagerInline />
                   )}
                 </>
               )}
@@ -489,6 +738,7 @@ const AssessmentsDashboard: React.FC = () => {
             onUpdate={handleUpdateAssessment}
             onCancel={() => setEditingAssessment(null)}
             loading={loading}
+            onQuestionCountUpdate={handleQuestionCountUpdate}
           />
         )}
       </Modal>

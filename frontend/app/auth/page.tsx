@@ -97,6 +97,22 @@ export default function AuthPage() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [isSkeletonLoading, setIsSkeletonLoading] = useState(true)
 
+  // Auth mode + signup state
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login")
+  const [signupStep, setSignupStep] = useState<1 | 2>(1)
+  const [signupRole, setSignupRole] = useState<"student" | "lecturer">("student")
+  const [signupEmail, setSignupEmail] = useState("")
+  const [signupPassword, setSignupPassword] = useState("")
+  const [signupCode, setSignupCode] = useState("")
+  const [signupFirstname, setSignupFirstname] = useState("")
+  const [signupSurname, setSignupSurname] = useState("")
+  const [signupOthernames, setSignupOthernames] = useState("")
+  const [signupRegNumber, setSignupRegNumber] = useState("")
+  const [signupUnitJoinCode, setSignupUnitJoinCode] = useState("")
+  const [signupError, setSignupError] = useState("")
+  const [isSignupLoading, setIsSignupLoading] = useState(false)
+  const [signupSuccessMessage, setSignupSuccessMessage] = useState("")
+
   // Skeleton loading effect
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -154,6 +170,133 @@ export default function AuthPage() {
     if (value) validatePassword(value)
   }
 
+  const resetSignupState = () => {
+    setSignupStep(1)
+    setSignupEmail("")
+    setSignupPassword("")
+    setSignupCode("")
+    setSignupFirstname("")
+    setSignupSurname("")
+    setSignupOthernames("")
+    setSignupRegNumber("")
+    setSignupUnitJoinCode("")
+    setSignupError("")
+    setSignupSuccessMessage("")
+    setEmailError("")
+    setPasswordError("")
+  }
+
+  const handleRequestVerificationCode = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    const isEmailValid = validateEmail(signupEmail)
+    if (!isEmailValid) {
+      return
+    }
+
+    setIsSignupLoading(true)
+    setSignupError("")
+    setSignupSuccessMessage("")
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/auth/register/request-code`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email: signupEmail,
+          role: signupRole,
+        }),
+      })
+
+      const body = JSON.stringify({
+        email: signupEmail,
+        role: signupRole,
+      })
+
+      console.log("body request sent: ", body)
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSignupStep(2)
+        setSignupSuccessMessage("Verification code sent to your institutional email.")
+      } else {
+        setSignupError(data.error || data.message || "Failed to send verification code. Please try again.")
+      }
+    } catch (err) {
+      console.error("Request verification code error:", err)
+      setSignupError("Network error. Please check your connection and try again.")
+    } finally {
+      setIsSignupLoading(false)
+    }
+  }
+
+  const handleCompleteSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    const isEmailValid = validateEmail(signupEmail)
+    const isPasswordValid = validatePassword(signupPassword)
+
+    if (!isEmailValid || !isPasswordValid || !signupCode) {
+      if (!signupCode) {
+        setSignupError("Verification code is required")
+      }
+      return
+    }
+
+    setIsSignupLoading(true)
+    setSignupError("")
+    setSignupSuccessMessage("")
+
+    const payload: any = {
+      email: signupEmail,
+      password: signupPassword,
+      role: signupRole,
+      verification_code: signupCode,
+      firstname: signupFirstname,
+      surname: signupSurname,
+      othernames: signupOthernames || undefined,
+    }
+
+    if (signupRole === "student") {
+      payload.reg_number = signupRegNumber
+      if (signupUnitJoinCode.trim()) {
+        payload.unit_join_code = signupUnitJoinCode.trim()
+      }
+    }
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSignupSuccessMessage("Account created successfully. You can now log in.")
+        // Pre-fill login email and switch to login mode
+        setEmail(signupEmail)
+        setAuthMode("login")
+        setSignupStep(1)
+      } else {
+        setSignupError(data.error || data.message || "Registration failed. Please check your details and try again.")
+      }
+    } catch (err) {
+      console.error("Complete signup error:", err)
+      setSignupError("Network error. Please check your connection and try again.")
+    } finally {
+      setIsSignupLoading(false)
+    }
+  }
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
@@ -168,9 +311,7 @@ export default function AuthPage() {
     setError("")
 
     try {
-
       const response = await fetch(`${apiBaseUrl}/auth/login`, {
-
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -187,20 +328,17 @@ export default function AuthPage() {
 
         // Delay redirect to show success animation
         setTimeout(() => {
-          const user = data
-          switch ((user.role || "").toLowerCase()) {
-          case 'student':
-            window.location.href = '/hobby';
-            break;
-          case 'lecturer':
-          case 'teacher':
-            window.location.href = '/lecturer/dashboard';
-            break;
-          case 'admin':
-            window.location.href = '/admin/dashboard';
-            break;
-          default:
-            window.location.href = '/hobby';
+          const role = (data.role || "").toLowerCase()
+          switch (role) {
+            case "student":
+              window.location.href = "/hobby"
+              break
+            case "lecturer":
+            case "teacher":
+              window.location.href = "/lecturer/dashboard"
+              break
+            default:
+              window.location.href = "/hobby"
           }
         }, 2000)
       } else {
@@ -524,7 +662,7 @@ export default function AuthPage() {
                 transition={{ delay: 0.2 }}
                 className="text-3xl font-bold text-gray-900 mb-2"
               >
-                Welcome back
+                {authMode === "login" ? "Welcome back" : "Create your account"}
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -532,219 +670,585 @@ export default function AuthPage() {
                 transition={{ delay: 0.3 }}
                 className="text-gray-600"
               >
-                Continue your AI-powered learning journey
+                {authMode === "login"
+                  ? "Continue your AI-powered learning journey"
+                  : "Sign up with your institutional email to get started"}
               </motion.p>
             </div>
-
-            {/* Login Form */}
-            <form onSubmit={handleLogin} className="space-y-6">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
-              >
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <div className="relative group">
-                  <HiMail
-                    className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${
-                      emailError ? "text-red-400" : "text-gray-400 group-focus-within:text-emerald-500"
-                    }`}
-                  />
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={handleEmailChange}
-                    placeholder="your@email.com"
-                    className={`w-full pl-12 pr-4 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
-                      emailError
-                        ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-                        : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
-                    }`}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-                <AnimatePresence>
-                  {emailError && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="text-red-500 text-sm mt-1 flex items-center"
-                    >
-                      <HiExclamationCircle className="w-4 h-4 mr-1" />
-                      {emailError}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    className="text-sm font-semibold text-emerald-600 hover:text-emerald-500 transition-colors"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                <div className="relative group">
-                  <HiLockClosed
-                    className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${
-                      passwordError ? "text-red-400" : "text-gray-400 group-focus-within:text-emerald-500"
-                    }`}
-                  />
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={handlePasswordChange}
-                    placeholder="••••••••"
-                    className={`w-full pl-12 pr-12 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
-                      passwordError
-                        ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-                        : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
-                    }`}
-                    required
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    {showPassword ? <HiEyeOff className="w-5 h-5" /> : <HiEye className="w-5 h-5" />}
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {passwordError && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="text-red-500 text-sm mt-1 flex items-center"
-                    >
-                      <HiExclamationCircle className="w-4 h-4 mr-1" />
-                      {passwordError}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-200 flex items-center"
+            {/* Auth mode toggle */}
+            <div className="flex items-center justify-center lg:justify-start">
+              <div className="inline-flex rounded-full bg-gray-100 p-1 text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode("login")
+                    setSignupError("")
+                    setSignupSuccessMessage("")
+                  }}
+                  className={`px-4 py-2 rounded-full transition-all ${
+                    authMode === "login"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-800"
+                  }`}
                 >
-                  <HiExclamationCircle className="w-5 h-5 mr-3 flex-shrink-0" />
-                  {error}
-                </motion.div>
-              )}
-
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
-                className="flex items-center"
-              >
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
-                />
-                <label htmlFor="remember-me" className="ml-3 block text-sm text-gray-700">
-                  Keep me signed in
-                </label>
-              </motion.div>
-
-              <motion.button
-                type="submit"
-                disabled={isLoading || !!emailError || !!passwordError}
-                whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.3)" }}
-                whileTap={{ scale: 0.98 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7, duration: 0.5 }}
-                className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"
-                    />
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    Access IntelliLearn
-                    <HiArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </motion.button>
-
-              <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">or continue with</span>
-                </div>
+                  Sign in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode("signup")
+                    resetSignupState()
+                  }}
+                  className={`px-4 py-2 rounded-full transition-all ${
+                    authMode === "signup"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-800"
+                  }`}
+                >
+                  Sign up
+                </button>
               </div>
+            </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8, duration: 0.5 }}
-                className="grid grid-cols-3 gap-4"
-              >
-                {[
-                  { name: "Google", icon: SiGoogle, color: "hover:text-red-500 hover:border-red-200 hover:bg-red-50" },
-                  {
-                    name: "Facebook",
-                    icon: SiFacebook,
-                    color: "hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50",
-                  },
-                  { name: "Apple", icon: SiApple, color: "hover:text-gray-800 hover:border-gray-300 hover:bg-gray-50" },
-                ].map((provider) => (
-                  <motion.button
-                    key={provider.name}
-                    type="button"
-                    whileHover={{ y: -2, scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-gray-600 transition-all ${provider.color}`}
+            {authMode === "login" ? (
+              <>
+                {/* Login Form */}
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4, duration: 0.5 }}
                   >
-                    <provider.icon className="w-5 h-5" />
-                  </motion.button>
-                ))}
-              </motion.div>
-            </form>
+                    <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative group">
+                      <HiMail
+                        className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${
+                          emailError ? "text-red-400" : "text-gray-400 group-focus-within:text-emerald-500"
+                        }`}
+                      />
+                      <input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={handleEmailChange}
+                        placeholder="your@email.com"
+                        className={`w-full pl-12 pr-4 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
+                          emailError
+                            ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                            : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
+                        }`}
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <AnimatePresence>
+                      {emailError && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="text-red-500 text-sm mt-1 flex items-center"
+                        >
+                          <HiExclamationCircle className="w-4 h-4 mr-1" />
+                          {emailError}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9, duration: 0.5 }}
-              className="text-center text-sm text-gray-600"
-            >
-              Need access?{" "}
-              <button className="font-semibold text-emerald-600 hover:text-emerald-500 transition-colors">
-                Contact your institution
-              </button>
-            </motion.p>
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5, duration: 0.5 }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
+                        Password
+                      </label>
+                      <button
+                        type="button"
+                        className="text-sm font-semibold text-emerald-600 hover:text-emerald-500 transition-colors"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                    <div className="relative group">
+                      <HiLockClosed
+                        className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${
+                          passwordError ? "text-red-400" : "text-gray-400 group-focus-within:text-emerald-500"
+                        }`}
+                      />
+                      <input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={handlePasswordChange}
+                        placeholder="••••••••"
+                        className={`w-full pl-12 pr-12 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
+                          passwordError
+                            ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                            : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
+                        }`}
+                        required
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showPassword ? <HiEyeOff className="w-5 h-5" /> : <HiEye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    <AnimatePresence>
+                      {passwordError && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="text-red-500 text-sm mt-1 flex items-center"
+                        >
+                          <HiExclamationCircle className="w-4 h-4 mr-1" />
+                          {passwordError}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-200 flex items-center"
+                    >
+                      <HiExclamationCircle className="w-5 h-5 mr-3 flex-shrink-0" />
+                      {error}
+                    </motion.div>
+                  )}
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.6, duration: 0.5 }}
+                    className="flex items-center"
+                  >
+                    <input
+                      id="remember-me"
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                    />
+                    <label htmlFor="remember-me" className="ml-3 block text-sm text-gray-700">
+                      Keep me signed in
+                    </label>
+                  </motion.div>
+
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading || !!emailError || !!passwordError}
+                    whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.3)" }}
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7, duration: 0.5 }}
+                    className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                          className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"
+                        />
+                        Signing in...
+                      </>
+                    ) : (
+                      <>
+                        Access IntelliLearn
+                        <HiArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </motion.button>
+
+                  <div className="relative my-8">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-4 bg-white text-gray-500">or continue with</span>
+                    </div>
+                  </div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8, duration: 0.5 }}
+                    className="grid grid-cols-3 gap-4"
+                  >
+                    {[
+                      { name: "Google", icon: SiGoogle, color: "hover:text-red-500 hover:border-red-200 hover:bg-red-50" },
+                      {
+                        name: "Facebook",
+                        icon: SiFacebook,
+                        color: "hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50",
+                      },
+                      { name: "Apple", icon: SiApple, color: "hover:text-gray-800 hover:border-gray-300 hover:bg-gray-50" },
+                    ].map((provider) => (
+                      <motion.button
+                        key={provider.name}
+                        type="button"
+                        whileHover={{ y: -2, scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-gray-600 transition-all ${provider.color}`}
+                      >
+                        <provider.icon className="w-5 h-5" />
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                </form>
+
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9, duration: 0.5 }}
+                  className="text-center text-sm text-gray-600"
+                >
+                  Need access?{" "}
+                  <button className="font-semibold text-emerald-600 hover:text-emerald-500 transition-colors">
+                    Contact your institution
+                  </button>
+                </motion.p>
+              </>
+            ) : (
+              <>
+                {signupStep === 1 ? (
+                  <form onSubmit={handleRequestVerificationCode} className="space-y-6">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4, duration: 0.5 }}
+                    >
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Sign up as</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setSignupRole("student")}
+                          className={`flex items-center justify-center rounded-xl border px-3 py-3 text-sm font-medium transition-all ${
+                            signupRole === "student"
+                              ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                              : "border-gray-200 bg-white text-gray-700 hover:border-emerald-300"
+                          }`}
+                        >
+                          Student
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSignupRole("lecturer")}
+                          className={`flex items-center justify-center rounded-xl border px-3 py-3 text-sm font-medium transition-all ${
+                            signupRole === "lecturer"
+                              ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                              : "border-gray-200 bg-white text-gray-700 hover:border-emerald-300"
+                          }`}
+                        >
+                          Lecturer
+                        </button>
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5, duration: 0.5 }}
+                    >
+                      <label htmlFor="signup-email" className="block text-sm font-semibold text-gray-700 mb-2">
+                        Institutional Email
+                      </label>
+                      <div className="relative group">
+                        <HiMail
+                          className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${
+                            emailError ? "text-red-400" : "text-gray-400 group-focus-within:text-emerald-500"
+                          }`}
+                        />
+                        <input
+                          id="signup-email"
+                          type="email"
+                          value={signupEmail}
+                          onChange={(e) => {
+                            setSignupEmail(e.target.value)
+                            if (e.target.value) validateEmail(e.target.value)
+                          }}
+                          placeholder="you@institution.ac.ke"
+                          className={`w-full pl-12 pr-4 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
+                            emailError
+                              ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                              : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
+                          }`}
+                          required
+                          disabled={isSignupLoading}
+                        />
+                      </div>
+                      <AnimatePresence>
+                        {emailError && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="text-red-500 text-sm mt-1 flex items-center"
+                          >
+                            <HiExclamationCircle className="w-4 h-4 mr-1" />
+                            {emailError}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+
+                    {signupError && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-200 flex items-center"
+                      >
+                        <HiExclamationCircle className="w-5 h-5 mr-3 flex-shrink-0" />
+                        {signupError}
+                      </motion.div>
+                    )}
+
+                    {signupSuccessMessage && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-4 bg-emerald-50 text-emerald-700 text-sm rounded-xl border border-emerald-200"
+                      >
+                        {signupSuccessMessage}
+                      </motion.div>
+                    )}
+
+                    <motion.button
+                      type="submit"
+                      disabled={isSignupLoading || !!emailError}
+                      whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.3)" }}
+                      whileTap={{ scale: 0.98 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7, duration: 0.5 }}
+                      className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSignupLoading ? (
+                        <>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                            className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"
+                          />
+                          Sending code...
+                        </>
+                      ) : (
+                        <>
+                          Send verification code
+                          <HiArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </motion.button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleCompleteSignup} className="space-y-6">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4, duration: 0.5 }}
+                    >
+                      <label htmlFor="signup-code" className="block text-sm font-semibold text-gray-700 mb-2">
+                        Verification Code
+                      </label>
+                      <input
+                        id="signup-code"
+                        type="text"
+                        value={signupCode}
+                        onChange={(e) => setSignupCode(e.target.value)}
+                        placeholder="Enter the 6-digit code sent to your email"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        required
+                        disabled={isSignupLoading}
+                      />
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5, duration: 0.5 }}
+                    >
+                      <label htmlFor="signup-password" className="block text-sm font-semibold text-gray-700 mb-2">
+                        Password
+                      </label>
+                      <div className="relative group">
+                        <HiLockClosed className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          id="signup-password"
+                          type={showPassword ? "text" : "password"}
+                          value={signupPassword}
+                          onChange={(e) => {
+                            setSignupPassword(e.target.value)
+                            if (e.target.value) validatePassword(e.target.value)
+                          }}
+                          placeholder="Create a strong password"
+                          className={`w-full pl-12 pr-12 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
+                            passwordError
+                              ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                              : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
+                          }`}
+                          required
+                          disabled={isSignupLoading}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showPassword ? <HiEyeOff className="w-5 h-5" /> : <HiEye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </motion.div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.6, duration: 0.5 }}
+                      >
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
+                        <input
+                          type="text"
+                          value={signupFirstname}
+                          onChange={(e) => setSignupFirstname(e.target.value)}
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                          required
+                          disabled={isSignupLoading}
+                        />
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.6, duration: 0.5 }}
+                      >
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Surname</label>
+                        <input
+                          type="text"
+                          value={signupSurname}
+                          onChange={(e) => setSignupSurname(e.target.value)}
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                          required
+                          disabled={isSignupLoading}
+                        />
+                      </motion.div>
+                    </div>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.7, duration: 0.5 }}
+                    >
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Other Names (optional)</label>
+                      <input
+                        type="text"
+                        value={signupOthernames}
+                        onChange={(e) => setSignupOthernames(e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        disabled={isSignupLoading}
+                      />
+                    </motion.div>
+
+                    {signupRole === "student" && (
+                      <>
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.8, duration: 0.5 }}
+                        >
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Registration Number</label>
+                          <input
+                            type="text"
+                            value={signupRegNumber}
+                            onChange={(e) => setSignupRegNumber(e.target.value)}
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                            required
+                            disabled={isSignupLoading}
+                          />
+                        </motion.div>
+
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.9, duration: 0.5 }}
+                        >
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Unit Join Code (optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={signupUnitJoinCode}
+                            onChange={(e) => setSignupUnitJoinCode(e.target.value)}
+                            placeholder="Enter unit join code if you have one"
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                            disabled={isSignupLoading}
+                          />
+                        </motion.div>
+                      </>
+                    )}
+
+                    {signupError && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-200 flex items-center"
+                      >
+                        <HiExclamationCircle className="w-5 h-5 mr-3 flex-shrink-0" />
+                        {signupError}
+                      </motion.div>
+                    )}
+
+                    {signupSuccessMessage && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-4 bg-emerald-50 text-emerald-700 text-sm rounded-xl border border-emerald-200"
+                      >
+                        {signupSuccessMessage}
+                      </motion.div>
+                    )}
+
+                    <motion.button
+                      type="submit"
+                      disabled={isSignupLoading || !!emailError || !!passwordError}
+                      whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.3)" }}
+                      whileTap={{ scale: 0.98 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1, duration: 0.5 }}
+                      className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSignupLoading ? (
+                        <>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                            className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"
+                          />
+                          Creating account...
+                        </>
+                      ) : (
+                        <>
+                          Complete registration
+                          <HiArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </motion.button>
+                  </form>
+                )}
+              </>
+            )}
           </motion.div>
         </div>
       </div>

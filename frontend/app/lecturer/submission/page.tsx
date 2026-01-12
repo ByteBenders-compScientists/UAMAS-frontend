@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLayout } from '@/components/LayoutController';
 import Sidebar from '@/components/lecturerSidebar';
 import { 
@@ -311,6 +312,10 @@ const GradesTable: React.FC<{ grades: SubmissionEntry[], onGradeEdit: (gradeId: 
 
 // ===== MAIN COMPONENT =====
 const Page: React.FC = () => {
+  const searchParams = useSearchParams();
+  const initialCourseParam = searchParams.get('courseId');
+  const initialUnitParam = searchParams.get('unitId');
+  const initialAssessmentParam = searchParams.get('assessmentId');
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string>('');
@@ -326,8 +331,12 @@ const Page: React.FC = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState('');
-  const [selectedUnitId, setSelectedUnitId] = useState('');
+  const [selectedCourseId, setSelectedCourseId] = useState(
+    initialCourseParam ?? ''
+  );
+  const [selectedUnitId, setSelectedUnitId] = useState(
+    initialUnitParam ?? ''
+  );
   const [downloadLoading, setDownloadLoading] = useState(false);
 
   // Fetch courses/units on mount
@@ -363,16 +372,19 @@ const Page: React.FC = () => {
     return filtered;
   }, [assessments, selectedCourseId, selectedUnitId, courses, filteredUnits]);
 
-  // Reset unit and assessment when course changes
+  // When filters change via UI, clear dependent selections
   useEffect(() => {
-    setSelectedUnitId('');
-    setSelectedAssessmentId('');
-  }, [selectedCourseId]);
+    if (!initialCourseParam) {
+      setSelectedUnitId('');
+      setSelectedAssessmentId('');
+    }
+  }, [selectedCourseId, initialCourseParam]);
 
-  // Reset assessment when unit changes
   useEffect(() => {
-    setSelectedAssessmentId('');
-  }, [selectedUnitId]);
+    if (!initialUnitParam) {
+      setSelectedAssessmentId('');
+    }
+  }, [selectedUnitId, initialUnitParam]);
 
   // Fetch assessments on mount
   useEffect(() => {
@@ -387,6 +399,13 @@ const Page: React.FC = () => {
       .then((data: Assessment[]) => {
         setAssessments(data);
         setLoadingAssessments(false);
+        // If an assessmentId was passed in the URL, pre-select it
+        if (initialAssessmentParam) {
+          const exists = data.find(a => a.id === initialAssessmentParam);
+          if (exists) {
+            setSelectedAssessmentId(initialAssessmentParam);
+          }
+        }
       })
       .catch(err => {
         setError(err.message);
@@ -697,7 +716,7 @@ const Page: React.FC = () => {
 
             {/* Result Modal */}
             {showResultModal && selectedResult && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-transparent">
                 <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] flex flex-col">
                   <button
                     className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
