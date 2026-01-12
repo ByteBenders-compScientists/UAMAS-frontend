@@ -145,6 +145,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   if (!showMobileOnly && (isMobileView || isTabletView) && !isMobileMenuOpen)
     return null;
 
+  // Main lecturer navigation – intentionally minimal to avoid duplication
   const navItems: NavItemType[] = [
     {
       name: "Dashboard",
@@ -152,31 +153,13 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       path: "/lecturer/dashboard",
     },
     {
-      name: "Assessments",
-      icon: <ClipboardList size={20} />,
-      path: "/lecturer/assessments",
-      badge: 3,
-    },
-    {
-      name: "Submissions",
+      name: "Courses",
       icon: <GraduationCap size={20} />,
-      path: "/lecturer/submission",
+      // Route to the main teaching workspace where course/unit context is selected
+      path: "/lecturer/courses",
     },
     {
-      name: "Students",
-      icon: <User size={20} />,
-      path: "/lecturer/students",
-      badge: 5,
-    },
-    {
-      name: "Course",
-      icon: <GraduationCap size={20} />,
-      path: "/lecturer/course",
-      badge: 2,
-    },
-    { name: "Library", icon: <Library size={20} />, path: "/lecturer/library" },
-    {
-      name: "Forums",
+      name: "Forum",
       icon: <MessageSquare size={20} />,
       path: "/lecturer/forums",
       badge: "New",

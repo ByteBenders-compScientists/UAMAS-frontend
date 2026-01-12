@@ -16,6 +16,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Intellimark",
   description: "An AI-powered platform for lecturers and students in universities and colleges to enhance CTL and student engagement with automated assessment and performance tracking.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

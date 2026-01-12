@@ -3,11 +3,7 @@ import {
   Unit, 
   Assessment, 
   Question,
-  LegacyAssessment,
-  LegacyQuestion,
-  LegacyCourse,
-  LegacyUnit,
-  CourseWithColor
+  QuestionType,
 } from '../types/assessment';
 
 // Color palette for courses
@@ -23,114 +19,71 @@ const courseColors = [
 ];
 
 // Transform API Course to UI Course with color
-export function transformCourseToUI(course: Course, index: number = 0): CourseWithColor {
+export function transformCourseToUI(course: Course, index: number = 0): Course {
   return {
     ...course,
     color: courseColors[index % courseColors.length],
   };
 }
 
-// Transform API Unit to Legacy Unit format
-export function transformUnitToLegacy(unit: Unit): LegacyUnit {
-  return {
-    id: unit.id,
-    name: unit.unit_name,
-    code: unit.unit_code,
-    course_id: unit.course_id,
-  };
+const allowedQuestionTypes: QuestionType[] = [
+  'open-ended',
+  'close-ended-multiple-single',
+  'close-ended-multiple-multiple',
+  'close-ended-bool',
+  'close-ended-matching',
+  'close-ended-ordering',
+  'close-ended-drag-drop',
+];
+
+function normalizeQuestionType(type: unknown): QuestionType {
+  const raw = String(type ?? '').trim().toLowerCase();
+  return allowedQuestionTypes.includes(raw as QuestionType) ? (raw as QuestionType) : 'open-ended';
 }
 
-// Transform API Course to Legacy Course format
-export function transformCourseToLegacy(course: CourseWithColor): LegacyCourse {
-  return {
-    id: course.id,
-    name: course.name,
-    code: course.code,
-    color: course.color,
-    units: course.units.map(transformUnitToLegacy),
-  };
-}
-
-// Transform API Question to Legacy Question format
-export function transformQuestionToLegacy(question: Question): LegacyQuestion {
-  // Determine question type based on API data
-  let questionType: "multiple-choice" | "true-false" | "open-ended" | "application" = "open-ended";
-  
-  if (question.type === "close-ended" && question.choices && question.choices.length > 0) {
-    if (question.choices.length === 2 && 
-        question.choices.some(choice => choice.toLowerCase().includes('true') || choice.toLowerCase().includes('false'))) {
-      questionType = "true-false";
-    } else {
-      questionType = "multiple-choice";
-    }
-  } else if (question.type === "open-ended") {
-    questionType = "open-ended";
+function normalizeQuestionsTypeArray(types: unknown): QuestionType[] {
+  if (Array.isArray(types)) {
+    const normalized = types
+      .map(t => normalizeQuestionType(t))
+      .filter((t, idx, arr) => arr.indexOf(t) === idx);
+    return normalized.length > 0 ? normalized : ['open-ended'];
   }
 
+  // Backward compatibility: if API ever returns a single string
+  if (typeof types === 'string' && types.trim().length > 0) {
+    return [normalizeQuestionType(types)];
+  }
+
+  return ['open-ended'];
+}
+
+function normalizeQuestion(question: Question): Question {
   return {
-    id: question.id,
-    question: question.text,
-    type: questionType,
-    options: question.choices || undefined,
-    correct_answer: question.correct_answer ? 
-      (Array.isArray(question.correct_answer) ? question.correct_answer : [question.correct_answer]) : 
-      undefined,
-    marks: question.marks,
-    explanation: question.rubric,
+    ...question,
+    text: question.text || question.question || '',
+    type: normalizeQuestionType(question.type),
   };
 }
 
 // Transform API Assessment to Legacy Assessment format
-export function transformAssessmentToLegacy(assessment: Assessment): LegacyAssessment {
-  // Map API difficulty to UI difficulty
-  const difficultyMap: Record<string, "Easy" | "Intermediate" | "Advanced"> = {
-    'Easy': 'Easy',
-    'Intermediate': 'Intermediate', 
-    'Advance': 'Advanced', // API uses 'Advance', UI expects 'Advanced'
-  };
-
-  // Determine questions_type for UI
-  let questionsType: "open-ended" | "close-ended" | "application" = "close-ended";
-  if (assessment.questions_type === "open-ended") {
-    questionsType = "open-ended";
-  } else if (assessment.questions_type === "close-ended") {
-    questionsType = "close-ended";
-  }
-
+export function transformAssessmentToLegacy(assessment: Assessment): Assessment {
   return {
-    id: assessment.id,
-    title: assessment.title,
-    description: assessment.description,
-    type: assessment.type,
-    unit_id: assessment.unit_id,
-    course_id: assessment.course_id,
-    questions_type: questionsType,
-    close_ended_type: assessment.close_ended_type,
-    topic: assessment.topic,
-    total_marks: assessment.total_marks,
-    difficulty: difficultyMap[assessment.difficulty] || 'Intermediate',
-    number_of_questions: assessment.number_of_questions,
-    blooms_level: assessment.blooms_level,
-    deadline: assessment.deadline,
-    duration: assessment.duration,
-    verified: assessment.verified,
-    created_at: assessment.created_at,
-    creator_id: assessment.creator_id,
-    week: assessment.week,
-    status: assessment.status,
-    questions: assessment.questions?.map(transformQuestionToLegacy),
+    ...assessment,
+    questions_type: normalizeQuestionsTypeArray(assessment.questions_type),
+    questions: assessment.questions?.map(normalizeQuestion),
   };
 }
 
 // Transform Legacy Assessment to API Assessment format for creation
 export function transformLegacyToApiAssessment(
-  legacyAssessment: Partial<LegacyAssessment>
+  legacyAssessment: Partial<Assessment>
 ): Partial<import('../services/api').CreateAssessmentRequest> {
   // Map UI difficulty to API difficulty
   const difficultyMap: Record<string, "Easy" | "Intermediate" | "Advance"> = {
     'Easy': 'Easy',
     'Intermediate': 'Intermediate',
-    'Advanced': 'Advance', // UI uses 'Advanced', API expects 'Advance'
+    'Advance': 'Advance',
+    'Advanced': 'Advance',
   };
 
   return {
@@ -139,20 +92,19 @@ export function transformLegacyToApiAssessment(
     week: legacyAssessment.week,
     type: legacyAssessment.type,
     unit_id: legacyAssessment.unit_id,
-    questions_type: legacyAssessment.questions_type === "application" ? "open-ended" : legacyAssessment.questions_type,
-    close_ended_type: legacyAssessment.close_ended_type,
+    questions_type: normalizeQuestionsTypeArray(legacyAssessment.questions_type),
     topic: legacyAssessment.topic,
     total_marks: legacyAssessment.total_marks,
     difficulty: legacyAssessment.difficulty ? difficultyMap[legacyAssessment.difficulty] : 'Intermediate',
     number_of_questions: legacyAssessment.number_of_questions,
     blooms_level: legacyAssessment.blooms_level,
-    deadline: legacyAssessment.deadline,
-    duration: legacyAssessment.duration,
+    deadline: legacyAssessment.deadline ?? undefined,
+    duration: legacyAssessment.duration ?? undefined,
   };
 }
 
 // Group units by course for easier UI handling
-export function groupUnitsByCourse(courses: CourseWithColor[], units: Unit[]): CourseWithColor[] {
+export function groupUnitsByCourse(courses: Course[], units: Unit[]): Course[] {
   return courses.map(course => ({
     ...course,
     units: units.filter(unit => unit.course_id === course.id),

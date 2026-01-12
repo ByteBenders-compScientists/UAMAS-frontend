@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { useLayout } from "@/components/LayoutController"
 import AdminSidebar from "@/components/lecturerSidebar"
 import Header from "@/components/Header"
 import EmptyState from "@/components/EmptyState"
-import AddStudentModal from "@/components/lecturer/AddStudentModal"
-import { Users, Plus, Search, Filter, Edit, Trash2, Eye, Download, Upload, X, CheckCircle, AlertCircle } from "lucide-react"
+import { Users, Search, Filter } from "lucide-react"
 
 type Student = {
   id: string
@@ -35,57 +35,27 @@ type Student = {
   }>
 }
 
-interface ModalStudent {
-  id: string
-  reg_number: string
-  firstname: string
-  surname: string
-  othernames: string
-  year_of_study: number
-  semester: number
-  email: string
-  course: {
-    id: string
-    name: string
-    code?: string
-  }
-}
-
 type Course = {
   id: string
   name: string
   code?: string
 }
 
-interface BulkUploadResult {
-  message: string
-  success_count: number
-  error_count: number
-  total_processed: number
-  errors?: string[]
-  note?: string
-}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
 export default function StudentsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout()
+  const searchParams = useSearchParams()
+  const initialCourseIdFromQuery = searchParams.get("courseId") ?? ""
   const [isLoading, setIsLoading] = useState(true)
   const [students, setStudents] = useState<Student[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
-  const [selectedCourse, setSelectedCourse] = useState("")
+  const [selectedCourse, setSelectedCourse] = useState(initialCourseIdFromQuery)
   const [selectedYear, setSelectedYear] = useState("")
   const [selectedSemester, setSelectedSemester] = useState("")
-  
-  // Import/Export states
-  const [showImportModal, setShowImportModal] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadResult, setUploadResult] = useState<BulkUploadResult | null>(null)
-  const [isExporting, setIsExporting] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedUnitId, setSelectedUnitId] = useState("")
 
   // Fetch students from API
   const fetchStudents = async () => {
@@ -138,12 +108,22 @@ export default function StudentsPage() {
   const yearsOfStudy = Array.from(new Set(students.map(s => s.year_of_study))).sort((a, b) => a - b)
   const semesters = Array.from(new Set(students.map(s => s.semester))).sort((a, b) => a - b)
 
-  // Filter students based on search term and filters
+  // Get unique units from students for unit-based filtering
+  const unitsForFilter = Array.from(
+    new Map(
+      students
+        .flatMap((s) => s.units || [])
+        .map((u) => [u.id, u])
+    ).values()
+  )
+
+  // Filter students based on search term, filters, and selected unit
   const filteredStudents = students.filter(
     (student) =>
       (selectedCourse === "" || (student.courses && student.courses.some(c => c.id === selectedCourse))) &&
       (selectedYear === "" || String(student.year_of_study) === selectedYear) &&
       (selectedSemester === "" || String(student.semester) === selectedSemester) &&
+      (selectedUnitId === "" || (student.units && student.units.some(u => u.id === selectedUnitId))) &&
       (
         student.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -153,235 +133,6 @@ export default function StudentsPage() {
       )
   )
 
-  // Handle bulk import
-  const handleImport = async (file: File) => {
-    setIsUploading(true)
-    setUploadResult(null)
-
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/lecturer/students/bulk-upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      })
-
-      const result = await response.json()
-      setUploadResult(result)
-
-      if (response.ok && result.success_count > 0) {
-        // Refresh students list
-        await fetchStudents()
-      }
-    } catch (error) {
-      console.error('Import error:', error)
-      setUploadResult({
-        message: 'Failed to import students',
-        success_count: 0,
-        error_count: 0,
-        total_processed: 0,
-        errors: ['Network error occurred. Please try again.']
-      })
-    } finally {
-      setIsUploading(false)
-    }
-  }
-
-  // Handle export
-  const handleExport = async (format: 'csv' | 'excel' = 'csv') => {
-    setIsExporting(true)
-    
-    try {
-      // Create CSV content
-      const headers = [
-        'Registration Number',
-        'First Name',
-        'Surname', 
-        'Other Names',
-        'Email',
-        'Course Code',
-        'Course Name',
-        'Year of Study',
-        'Semester',
-        'Units Count'
-      ]
-
-      const csvRows = [
-        headers.join(','),
-        ...filteredStudents.map(student => [
-          `"${student.reg_number}"`,
-          `"${student.firstname}"`,
-          `"${student.surname}"`,
-          `"${student.othernames || ''}"`,
-          `"${student.email || ''}"`,
-          `"${student.courses && student.courses.length > 0 ? student.courses[0].code || '' : ''}"`,
-          `"${student.courses && student.courses.length > 0 ? student.courses.map(c => c.name).join('; ') : ''}"`,
-          student.year_of_study,
-          student.semester,
-          student.units?.length || 0
-        ].join(','))
-      ]
-
-      const csvContent = csvRows.join('\n')
-      
-      // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob)
-        link.setAttribute('href', url)
-        link.setAttribute('download', `students_export_${new Date().toISOString().split('T')[0]}.csv`)
-        link.style.visibility = 'hidden'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-      }
-    } catch (error) {
-      console.error('Export error:', error)
-      alert('Failed to export students. Please try again.')
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  // Download template
-  const downloadTemplate = () => {
-    const headers = [
-      'reg_number',
-      'firstname', 
-      'surname',
-      'othernames',
-      'email',
-      'year_of_study',
-      'semester',
-      'course_id'
-    ]
-
-    const templateRows = [
-      headers.join(','),
-      // Sample row
-      '"STU001","John","Doe","Michael","john.doe@email.com",1,1,"course-id-here"'
-    ]
-
-    const csvContent = templateRows.join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob)
-      link.setAttribute('href', url)
-      link.setAttribute('download', 'students_import_template.csv')
-      link.style.visibility = 'hidden'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    }
-  }
-
-  const handleAddStudent = async (studentData: unknown) => {
-    try {
-      if (selectedStudent) {
-        // Update existing student
-        const response = await fetch(`${API_BASE_URL}/auth/lecturer/students/${selectedStudent.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(studentData),
-        })
-
-        const data = await response.json()
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to update student")
-        }
-      } else {
-        // Add new student
-        const response = await fetch(`${API_BASE_URL}/auth/lecturer/students`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(studentData),
-        })
-
-        const data = await response.json()
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to add student")
-        }
-      }
-
-      // Reload the students list
-      await fetchStudents()
-      setShowAddModal(false)
-      setSelectedStudent(null)
-    } catch (error) {
-      console.error("Error saving student:", error)
-      throw error // Re-throw to be handled by the modal
-    }
-  }
-
-  const handleEditStudent = (student: Student) => {
-    setSelectedStudent(student)
-    setShowAddModal(true)
-  }
-
-  const handleDeleteStudent = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this student? This will also remove their user account and unit assignments.")) {
-      return
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/lecturer/students/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || "Failed to delete student")
-      }
-
-      // Reload the students list
-      await fetchStudents()
-    } catch (error) {
-      console.error("Error deleting student:", error)
-      alert("Failed to delete student. Please try again.")
-    }
-  }
-
-  const handleViewStudent = async (student: Student) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/lecturer/students/${student.id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch student details")
-      }
-
-      const studentDetails = await response.json()
-      console.log("Student details:", studentDetails)
-      // Here you could open a detailed view modal or navigate to a student details page
-      alert(`Student Details:\nName: ${studentDetails.firstname} ${studentDetails.surname}\nUnits: ${studentDetails.units?.length || 0}`)
-    } catch (error) {
-      console.error("Error fetching student details:", error)
-      alert("Failed to fetch student details. Please try again.")
-    }
-  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -405,32 +156,7 @@ export default function StudentsPage() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-gray-800 mb-2">Students</h1>
-                <p className="text-gray-600">Manage student records and information</p>
-              </div>
-
-              <div className="flex items-center space-x-3 mt-4 md:mt-0">
-                <button 
-                  onClick={() => setShowImportModal(true)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm flex items-center space-x-2"
-                >
-                  <Upload size={16} />
-                  <span>Import</span>
-                </button>
-                <button 
-                  onClick={() => handleExport('csv')}
-                  disabled={isExporting}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm flex items-center space-x-2 disabled:opacity-50"
-                >
-                  <Download size={16} />
-                  <span>{isExporting ? 'Exporting...' : 'Export'}</span>
-                </button>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium text-sm flex items-center space-x-2"
-                >
-                  <Plus size={16} />
-                  <span>Add Student</span>
-                </button>
+                <p className="text-gray-600">View students who have joined your units via join codes</p>
               </div>
             </div>
 
@@ -448,6 +174,18 @@ export default function StudentsPage() {
               </div>
               <div className="flex items-center space-x-2">
                 <Filter size={16} className="text-gray-400" />
+                <select
+                  value={selectedUnitId}
+                  onChange={(e) => setSelectedUnitId(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                >
+                  <option value="">Select Unit</option>
+                  {unitsForFilter.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.unit_code} - {unit.unit_name}
+                    </option>
+                  ))}
+                </select>
                 <select
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
@@ -496,17 +234,21 @@ export default function StudentsPage() {
                   </div>
                 ))}
               </div>
+            ) : !selectedUnitId ? (
+              <EmptyState
+                icon={<Users size={48} className="text-gray-400" />}
+                title="Select a Unit"
+                description="Choose a unit from the filters above to view the students enrolled in it."
+              />
             ) : filteredStudents.length === 0 ? (
               <EmptyState
                 icon={<Users size={48} className="text-gray-400" />}
                 title="No Students Found"
                 description={
                   searchTerm
-                    ? "No students match your search criteria."
-                    : "Start by adding your first student to the system."
+                    ? "No students match your search criteria for this unit."
+                    : "No students have joined this unit yet."
                 }
-                actionText="Add Student"
-                onAction={() => setShowAddModal(true)}
               />
             ) : (
               <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
@@ -518,7 +260,6 @@ export default function StudentsPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Units</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Year</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Semester</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
@@ -544,31 +285,6 @@ export default function StudentsPage() {
                             Sem {student.semester}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleViewStudent(student)}
-                              className="hover:bg-gray-100 p-1 rounded"
-                              title="View Details"
-                            >
-                              <Eye size={16} className="text-gray-600" />
-                            </button>
-                            <button
-                              onClick={() => handleEditStudent(student)}
-                              className="hover:bg-gray-100 p-1 rounded"
-                              title="Edit Student"
-                            >
-                              <Edit size={16} className="text-blue-600" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteStudent(student.id)}
-                              className="hover:bg-gray-100 p-1 rounded"
-                              title="Delete Student"
-                            >
-                              <Trash2 size={16} className="text-red-600" />
-                            </button>
-                          </div>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -579,142 +295,7 @@ export default function StudentsPage() {
         </main>
       </motion.div>
 
-      {/* Import Modal */}
-      {showImportModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowImportModal(false)} />
-            
-            <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-              <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Import Students</h3>
-                  <button
-                    onClick={() => setShowImportModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
 
-                {!uploadResult && (
-                  <div className="space-y-4">
-                    <div className="text-sm text-gray-600">
-                      Upload an Excel file (.xlsx, .xls) with student data. The file should contain columns:
-                      reg_number, firstname, surname, email, year_of_study, semester, course_name, othernames (optional)
-                    </div>
-                    
-                    <button
-                      onClick={downloadTemplate}
-                      className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
-                    >
-                      Download Template File
-                    </button>
-
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".xlsx,.xls"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) {
-                            handleImport(file)
-                          }
-                        }}
-                        className="hidden"
-                      />
-                      
-                      <Upload size={40} className="mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-600 mb-2">
-                        Click to select or drag and drop your Excel file
-                      </p>
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
-                      >
-                        {isUploading ? 'Uploading...' : 'Select File'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {uploadResult && (
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      {uploadResult.success_count > 0 ? (
-                        <CheckCircle size={20} className="text-green-500" />
-                      ) : (
-                        <AlertCircle size={20} className="text-red-500" />
-                      )}
-                      <h4 className="font-medium">Import Results</h4>
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                      <div className="text-sm">
-                        <span className="font-medium">Total Processed:</span> {uploadResult.total_processed}
-                      </div>
-                      <div className="text-sm text-green-600">
-                        <span className="font-medium">Successful:</span> {uploadResult.success_count}
-                      </div>
-                      <div className="text-sm text-red-600">
-                        <span className="font-medium">Errors:</span> {uploadResult.error_count}
-                      </div>
-                    </div>
-
-                    {uploadResult.errors && uploadResult.errors.length > 0 && (
-                      <div className="space-y-2">
-                        <h5 className="font-medium text-red-600">Errors:</h5>
-                        <div className="max-h-40 overflow-y-auto bg-red-50 p-3 rounded text-sm">
-                          {uploadResult.errors.map((error, index) => (
-                            <div key={index} className="text-red-700 mb-1">{error}</div>
-                          ))}
-                        </div>
-                        {uploadResult.note && (
-                          <div className="text-xs text-gray-500">{uploadResult.note}</div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={() => {
-                          setShowImportModal(false)
-                          setUploadResult(null)
-                        }}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                      >
-                        Close
-                      </button>
-                      {uploadResult.error_count > 0 && (
-                        <button
-                          onClick={() => setUploadResult(null)}
-                          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-                        >
-                          Try Again
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add/Edit Student Modal */}
-      {showAddModal && (
-        <AddStudentModal
-          student={selectedStudent as ModalStudent | null}
-          onClose={() => {
-            setShowAddModal(false)
-            setSelectedStudent(null)
-          }}
-          onSubmit={handleAddStudent}
-        />
-      )}
     </div>
   )
 }

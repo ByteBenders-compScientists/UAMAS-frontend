@@ -1,68 +1,79 @@
-// Re-export API types and add additional UI-specific types
-export * from '../services/api';
+export interface Course {
+  id: string;
+  name: string;
+  code: string;
+  color: string;
+  units: Unit[];
+}
 
-// Additional UI-specific types
-export type MessageType = 'success' | 'error' | 'info';
+export interface Unit {
+  id: string;
+  unit_code: string;
+  unit_name: string;
+  level: number;
+  semester: number;
+  course_id: string;
+}
 
 export interface Message {
-  type: MessageType;
+  type: 'success' | 'error' | 'info' | 'warning';
   text: string;
 }
+// types/assessment.ts
+export type QuestionType = 
+  | 'open-ended'
+  | 'close-ended-multiple-single'
+  | 'close-ended-multiple-multiple'
+  | 'close-ended-bool'
+  | 'close-ended-matching'
+  | 'close-ended-ordering'
+  | 'close-ended-drag-drop';
 
-// Import Course type for extension
-import type { Course } from '../services/api';
-
-// Extended types for UI components
-export interface CourseWithColor extends Course {
-  color: string;
+export interface BaseQuestion {
+  id: string;
+  assessment_id: string;
+  text: string;
+  type: QuestionType;
+  choices?: (string | string[])[];
+  correct_answer?: string | string[] | { item: string; target: string }[] | string[][];
+  marks: number;
+  rubric?: string;
+  created_at: string;
+  question?: string; // For backward compatibility
 }
 
-// Legacy compatibility - map API types to existing component props
-export interface LegacyAssessment {
+export interface Assessment {
   id: string;
   title: string;
   description: string;
-  type: "CAT" | "Assignment" | "Case Study";
-  unit_id: string;
-  course_id: string;
-  questions_type: "open-ended" | "close-ended" | "application";
-  close_ended_type?: string;
+  type: 'CAT' | 'Assignment' | 'Case Study';
+  questions_type: QuestionType[];
   topic: string;
   total_marks: number;
-  difficulty: "Easy" | "Intermediate" | "Advanced";
+  difficulty: 'Easy' | 'Intermediate' | 'Advance';
   number_of_questions: number;
-  blooms_level: "Remember" | "Understand" | "Apply" | "Analyze" | "Evaluate" | "Create";
-  deadline?: string;
-  duration?: number;
+  blooms_level: 'Remember' | 'Understand' | 'Apply' | 'Analyze' | 'Evaluate' | 'Create';
+  deadline?: string | null;
+  duration?: number | null;
+  schedule_date?: string | null;
+  course_id: string;
+  unit_id: string;
+  week: number;
+  semester: number;
   verified: boolean;
   created_at: string;
   creator_id: string;
-  week: number;
-  status?: string;
-  questions?: LegacyQuestion[];
+  questions?: Question[];
 }
 
-export interface LegacyQuestion {
-  id: string;
-  question: string;
-  type: "multiple-choice" | "true-false" | "open-ended" | "application";
-  options?: string[];
-  correct_answer?: string | string[];
-  marks: number;
-  explanation?: string;
-}
-
-export interface LegacyCourse {
-  id: string;
-  name: string;
-  code: string;
-  color: string;
-  units: LegacyUnit[];
-}
-
-export interface LegacyUnit {
-  id: string;
-  name: string;
-  code: string;
-  course_id: string;
+export interface Question extends BaseQuestion {
+  // Alias for backward compatibility
+  question?: string;
+  text: string;
+  // More specific type for correct_answer based on question type
+  correct_answer?: 
+    | string // for open-ended
+    | string[] // for multiple-single, multiple-multiple, ordering
+    | { item: string; target: string }[] // for drag-drop
+    | string[][]; // for matching
 }

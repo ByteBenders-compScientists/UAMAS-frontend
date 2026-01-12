@@ -19,6 +19,7 @@ import {
   MoreVertical,
   BookOpen,
   X,
+  Copy,
 } from "lucide-react";
 
 type Course = {
@@ -34,6 +35,7 @@ type Course = {
     level: number;
     semester: number;
     course_id: string;
+    unique_join_code?: string;
   }>;
 };
 
@@ -44,6 +46,7 @@ type Unit = {
   level: number;
   semester: number;
   course_id: string;
+  unique_join_code?: string;
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
@@ -140,9 +143,34 @@ const CourseCard = ({
                 key={unit.id}
                 className="text-xs bg-violet-50 text-violet-700 px-2 py-1 rounded flex items-center justify-between group"
               >
-                <span>
-                  {unit.unit_code} - {unit.unit_name}
-                </span>
+                <div className="flex flex-col">
+                  <span>
+                    {unit.unit_code} - {unit.unit_name}
+                  </span>
+                  {unit.unique_join_code && (
+                    <div className="mt-0.5 flex items-center space-x-1 text-[10px] text-violet-700/90">
+                      <span className="font-mono tracking-wide">
+                        Join code: {unit.unique_join_code}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard
+                            .writeText(unit.unique_join_code || "")
+                            .catch(() => {
+                              // Silently ignore clipboard errors
+                            });
+                        }}
+                        className="inline-flex items-center px-1 py-0.5 rounded hover:bg-violet-100 text-violet-700"
+                        title="Copy join code"
+                      >
+                        <Copy size={10} className="mr-0.5" />
+                        Copy
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center space-x-1">
                   <span className="text-violet-500">
                     L{unit.level}S{unit.semester}

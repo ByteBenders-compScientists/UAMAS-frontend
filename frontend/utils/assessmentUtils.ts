@@ -8,12 +8,23 @@ export const formatDate = (dateString: string) => {
   });
 };
 
+export const formatDateTime = (dateString: string) => {
+  return new Date(dateString).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
 export const getDifficultyColor = (difficulty: string) => {
   switch (difficulty) {
     case "Easy":
       return "bg-green-50 text-green-700 border-green-200";
     case "Intermediate": 
       return "bg-yellow-50 text-yellow-700 border-yellow-200";
+    case "Advance":
     case "Advanced":
       return "bg-red-50 text-red-700 border-red-200";
     default:
