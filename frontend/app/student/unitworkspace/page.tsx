@@ -76,7 +76,7 @@ type StudentSubmission = Record<string, string | number | boolean | undefined> &
   assessment_id: string;
   graded?: boolean;
   created_at: string;
-  results?: (string | number | boolean | undefined)[];
+  results?: { score?: number | string }[];
 };
 
 function getUnitLabel(unit: StudentUnit) {
@@ -529,7 +529,7 @@ export default function StudentUnitWorkspace() {
     0
   );
   const allScores = visibleSubmissions.flatMap((s) =>
-    Array.isArray(s.results) ? s.results.map((r: string | number | boolean | undefined) => Number(r?.score ?? 0)) : []
+    Array.isArray(s.results) ? s.results.map((r: { score?: number | string | undefined }) => Number(r?.score ?? 0)) : []
   );
   const averageScore = allScores.length > 0 ? allScores.reduce((a, b) => a + b, 0) / allScores.length : 0;
   const highestScore = allScores.length > 0 ? Math.max(...allScores) : 0;
@@ -911,8 +911,8 @@ export default function StudentUnitWorkspace() {
                               .map((s) => {
                                 const submissionId = String(s.submission_id || s.id || "");
                                 const results = Array.isArray(s.results) ? s.results : [];
-                                const totalMarks = results.reduce((acc: number, r: string | number | boolean | undefined) => acc + (Number(r?.marks ?? 0) || 0), 0);
-                                const totalScore = results.reduce((acc: number, r: string | number | boolean | undefined) => acc + (Number(r?.score ?? 0) || 0), 0);
+                                const totalMarks = results.reduce((acc: number, r: { score?: number | string | undefined; marks?: number | string | undefined }) => acc + (Number(r?.marks ?? 0) || 0), 0);
+                                const totalScore = results.reduce((acc: number, r: { score?: number | string | undefined }) => acc + (Number(r?.score ?? 0) || 0), 0);
                                 const expanded = expandedSubmissionId === submissionId;
                                 const title =
                                   String(s.topic || "").trim() ||
@@ -921,7 +921,7 @@ export default function StudentUnitWorkspace() {
 
                                 const questionsCount = Number(s.number_of_questions ?? results.length ?? 0);
                                 const deadlineValue = s.deadline ?? s.due_date ?? s.closing_date ?? s.close_at ?? null;
-                                const parsedDeadline = deadlineValue ? Date.parse(deadlineValue) : NaN;
+                                const parsedDeadline = deadlineValue ? Date.parse(String(deadlineValue)) : NaN;
                                 const hasDeadline = !!deadlineValue && !Number.isNaN(parsedDeadline);
                                 const isLocked = hasDeadline && Date.now() < parsedDeadline;
 
@@ -1079,6 +1079,24 @@ export default function StudentUnitWorkspace() {
                                                       </div>
                                                       <div className="mt-2 text-sm text-gray-800 whitespace-pre-wrap">
                                                         {rubric}
+                                                      </div>
+                                                    </div>
+                                                  )}
+
+                                                  {!!r.image_url && (
+                                                    <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
+                                                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
+                                                        Submitted Image
+                                                      </div>
+                                                      <div className="rounded-lg border border-gray-200 overflow-hidden">
+                                                        <img 
+                                                          src={r.image_url} 
+                                                          alt="Submitted work" 
+                                                          className="w-full h-auto max-h-64 object-contain bg-gray-50"
+                                                          onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                          }}
+                                                        />
                                                       </div>
                                                     </div>
                                                   )}
