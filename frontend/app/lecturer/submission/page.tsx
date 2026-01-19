@@ -58,6 +58,7 @@ interface SubmissionResult {
   graded_at: string;
   question_id: string;
   image_url?: string;
+  text_answer?: string;
 }
 
 interface SubmissionEntry {
@@ -414,28 +415,45 @@ const Page: React.FC = () => {
       });
   }, []);
 
-  // Fetch submissions when assessment changes
-  useEffect(() => {
-    if (!selectedAssessmentId) {
-      setSubmissions([]);
-      return;
-    }
+  const fetchSubmissions = async () => {
+    if (!selectedAssessmentId) return;
     setLoadingSubmissions(true);
-    fetch(`${apiBaseUrl}/bd/lecturer/submissions/assessments/${selectedAssessmentId}`, {
-      credentials: 'include',
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch submissions');
-        return res.json();
-      })
-      .then((data: Submission[]) => {
-        setSubmissions(data);
-        setLoadingSubmissions(false);
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoadingSubmissions(false);
+    try {
+      const response = await fetch(`${apiBaseUrl}/bd/lecturer/submissions/assessments/${selectedAssessmentId}`, {
+        credentials: 'include',
       });
+      if (!response.ok) throw new Error('Failed to fetch submissions');
+      const data = await response.json();
+      console.log('Lecturer submissions raw data:', data);
+      console.log('Lecturer submissions type:', typeof data);
+      console.log('Lecturer submissions is array:', Array.isArray(data));
+      
+      if (Array.isArray(data)) {
+        data.forEach((submission: any, index: number) => {
+          console.log(`Lecturer submission ${index}:`, submission);
+          if (submission.results && Array.isArray(submission.results)) {
+            submission.results.forEach((result: any, resultIndex: number) => {
+              console.log(`Lecturer submission ${index} result ${resultIndex}:`, result);
+              console.log(`Lecturer submission ${index} result ${resultIndex} image_url:`, result.image_url);
+              console.log(`Lecturer submission ${index} result ${resultIndex} text_answer:`, result.text_answer);
+              console.log(`Lecturer submission ${index} result ${resultIndex} has image_url:`, !!result.image_url);
+              console.log(`Lecturer submission ${index} result ${resultIndex} has text_answer:`, !!result.text_answer);
+            });
+          }
+        });
+      }
+      
+      setSubmissions(data);
+    } catch (err) {
+      console.error('Error fetching submissions:', err);
+      setSubmissions([]);
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubmissions();
   }, [selectedAssessmentId]);
 
   // Modal for result details
@@ -717,106 +735,180 @@ const Page: React.FC = () => {
 
             {/* Result Modal */}
             {showResultModal && selectedResult && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-transparent">
-                <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] flex flex-col">
-                  <button
-                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
-                    onClick={closeModal}
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                  <h3 className="text-lg font-bold mb-4">Submission Results</h3>
-                  {/* Submission details */}
-                  <div className="mb-4 space-y-1 text-sm text-gray-700">
-                    <div><span className="font-semibold">Student Name:</span> {selectedResult.student_name}</div>
-                    <div><span className="font-semibold">Reg Number:</span> {selectedResult.reg_number}</div>
-                    <div><span className="font-semibold">Course:</span> {selectedResult.course_name}</div>
-                    <div><span className="font-semibold">Unit:</span> {selectedResult.unit_name}</div>
-                    <div><span className="font-semibold">Assessment Topic:</span> {selectedResult.assessment_topic}</div>
-                    <div><span className="font-semibold">Total Marks:</span> {selectedResult.total_marks}</div>
+              <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+                <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col">
+                  {/* Modal Header */}
+                  <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">Submission Results</h3>
+                      <p className="text-sm text-gray-500 mt-1">Review and grade student responses</p>
+                    </div>
+                    <button
+                      className="text-gray-400 hover:text-gray-700 transition-colors p-2 rounded-lg hover:bg-gray-100"
+                      onClick={closeModal}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
-                  <div className="overflow-y-auto" style={{ maxHeight: '65vh' }}>
+                  
+                  {/* Student Info Card */}
+                  <div className="p-6 border-b border-gray-200">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="font-semibold text-gray-700">Student:</span>
+                          <div className="text-gray-900 mt-1">{selectedResult.student_name}</div>
+                          <div className="text-xs text-gray-500">{selectedResult.reg_number}</div>
+                        </div>
+                        <div>
+                          <span className="font-semibold text-gray-700">Course:</span>
+                          <div className="text-gray-900 mt-1">{selectedResult.course_name}</div>
+                          <div className="text-xs text-gray-500">{selectedResult.unit_name}</div>
+                        </div>
+                        <div>
+                          <span className="font-semibold text-gray-700">Assessment:</span>
+                          <div className="text-gray-900 mt-1">{selectedResult.assessment_topic}</div>
+                          <div className="text-xs text-gray-500">Total: {selectedResult.total_marks} marks</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Results Content */}
+                  <div className="flex-1 overflow-y-auto p-6">
                     {selectedResult.results && selectedResult.results.length > 0 ? (
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         {selectedResult.results.map((result: SubmissionResult) => (
-                          <div key={result.id} className="border rounded-lg p-4">
-                            <div className="font-semibold text-gray-800 mb-1">Question: {result.question_text}</div>
-                            <div className="text-gray-700 mb-2">Score: {editingResultId === result.id ? (
-                              <input
-                                type="number"
-                                min={0}
-                                max={result.marks}
-                                step="0.01"
-                                value={editScore ?? ''}
-                                onChange={e => setEditScore(Math.max(0, Math.min(Number(e.target.value), result.marks)))}
-                                className="border rounded px-2 py-1 w-24 mr-2"
-                                disabled={updateLoading}
-                              />
-                            ) : (
-                              <>{result.score} / {result.marks}</>
-                            )}
-                            </div>
-                            <div className="text-gray-600 mb-2">Feedback: {editingResultId === result.id ? (
-                              <textarea
-                                value={editFeedback}
-                                onChange={e => setEditFeedback(e.target.value)}
-                                className="border rounded px-2 py-1 w-full"
-                                rows={2}
-                                disabled={updateLoading}
-                              />
-                            ) : (
-                              <>{result.feedback}</>
-                            )}
-                            </div>
-                            <div className="text-xs text-gray-400 mb-2">Graded at: {formatDate(result.graded_at)}</div>
-                            {result.image_url && (
-                              <div className="mt-4">
-                                <div className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
-                                  Submitted Image
+                          <div key={result.id} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                            {/* Question Header */}
+                            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-gray-900 text-sm leading-relaxed">
+                                    {result.question_text}
+                                  </h4>
                                 </div>
-                                <div className="rounded-lg border border-gray-200 overflow-hidden">
-                                  <img 
-                                    src={result.image_url} 
-                                    alt="Submitted work" 
-                                    className="w-full h-auto max-h-64 object-contain bg-gray-50"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = 'none';
-                                    }}
+                                <div className="ml-4 text-right">
+                                  <div className="text-sm font-semibold text-gray-900">
+                                    {editingResultId === result.id ? (
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        max={result.marks}
+                                        step="0.01"
+                                        value={editScore ?? ''}
+                                        onChange={e => setEditScore(Math.max(0, Math.min(Number(e.target.value), result.marks)))}
+                                        className="border rounded-lg px-3 py-1 w-20 text-center font-mono text-sm"
+                                        disabled={updateLoading}
+                                      />
+                                    ) : (
+                                      <span className="text-lg">{result.score}</span>
+                                    )}
+                                    <span className="text-gray-500 text-sm"> / {result.marks}</span>
+                                  </div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {formatDate(result.graded_at)}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Student Answer Section */}
+                            <div className="p-6 space-y-4">
+                              {result.text_answer && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                  <div className="flex items-center mb-3">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                                    <h5 className="text-sm font-semibold text-blue-900 uppercase tracking-wide">Student Answer</h5>
+                                  </div>
+                                  <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                    {result.text_answer}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {result.image_url && (
+                                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                  <div className="flex items-center mb-3">
+                                    <div className="w-2 h-2 bg-gray-500 rounded-full mr-2"></div>
+                                    <h5 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Submitted Image</h5>
+                                  </div>
+                                  <div className="rounded-lg border border-gray-300 overflow-hidden bg-white">
+                                    <img 
+                                      src={result.image_url} 
+                                      alt="Submitted work" 
+                                      className="w-full h-auto max-h-80 object-contain"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Feedback Section */}
+                              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                                <div className="flex items-center mb-3">
+                                  <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></div>
+                                  <h5 className="text-sm font-semibold text-emerald-900 uppercase tracking-wide">Feedback</h5>
+                                </div>
+                                {editingResultId === result.id ? (
+                                  <textarea
+                                    value={editFeedback}
+                                    onChange={e => setEditFeedback(e.target.value)}
+                                    className="w-full border border-emerald-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                                    rows={3}
+                                    placeholder="Provide feedback for this answer..."
+                                    disabled={updateLoading}
                                   />
+                                ) : (
+                                  <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                    {result.feedback || <span className="text-gray-400 italic">No feedback provided yet</span>}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Action Buttons */}
+                              <div className="flex items-center justify-between pt-2">
+                                <div className="text-xs text-gray-500">
+                                  Question ID: {result.question_id}
                                 </div>
+                                {editingResultId === result.id ? (
+                                  <div className="flex items-center space-x-2">
+                                    <button
+                                      className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium"
+                                      onClick={() => handleSaveResult(result)}
+                                      disabled={updateLoading}
+                                    >
+                                      {updateLoading ? 'Saving...' : 'Save Changes'}
+                                    </button>
+                                    <button
+                                      className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+                                      onClick={() => setEditingResultId(null)}
+                                      disabled={updateLoading}
+                                    >
+                                      Cancel
+                                    </button>
+                                    {updateError && <span className="text-xs text-red-500 ml-2">{updateError}</span>}
+                                  </div>
+                                ) : (
+                                  <button
+                                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center"
+                                    onClick={() => handleEditResult(result)}
+                                  >
+                                    <Edit className="w-4 h-4 mr-1" />
+                                    Edit Result
+                                  </button>
+                                )}
                               </div>
-                            )}
-                            {editingResultId === result.id ? (
-                              <div className="flex space-x-2 mt-2">
-                                <button
-                                  className="bg-emerald-500 text-white px-3 py-1 rounded hover:bg-emerald-600 text-xs"
-                                  onClick={() => handleSaveResult(result)}
-                                  disabled={updateLoading}
-                                >
-                                  {updateLoading ? 'Saving...' : 'Save'}
-                                </button>
-                                <button
-                                  className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 text-xs"
-                                  onClick={() => setEditingResultId(null)}
-                                  disabled={updateLoading}
-                                >
-                                  Cancel
-                                </button>
-                                {updateError && <span className="text-xs text-red-500 ml-2">{updateError}</span>}
-                              </div>
-                            ) : (
-                              <button
-                                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs"
-                                onClick={() => handleEditResult(result)}
-                              >
-                                Edit
-                              </button>
-                            )}
+                            </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-gray-500">No results available for this submission.</div>
+                      <div className="text-center py-12">
+                        <div className="text-gray-400 text-lg">No results available for this submission.</div>
+                      </div>
                     )}
                   </div>
                 </div>

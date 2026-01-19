@@ -334,6 +334,7 @@ export interface SubmissionResult {
   feedback: string;
   graded_at: string;
   image_url?: string;
+  text_answer?: string;
 }
 
 // Request/Response types
