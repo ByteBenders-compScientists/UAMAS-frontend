@@ -56,6 +56,7 @@ export interface Assessment {
   deadline?: string | null;
   duration?: number | null;
   schedule_date?: string | null;
+  deadline_date?: string | null;
   course_id: string;
   unit_id: string;
   week: number;
