@@ -333,6 +333,7 @@ export interface SubmissionResult {
   score: number;
   feedback: string;
   graded_at: string;
+  image_url?: string;
 }
 
 // Request/Response types

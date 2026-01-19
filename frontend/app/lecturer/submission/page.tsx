@@ -57,6 +57,7 @@ interface SubmissionResult {
   feedback: string;
   graded_at: string;
   question_id: string;
+  image_url?: string;
 }
 
 interface SubmissionEntry {
@@ -768,6 +769,23 @@ const Page: React.FC = () => {
                             )}
                             </div>
                             <div className="text-xs text-gray-400 mb-2">Graded at: {formatDate(result.graded_at)}</div>
+                            {result.image_url && (
+                              <div className="mt-4">
+                                <div className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
+                                  Submitted Image
+                                </div>
+                                <div className="rounded-lg border border-gray-200 overflow-hidden">
+                                  <img 
+                                    src={result.image_url} 
+                                    alt="Submitted work" 
+                                    className="w-full h-auto max-h-64 object-contain bg-gray-50"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            )}
                             {editingResultId === result.id ? (
                               <div className="flex space-x-2 mt-2">
                                 <button
