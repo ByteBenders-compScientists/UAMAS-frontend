@@ -292,14 +292,14 @@ export default function AuthPage() {
           const role = (data.role || "").toLowerCase()
           switch (role) {
             case "student":
-              window.location.href = "/hobby"
+              window.location.href = "/student/dashboard"
               break
             case "lecturer":
             case "teacher":
               window.location.href = "/lecturer/dashboard"
               break
             default:
-              window.location.href = "/hobby"
+              window.location.href = "/student/dashboard"
           }
         }, 2000)
       } else {
@@ -858,7 +858,7 @@ export default function AuthPage() {
                             if (e.target.value) validateEmail(e.target.value)
                           }}
                           placeholder="you@institution.ac.ke"
-                          className={`w-full pl-12 pr-4 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
+                          className={`w-full outline-0 pl-12 pr-4 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
                             emailError
                               ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                               : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
@@ -946,7 +946,7 @@ export default function AuthPage() {
                         value={signupCode}
                         onChange={(e) => setSignupCode(e.target.value)}
                         placeholder="Enter the 6-digit code sent to your email"
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        className="w-full  outline-0 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                         required
                         disabled={isSignupLoading}
                       />
@@ -971,7 +971,7 @@ export default function AuthPage() {
                             if (e.target.value) validatePassword(e.target.value)
                           }}
                           placeholder="Create a strong password"
-                          className={`w-full pl-12 pr-12 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
+                          className={`w-full outline-0 pl-12 pr-12 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
                             passwordError
                               ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                               : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
@@ -1000,7 +1000,7 @@ export default function AuthPage() {
                           type="text"
                           value={signupFirstname}
                           onChange={(e) => setSignupFirstname(e.target.value)}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                          className="w-full outline-0 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                           required
                           disabled={isSignupLoading}
                         />
@@ -1015,7 +1015,7 @@ export default function AuthPage() {
                           type="text"
                           value={signupSurname}
                           onChange={(e) => setSignupSurname(e.target.value)}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                          className="w-full outline-0 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                           required
                           disabled={isSignupLoading}
                         />
@@ -1032,7 +1032,7 @@ export default function AuthPage() {
                         type="text"
                         value={signupOthernames}
                         onChange={(e) => setSignupOthernames(e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        className="w-full outline-0 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                         disabled={isSignupLoading}
                       />
                     </motion.div>
@@ -1049,7 +1049,7 @@ export default function AuthPage() {
                             type="text"
                             value={signupRegNumber}
                             onChange={(e) => setSignupRegNumber(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                            className="w-full outline-0 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                             required
                             disabled={isSignupLoading}
                           />
@@ -1068,7 +1068,7 @@ export default function AuthPage() {
                             value={signupUnitJoinCode}
                             onChange={(e) => setSignupUnitJoinCode(e.target.value)}
                             placeholder="Enter unit join code if you have one"
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                            className="w-full outline-0 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                             disabled={isSignupLoading}
                           />
                         </motion.div>

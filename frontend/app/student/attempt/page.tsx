@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -7,6 +8,11 @@ import {
   ChevronRight,
   Clock,
   Loader2,
+  Image as ImageIcon,
+  FileText,
+  XCircle,
+  Edit3,
+  Camera,
 } from "lucide-react";
 import type { QuestionType } from "@/types/assessment";
 
@@ -32,6 +38,14 @@ interface AttemptQuestion {
   status?: "answered" | "not answered";
 }
 
+interface ImageUploadState {
+  file: File | null;
+  previewUrl: string | null;
+  isUploading: boolean;
+  error: string | null;
+  imageId?: string;
+}
+
 export default function AttemptPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -50,8 +64,15 @@ export default function AttemptPage() {
   const [dragDropAnswers, setDragDropAnswers] = useState<Record<string, string>[]>([]);
 
   const [openEndedAnswers, setOpenEndedAnswers] = useState<string[]>([]);
-  const [openEndedImages, setOpenEndedImages] = useState<(File | null)[]>([]);
   const [openEndedInputModes, setOpenEndedInputModes] = useState<("text" | "image" | null)[]>([]);
+  
+  // State for image upload handling
+  const [imageUploadStates, setImageUploadStates] = useState<ImageUploadState[]>([]);
+  
+  // Camera access state
+  const [showCamera, setShowCamera] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [isNextLoading, setIsNextLoading] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
@@ -81,8 +102,18 @@ export default function AttemptPage() {
         setSelectedAnswers(Array(qs.length).fill(-1));
         setMultipleAnswers(Array(qs.length).fill([]));
         setOpenEndedAnswers(Array(qs.length).fill(""));
-        setOpenEndedImages(Array(qs.length).fill(null));
         setOpenEndedInputModes(Array(qs.length).fill(null));
+
+        // Initialize image upload states
+        setImageUploadStates(
+          Array(qs.length).fill(null).map(() => ({
+            file: null,
+            previewUrl: null,
+            isUploading: false,
+            error: null,
+            imageId: undefined,
+          }))
+        );
 
         setOrderingAnswers(
           qs.map((q) => {
@@ -132,8 +163,59 @@ export default function AttemptPage() {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
+      stopCamera();
     };
   }, [assessmentId, router]);
+
+  // Camera functions
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setShowCamera(true);
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      alert('Unable to access camera. Please check permissions and try again.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setShowCamera(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext('2d');
+      if (context) {
+        canvasRef.current.width = videoRef.current.videoWidth;
+        canvasRef.current.height = videoRef.current.videoHeight;
+        context.drawImage(videoRef.current, 0, 0);
+        
+        canvasRef.current.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `camera-capture-${Date.now()}.jpg`, { 
+              type: 'image/jpeg' 
+            });
+            handleImageUpload(currentQuestion, file);
+            stopCamera();
+          }
+        }, 'image/jpeg', 0.9);
+      }
+    }
+  };
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -160,15 +242,104 @@ export default function AttemptPage() {
     setMultipleAnswers(newAnswers);
   };
 
+  const handleImageUpload = async (questionIndex: number, file: File) => {
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload a valid image file (JPEG, PNG, etc.)');
+      return;
+    }
+
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image file is too large. Please upload an image smaller than 10MB');
+      return;
+    }
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    
+    // Update state with new file and preview immediately
+    const newStates = [...imageUploadStates];
+    newStates[questionIndex] = {
+      ...newStates[questionIndex],
+      file,
+      previewUrl,
+      isUploading: true,
+      error: null,
+    };
+    setImageUploadStates(newStates);
+
+    try {
+      // In a real implementation, you would upload the image to your server here
+      // For now, we'll simulate upload and generate a unique ID
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate upload delay
+      
+      const imageId = `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      setImageUploadStates(prevStates => {
+        const updatedStates = [...prevStates];
+        updatedStates[questionIndex] = {
+          ...updatedStates[questionIndex],
+          isUploading: false,
+          imageId,
+        };
+        return updatedStates;
+      });
+
+      // Set open-ended answer to indicate image upload
+      const newAnswers = [...openEndedAnswers];
+      newAnswers[questionIndex] = `[Image uploaded: ${file.name}]`;
+      setOpenEndedAnswers(newAnswers);
+    } catch (error) {
+      setImageUploadStates(prevStates => {
+        const errorStates = [...prevStates];
+        errorStates[questionIndex] = {
+          ...errorStates[questionIndex],
+          isUploading: false,
+          error: error instanceof Error ? error.message : "Failed to upload image",
+        };
+        return errorStates;
+      });
+    }
+  };
+
+  const handleRemoveImage = (questionIndex: number) => {
+    const state = imageUploadStates[questionIndex];
+    if (state.previewUrl) {
+      URL.revokeObjectURL(state.previewUrl);
+    }
+
+    const newStates = [...imageUploadStates];
+    newStates[questionIndex] = {
+      file: null,
+      previewUrl: null,
+      isUploading: false,
+      error: null,
+      imageId: undefined,
+    };
+    setImageUploadStates(newStates);
+
+    // Clear the answer
+    const newAnswers = [...openEndedAnswers];
+    newAnswers[questionIndex] = "";
+    setOpenEndedAnswers(newAnswers);
+  };
+
   const isCurrentQuestionAnswered = () => {
     if (questions.length === 0) return false;
     const q = questions[currentQuestion];
 
     switch (q.type) {
       case "open-ended": {
-        const textAnswer = openEndedAnswers[currentQuestion]?.trim();
-        const imageAnswer = openEndedImages[currentQuestion];
-        return !!textAnswer || !!imageAnswer;
+        const inputMode = openEndedInputModes[currentQuestion];
+        if (inputMode === "text") {
+          return !!openEndedAnswers[currentQuestion]?.trim();
+        } else if (inputMode === "image") {
+          const uploadState = imageUploadStates[currentQuestion];
+          // Question is answered if an image has been uploaded
+          return !!uploadState.file;
+        }
+        return false;
       }
       case "close-ended-multiple-single":
       case "close-ended-bool":
@@ -202,28 +373,32 @@ export default function AttemptPage() {
 
       if (!inputMode) {
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h3 className="text-lg font-semibold text-gray-900">
               Question {index + 1}: {question.text}
             </h3>
-            <p className="text-gray-600">
-              Please choose how you would like to answer this question. This choice cannot be changed.
-            </p>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => handleInputModeChange("text")}
-                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-              >
-                Answer with Text
-              </button>
-              <button
-                type="button"
-                onClick={() => handleInputModeChange("image")}
-                className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-              >
-                Upload an Image
-              </button>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-sm text-blue-900 mb-4">
+                Please choose how you would like to answer this question. This choice cannot be changed.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleInputModeChange("text")}
+                  className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-blue-500 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                >
+                  <FileText className="w-5 h-5" />
+                  Answer with Text
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleInputModeChange("image")}
+                  className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-purple-500 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium"
+                >
+                  <ImageIcon className="w-5 h-5" />
+                  Upload an Image
+                </button>
+              </div>
             </div>
           </div>
         );
@@ -237,6 +412,7 @@ export default function AttemptPage() {
             </h3>
             <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
           </div>
+
           {inputMode === "text" && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Your Answer</label>
@@ -249,22 +425,280 @@ export default function AttemptPage() {
                   setOpenEndedAnswers(next);
                 }}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Type your answer here..."
               />
             </div>
           )}
+
           {inputMode === "image" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Upload Image</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const next = [...openEndedImages];
-                  next[index] = e.target.files?.[0] || null;
-                  setOpenEndedImages(next);
-                }}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+            <div className="space-y-4">
+              {/* Camera Modal */}
+              {showCamera && (
+                <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex flex-col items-center justify-center p-4">
+                  <div className="w-full max-w-2xl">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-white text-lg font-semibold">Take a Photo</h3>
+                      <button
+                        onClick={stopCamera}
+                        className="text-white hover:text-gray-300"
+                      >
+                        <XCircle className="w-6 h-6" />
+                      </button>
+                    </div>
+                    
+                    <div className="relative bg-black rounded-lg overflow-hidden">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        className="w-full h-auto max-h-[70vh] object-contain"
+                      />
+                      <canvas ref={canvasRef} className="hidden" />
+                    </div>
+                    
+                    <div className="flex justify-center gap-4 mt-4">
+                      <button
+                        onClick={capturePhoto}
+                        className="px-6 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 flex items-center gap-2"
+                      >
+                        <Camera className="w-5 h-5" />
+                        Capture Photo
+                      </button>
+                      <button
+                        onClick={stopCamera}
+                        className="px-6 py-3 bg-gray-700 text-white rounded-full hover:bg-gray-600"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!imageUploadStates[index].file ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Upload Image Answer
+                  </label>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Upload an image of your handwritten answer, diagram, or work. The AI will analyze the image directly.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors">
+                      <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-sm text-gray-600 mb-4">
+                        Upload from device
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(index, file);
+                          }
+                        }}
+                        className="hidden"
+                        id={`image-upload-${index}`}
+                      />
+                      <label
+                        htmlFor={`image-upload-${index}`}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors"
+                      >
+                        <ImageIcon className="w-4 h-4" />
+                        Choose Image
+                      </label>
+                    </div>
+                    
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors">
+                      <Camera className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-sm text-gray-600 mb-4">
+                        Use camera (mobile)
+                      </p>
+                      <button
+                        onClick={startCamera}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                      >
+                        <Camera className="w-4 h-4" />
+                        Open Camera
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <Edit3 className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-yellow-900 mb-1">
+                          Important Note
+                        </p>
+                        <ul className="text-xs text-yellow-800 space-y-1 list-disc ml-4">
+                          <li>Ensure your handwriting is clear and legible</li>
+                          <li>Use good lighting when taking photos</li>
+                          <li>Make sure the entire answer is visible in the frame</li>
+                          <li>The AI will analyze the image directly - no OCR is used</li>
+                          <li>You can upload multiple images if needed (max 10MB each)</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Image Preview */}
+                  <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">Uploaded Image</span>
+                      <div className="flex items-center gap-3">
+                        {imageUploadStates[index].imageId && (
+                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                            ✓ Uploaded
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index)}
+                          className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                    <div className="p-4 bg-white">
+                      {imageUploadStates[index].previewUrl ? (
+                        <div className="flex flex-col items-center">
+                          <img
+                            src={imageUploadStates[index].previewUrl!}
+                            alt="Uploaded answer"
+                            className="max-w-full max-h-96 mx-auto rounded-lg shadow-sm object-contain"
+                            onError={(e) => {
+                              console.error('Image preview failed to load');
+                              e.currentTarget.src = '';
+                              e.currentTarget.alt = 'Preview unavailable';
+                            }}
+                          />
+                          <p className="text-xs text-gray-500 mt-2">
+                            {imageUploadStates[index].file?.name} • 
+                            {(imageUploadStates[index].file?.size || 0) > 1024 * 1024 
+                              ? `${(imageUploadStates[index].file!.size / (1024 * 1024)).toFixed(2)} MB`
+                              : `${Math.round(imageUploadStates[index].file!.size / 1024)} KB`
+                            }
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-48 bg-gray-100 rounded-lg">
+                          <p className="text-gray-500">Loading preview...</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Uploading Status */}
+                  {imageUploadStates[index].isUploading && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                        <div>
+                          <div className="text-sm font-medium text-blue-900">
+                            Uploading image...
+                          </div>
+                          <div className="text-xs text-blue-700">
+                            Preparing image for AI analysis
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Upload Error */}
+                  {imageUploadStates[index].error && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <div className="text-sm font-medium text-red-900 mb-1">
+                            Upload failed
+                          </div>
+                          <div className="text-xs text-red-700">
+                            {imageUploadStates[index].error}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (imageUploadStates[index].file) {
+                                handleImageUpload(index, imageUploadStates[index].file!);
+                              }
+                            }}
+                            className="mt-2 text-sm text-red-700 hover:text-red-800 font-medium"
+                          >
+                            Try Again
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Additional Notes Field */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      <Edit3 className="w-4 h-4 inline mr-1" />
+                      Additional Notes (Optional)
+                    </label>
+                    <p className="text-xs text-gray-500 mb-2">
+                      Add any additional context or explanations that might help the AI understand your image answer better.
+                    </p>
+                    <textarea
+                      rows={3}
+                      value={openEndedAnswers[index] || ""}
+                      onChange={(e) => {
+                        const next = [...openEndedAnswers];
+                        next[index] = e.target.value;
+                        setOpenEndedAnswers(next);
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Add notes about your image answer..."
+                    />
+                  </div>
+
+                  {/* Upload Another Image Option */}
+                  <div className="border-t pt-4">
+                    <p className="text-sm text-gray-600 mb-3">
+                      Need to upload another image for this answer?
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(index, file);
+                          }
+                        }}
+                        className="hidden"
+                        id={`additional-upload-${index}`}
+                      />
+                      <label
+                        htmlFor={`additional-upload-${index}`}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors text-sm"
+                      >
+                        <ImageIcon className="w-3 h-3" />
+                        Add Another Image
+                      </label>
+                      <button
+                        onClick={startCamera}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                      >
+                        <Camera className="w-3 h-3" />
+                        Take Another Photo
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -628,7 +1062,6 @@ export default function AttemptPage() {
     if (!question) return;
 
     const formData = new FormData();
-    let textAnswer = "";
 
     if (question.type === "open-ended") {
       const inputMode = openEndedInputModes[questionIndex];
@@ -636,16 +1069,22 @@ export default function AttemptPage() {
         formData.append("answer_type", "text");
         formData.append("text_answer", openEndedAnswers[questionIndex] || "");
       } else if (inputMode === "image") {
-        const imageFile = openEndedImages[questionIndex];
+        const imageFile = imageUploadStates[questionIndex].file;
+        const notes = openEndedAnswers[questionIndex] || "";
+        
+        // Send the image directly to AI
+        formData.append("answer_type", "image");
         if (imageFile) {
-          formData.append("answer_type", "image");
           formData.append("image", imageFile);
         }
+        // Optional notes for context
+        formData.append("notes", notes);
       }
     } else {
       const rawChoices = question.choices || [];
       const choices = rawChoices.filter((c): c is string => typeof c === "string");
 
+      let textAnswer = "";
       switch (question.type) {
         case "close-ended-multiple-single": {
           textAnswer = choices[selectedAnswers[questionIndex]] || "";
