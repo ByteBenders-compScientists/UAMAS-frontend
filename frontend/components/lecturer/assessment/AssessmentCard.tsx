@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Assessment, Course, QuestionType } from '../../../types/assessment';
 
-import { formatDate, formatDateTime, getDifficultyColor, getTypeColor, getBlooms } from '../../../utils/assessmentUtils';
+import { formatDate, getDifficultyColor, getTypeColor, getBlooms, formatDateForInput } from '../../../utils/assessmentUtils';
 
 interface AssessmentCardProps {
   assessment: Assessment;
@@ -191,7 +191,13 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
           {(assessment).schedule_date && (
             <div className="flex items-center text-xs font-medium text-emerald-600 mt-2">
               <Calendar className="w-3.5 h-3.5 mr-1" />
-              Scheduled: {formatDateTime((assessment).schedule_date)}
+              Scheduled: {formatDateForInput((assessment).schedule_date)}
+            </div>
+          )}
+          {(assessment).deadline_date && (
+            <div className="flex items-center text-xs font-medium text-emerald-600 mt-2">
+              <Calendar className="w-3.5 h-3.5 mr-1" />
+              Deadline: {formatDateForInput(assessment.deadline_date)}
             </div>
           )}
         </div>

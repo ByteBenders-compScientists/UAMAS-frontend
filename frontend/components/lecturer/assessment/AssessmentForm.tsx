@@ -1,28 +1,32 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Sparkles, 
-  Edit3, 
-  Wand2, 
-  User, 
-  Check, 
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Sparkles,
+  Edit3,
+  Wand2,
+  User,
+  Check,
   Loader2,
   X,
-  ChevronDown
-} from 'lucide-react';
-import { Assessment, Course } from '../../../types/assessment';
+  ChevronDown,
+} from "lucide-react";
+import { Assessment, Course } from "../../../types/assessment";
 
-type QuestionType = 
-  | 'open-ended'
-  | 'close-ended-multiple-single'
-  | 'close-ended-multiple-multiple'
-  | 'close-ended-bool'
-  | 'close-ended-matching'
-  | 'close-ended-ordering'
-  | 'close-ended-drag-drop';
+type QuestionType =
+  | "open-ended"
+  | "close-ended-multiple-single"
+  | "close-ended-multiple-multiple"
+  | "close-ended-bool"
+  | "close-ended-matching"
+  | "close-ended-ordering"
+  | "close-ended-drag-drop";
 
 interface AssessmentFormProps {
-  initialData?: Omit<Assessment, 'questions_type'> & { questions_type?: string[]; schedule_date?: string | null };
+  initialData?: Omit<Assessment, "questions_type"> & {
+    questions_type?: string[];
+    schedule_date?: string | null;
+    deadline_date?: string | null;
+  };
   selectedCourse: string;
   selectedUnit: string;
   selectedWeek: number;
@@ -33,17 +37,16 @@ interface AssessmentFormProps {
   isEditing?: boolean;
 }
 
-
-const AssessmentForm: React.FC<AssessmentFormProps> = ({ 
-  initialData, 
-  selectedCourse, 
-  selectedUnit, 
-  selectedWeek, 
-  courses, 
-  onSubmit, 
-  onCancel, 
+const AssessmentForm: React.FC<AssessmentFormProps> = ({
+  initialData,
+  selectedCourse,
+  selectedUnit,
+  selectedWeek,
+  courses,
+  onSubmit,
+  onCancel,
   loading,
-  isEditing = false
+  isEditing = false,
 }) => {
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
@@ -52,56 +55,75 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
     questions_type: (initialData?.questions_type || []) as QuestionType[],
     topic: initialData?.topic || "",
     total_marks: initialData?.total_marks || 30,
-    difficulty: initialData?.difficulty || "Intermediate",
+    difficulty: initialData?.difficulty || "Advanced",
     number_of_questions: initialData?.number_of_questions || 15,
     blooms_level: initialData?.blooms_level || "Remember",
-    deadline: initialData?.deadline || "",
+    deadline_date: initialData?.deadline_date || "",
     duration: initialData?.duration || 60,
-    schedule_date: initialData?.schedule_date || ""
+    schedule_date: initialData?.schedule_date || "",
   });
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [docFile, setDocFile] = useState<File | null>(null);
 
   const questionTypeOptions = [
-    { value: 'open-ended' as const, label: 'Open Ended' },
-    { value: 'close-ended-multiple-single' as const, label: 'Multiple Choice (Single Answer)' },
-    { value: 'close-ended-multiple-multiple' as const, label: 'Multiple Choice (Multiple Answers)' },
-    { value: 'close-ended-bool' as const, label: 'True/False' },
-    { value: 'close-ended-matching' as const, label: 'Matching' },
-    { value: 'close-ended-ordering' as const, label: 'Ordering' },
-    { value: 'close-ended-drag-drop' as const, label: 'Drag and Drop' },
+    { value: "open-ended" as const, label: "Open Ended" },
+    {
+      value: "close-ended-multiple-single" as const,
+      label: "Multiple Choice (Single Answer)",
+    },
+    {
+      value: "close-ended-multiple-multiple" as const,
+      label: "Multiple Choice (Multiple Answers)",
+    },
+    { value: "close-ended-bool" as const, label: "True/False" },
+    { value: "close-ended-matching" as const, label: "Matching" },
+    { value: "close-ended-ordering" as const, label: "Ordering" },
+    { value: "close-ended-drag-drop" as const, label: "Drag and Drop" },
   ] as const;
 
   const toggleQuestionType = (type: QuestionType) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       questions_type: prev.questions_type.includes(type)
         ? prev.questions_type.filter((t: QuestionType) => t !== type)
-        : [...prev.questions_type, type]
+        : [...prev.questions_type, type],
     }));
   };
 
   const removeQuestionType = (type: QuestionType, e: React.MouseEvent) => {
     e.stopPropagation();
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      questions_type: prev.questions_type.filter((t: QuestionType) => t !== type)
+      questions_type: prev.questions_type.filter(
+        (t: QuestionType) => t !== type,
+      ),
     }));
   };
 
-  const selectedCourseData = courses.find(c => c.id === selectedCourse);
-  const selectedUnitData = selectedCourseData?.units.find(u => u.id === selectedUnit);
+  const selectedCourseData = courses.find((c) => c.id === selectedCourse);
+  const selectedUnitData = selectedCourseData?.units.find(
+    (u) => u.id === selectedUnit,
+  );
 
   const requiredFields = [
-    'title', 'type', 'description', 'topic', 'number_of_questions', 'total_marks', 'blooms_level', 'difficulty',
+    "title",
+    "type",
+    "description",
+    "topic",
+    "number_of_questions",
+    "total_marks",
+    "blooms_level",
+    "difficulty",
   ];
 
   const isFormValid = () => {
     for (const field of requiredFields) {
-      if (!formData[field as keyof typeof formData] || 
-          formData[field as keyof typeof formData] === "" ||
-          (field === 'questions_type' && formData.questions_type.length === 0)) {
+      if (
+        !formData[field as keyof typeof formData] ||
+        formData[field as keyof typeof formData] === "" ||
+        (field === "questions_type" && formData.questions_type.length === 0)
+      ) {
         return false;
       }
     }
@@ -110,12 +132,12 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
 
   const handleSubmit = (isAI: boolean) => {
     if (!isFormValid()) {
-      alert('Please fill in all required fields.');
+      alert("Please fill in all required fields.");
       return;
     }
     const submissionData = {
       ...formData,
-      deadline: formData.deadline || "",
+      deadline_date: formData.deadline_date|| "",
       duration: formData.duration || "",
       schedule_date: formData.schedule_date || "",
       course_id: selectedCourse,
@@ -150,20 +172,30 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             </>
           )}
         </h3>
-        <p className="text-gray-600 mt-2">{isEditing ? "Modify assessment details" : "Generate with AI or create manually"}</p>
-        
+        <p className="text-gray-600 mt-2">
+          {isEditing
+            ? "Modify assessment details"
+            : "Generate with AI or create manually"}
+        </p>
+
         {/* Current Context */}
         <div className="mt-6 p-4 bg-white rounded-xl border border-emerald-200 shadow-sm">
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <span className="text-gray-600 font-medium">Context:</span>
             <span className="flex items-center text-emerald-700 font-semibold">
-              <span className={`w-3 h-3 rounded-full mr-2 ${selectedCourseData?.color}`}></span>
+              <span
+                className={`w-3 h-3 rounded-full mr-2 ${selectedCourseData?.color}`}
+              ></span>
               {selectedCourseData?.name}
             </span>
             <span className="text-gray-400">•</span>
-            <span className="text-emerald-700 font-semibold">{selectedUnitData?.unit_name}</span>
+            <span className="text-emerald-700 font-semibold">
+              {selectedUnitData?.unit_name}
+            </span>
             <span className="text-gray-400">•</span>
-            <span className="text-emerald-700 font-semibold">Week {selectedWeek}</span>
+            <span className="text-emerald-700 font-semibold">
+              Week {selectedWeek}
+            </span>
           </div>
         </div>
       </div>
@@ -178,7 +210,9 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             <input
               type="text"
               value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
               placeholder="Enter assessment title"
             />
@@ -189,7 +223,12 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             </label>
             <select
               value={formData.type}
-              onChange={(e) => setFormData({...formData, type: e.target.value as "CAT" | "Assignment" | "Case Study"})}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  type: e.target.value as "CAT" | "Assignment" | "Case Study",
+                })
+              }
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
             >
               <option value="CAT">CAT</option>
@@ -205,7 +244,9 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
           </label>
           <textarea
             value={formData.description}
-            onChange={(e) => setFormData({...formData, description: e.target.value})}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
             rows={4}
             className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
             placeholder="Describe the assessment purpose and content"
@@ -219,14 +260,16 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               Question Types
               <span className="text-red-500 ml-1">*</span>
             </label>
-            
+
             {/* Selected Tags */}
             {formData.questions_type.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-2">
                 {formData.questions_type.map((type) => {
-                  const option = questionTypeOptions.find(opt => opt.value === type);
+                  const option = questionTypeOptions.find(
+                    (opt) => opt.value === type,
+                  );
                   return (
-                    <span 
+                    <span
                       key={type}
                       className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                     >
@@ -243,7 +286,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
                 })}
               </div>
             )}
-            
+
             {/* Dropdown */}
             <div className="relative">
               <button
@@ -252,13 +295,15 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
                 className="w-full p-2.5 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 flex justify-between items-center"
               >
                 <span className="text-gray-700">
-                  {formData.questions_type.length > 0 
-                    ? `Selected: ${formData.questions_type.length}` 
-                    : 'Select question types...'}
+                  {formData.questions_type.length > 0
+                    ? `Selected: ${formData.questions_type.length}`
+                    : "Select question types..."}
                 </span>
-                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? 'transform rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? "transform rotate-180" : ""}`}
+                />
               </button>
-              
+
               {isDropdownOpen && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
                   <div className="py-1">
@@ -266,7 +311,9 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
                       <div
                         key={option.value}
                         className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 flex items-center ${
-                          formData.questions_type.includes(option.value) ? 'bg-blue-50' : ''
+                          formData.questions_type.includes(option.value)
+                            ? "bg-blue-50"
+                            : ""
                         }`}
                         onClick={() => {
                           toggleQuestionType(option.value);
@@ -275,7 +322,9 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
                         <input
                           type="checkbox"
                           className="h-4 w-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
-                          checked={formData.questions_type.includes(option.value)}
+                          checked={formData.questions_type.includes(
+                            option.value,
+                          )}
                           onChange={() => {}} // Handled by the parent div
                         />
                         <span className="ml-2">{option.label}</span>
@@ -285,7 +334,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
                 </div>
               )}
             </div>
-            
+
             <p className="mt-1 text-xs text-gray-500">
               Click to select multiple question types
             </p>
@@ -300,7 +349,9 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             <input
               type="text"
               value={formData.topic}
-              onChange={(e) => setFormData({...formData, topic: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, topic: e.target.value })
+              }
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
               placeholder="Main topic or subject area"
             />
@@ -311,7 +362,15 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             </label>
             <select
               value={formData.difficulty}
-              onChange={(e) => setFormData({...formData, difficulty: e.target.value as "Easy" | "Intermediate" | "Advance"})}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  difficulty: e.target.value as
+                    | "Easy"
+                    | "Intermediate"
+                    | "Advance",
+                })
+              }
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
             >
               <option value="Easy">Easy</option>
@@ -329,7 +388,12 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             <input
               type="number"
               value={formData.number_of_questions}
-              onChange={(e) => setFormData({...formData, number_of_questions: parseInt(e.target.value)})}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  number_of_questions: parseInt(e.target.value),
+                })
+              }
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
               min="1"
             />
@@ -341,7 +405,12 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             <input
               type="number"
               value={formData.total_marks}
-              onChange={(e) => setFormData({...formData, total_marks: parseInt(e.target.value)})}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  total_marks: parseInt(e.target.value),
+                })
+              }
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
               min="1"
             />
@@ -352,7 +421,18 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             </label>
             <select
               value={formData.blooms_level}
-              onChange={(e) => setFormData({...formData, blooms_level: e.target.value as "Remember" | "Understand" | "Apply" | "Analyze" | "Evaluate" | "Create"})}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  blooms_level: e.target.value as
+                    | "Remember"
+                    | "Understand"
+                    | "Apply"
+                    | "Analyze"
+                    | "Evaluate"
+                    | "Create",
+                })
+              }
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
             >
               <option value="Remember">Remember</option>
@@ -372,9 +452,11 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               Deadline (Optional)
             </label>
             <input
-              type="date"
-              value={formData.deadline}
-              onChange={(e) => setFormData({...formData, deadline: e.target.value})}
+              type="datetime-local"
+              value={formData.deadline_date}
+              onChange={(e) =>
+                setFormData({ ...formData, deadline_date: e.target.value })
+              }
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
             />
           </div>
@@ -385,7 +467,9 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             <input
               type="datetime-local"
               value={formData.schedule_date}
-              onChange={(e) => setFormData({...formData, schedule_date: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, schedule_date: e.target.value })
+              }
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
             />
           </div>
@@ -398,7 +482,9 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             <input
               type="number"
               value={formData.duration}
-              onChange={(e) => setFormData({...formData, duration: parseInt(e.target.value)})}
+              onChange={(e) =>
+                setFormData({ ...formData, duration: parseInt(e.target.value) })
+              }
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
               placeholder="e.g., 60"
               min="1"
@@ -413,11 +499,13 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             <input
               type="file"
               accept=".pdf"
-              onChange={e => setDocFile(e.target.files?.[0] || null)}
+              onChange={(e) => setDocFile(e.target.files?.[0] || null)}
               className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
             />
             {docFile && (
-              <div className="text-xs text-gray-500 mt-1">Selected: {docFile.name}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                Selected: {docFile.name}
+              </div>
             )}
           </div>
         </div>

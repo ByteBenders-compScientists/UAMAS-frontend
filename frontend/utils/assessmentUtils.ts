@@ -18,6 +18,29 @@ export const formatDateTime = (dateString: string) => {
   });
 };
 
+// Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+export const formatDateForInput = (dateString: string | null | undefined): string => {
+  if (!dateString) return "";
+  
+  try {
+    const date = new Date(dateString);
+    // Check if date is valid
+    if (isNaN(date.getTime())) return "";
+    
+    // Format to YYYY-MM-DDTHH:mm (required format for datetime-local)
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return "";
+  }
+};
+
 export const getDifficultyColor = (difficulty: string) => {
   switch (difficulty) {
     case "Easy":
