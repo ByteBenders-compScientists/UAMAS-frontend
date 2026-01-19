@@ -292,14 +292,14 @@ export default function AuthPage() {
           const role = (data.role || "").toLowerCase()
           switch (role) {
             case "student":
-              window.location.href = "/hobby"
+              window.location.href = "/student/dashboard"
               break
             case "lecturer":
             case "teacher":
               window.location.href = "/lecturer/dashboard"
               break
             default:
-              window.location.href = "/hobby"
+              window.location.href = "/student/dashboard"
           }
         }, 2000)
       } else {
