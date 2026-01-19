@@ -736,7 +736,7 @@ export default function AuthPage() {
                       </>
                     ) : (
                       <>
-                        Access IntelliLearn
+                        Login
                         <HiArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
