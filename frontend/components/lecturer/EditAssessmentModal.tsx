@@ -4,6 +4,7 @@ import { Save, Loader2, FileText, Plus, AlertCircle, X } from 'lucide-react';
 import { Course, Assessment, Question, QuestionType } from '../../types/assessment';
 import { assessmentApi } from '../../services/api';
 import QuestionEditor from './QuestionsEditor';
+import { formatDateForInput } from '../../utils/assessmentUtils';
 
 interface EditAssessmentModalProps {
   assessment: Assessment;
@@ -14,6 +15,8 @@ interface EditAssessmentModalProps {
   onQuestionCountUpdate?: (assessmentId: string, nextCount: number) => void;
 }
 
+
+
 const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({ 
   assessment, 
   onUpdate, 
@@ -22,19 +25,22 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
   onQuestionCountUpdate,
 }) => {
   const [formData, setFormData] = useState({
-    title: assessment.title,
-    description: assessment.description,
-    type: assessment.type,
-    questions_type: assessment.questions_type,
-    topic: assessment.topic,
-    total_marks: assessment.total_marks,
-    difficulty: assessment.difficulty,
-    number_of_questions: assessment.number_of_questions,
-    blooms_level: assessment.blooms_level,
-    deadline: assessment.deadline || "",
-    duration: assessment.duration || 60,
-    schedule_date: (assessment as any).schedule_date || ""
-  });
+  title: assessment.title,
+  description: assessment.description,
+  type: assessment.type,
+  questions_type: assessment.questions_type,
+  topic: assessment.topic,
+  total_marks: assessment.total_marks,
+  difficulty: assessment.difficulty,
+  number_of_questions: assessment.number_of_questions,
+  blooms_level: assessment.blooms_level,
+  duration: assessment.duration || 60,
+  schedule_date: formatDateForInput((assessment as any).schedule_date),
+  deadline_date: formatDateForInput((assessment as any).deadline_date)
+});
+
+
+
 
   const [questions, setQuestions] = useState<Question[]>(assessment.questions || []);
   const [activeTab, setActiveTab] = useState<'details' | 'questions'>('details');
@@ -416,6 +422,15 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                 type="datetime-local"
                 value={formData.schedule_date}
                 onChange={(e) => setFormData({...formData, schedule_date: e.target.value})}
+                className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-3">Deadline Date (Optional)</label>
+              <input
+                type="datetime-local"
+                value={formData.deadline_date}
+                onChange={(e) => setFormData({...formData, deadline_date: e.target.value})}
                 className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
               />
             </div>
