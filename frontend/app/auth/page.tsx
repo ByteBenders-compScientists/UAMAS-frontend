@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import type React from "react"
@@ -13,12 +14,8 @@ import {
   HiSparkles,
   HiAcademicCap,
   HiLightBulb,
-  HiUsers,
-  HiClock,
   HiTrendingUp,
-  HiStar,
   HiCheckCircle,
-  HiHeart,
 } from "react-icons/hi"
 import { SiGoogle, SiApple, SiFacebook } from "react-icons/si"
 import { RiRobot2Fill } from "react-icons/ri"
@@ -55,33 +52,6 @@ const educationContent = [
   },
 ]
 
-// Smaller floating elements with just words - reduced and repositioned
-const floatingElements = [
-  {
-    icon: HiStar,
-    text: "Excellence",
-    position: "top-20 right-16",
-    delay: 0,
-    color: "bg-gradient-to-r from-yellow-400 to-orange-500",
-    size: "small",
-  },
-  {
-    icon: HiCheckCircle,
-    text: "Trusted",
-    position: "bottom-40 left-12",
-    delay: 2,
-    color: "bg-gradient-to-r from-green-400 to-emerald-500",
-    size: "small",
-  },
-]
-
-// Stats with enhanced styling
-const stats = [
-  { icon: HiClock, value: "75%", label: "Time Saved", delay: 0 },
-  { icon: HiUsers, value: "15K+", label: "Educators", delay: 0.2 },
-  { icon: HiTrendingUp, value: "98%", label: "Satisfaction", delay: 0.4 },
-]
-
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"
 
 export default function AuthPage() {
@@ -113,11 +83,11 @@ export default function AuthPage() {
   const [isSignupLoading, setIsSignupLoading] = useState(false)
   const [signupSuccessMessage, setSignupSuccessMessage] = useState("")
 
-  // Skeleton loading effect
+  // Reduced skeleton loading time
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsSkeletonLoading(false)
-    }, 1500)
+    }, 800)
     return () => clearTimeout(timer)
   }, [])
 
@@ -211,13 +181,6 @@ export default function AuthPage() {
         }),
       })
 
-      const body = JSON.stringify({
-        email: signupEmail,
-        role: signupRole,
-      })
-
-      // console.log("body request sent: ", body)
-
       const data = await response.json()
 
       if (response.ok) {
@@ -282,7 +245,6 @@ export default function AuthPage() {
 
       if (response.ok) {
         setSignupSuccessMessage("Account created successfully. You can now log in.")
-        // Pre-fill login email and switch to login mode
         setEmail(signupEmail)
         setAuthMode("login")
         setSignupStep(1)
@@ -326,7 +288,6 @@ export default function AuthPage() {
         setShowSuccess(true)
         await fetchUserInfo()
 
-        // Delay redirect to show success animation
         setTimeout(() => {
           const role = (data.role || "").toLowerCase()
           switch (role) {
@@ -354,9 +315,7 @@ export default function AuthPage() {
 
   const fetchUserInfo = async () => {
     try {
-
       const response = await fetch(`${apiBaseUrl}/auth/me`, {
-
         method: "GET",
         credentials: "include",
       })
@@ -468,15 +427,15 @@ export default function AuthPage() {
       <div className="hidden lg:flex lg:w-3/5 relative overflow-hidden">
         {/* Rounded container */}
         <div className="absolute inset-4 rounded-3xl overflow-hidden shadow-2xl">
-          {/* Background Image with smooth crossfade */}
+          {/* Background Image with zoom transition */}
           <div className="absolute inset-0">
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               <motion.div
                 key={currentIndex}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1.2, ease: "easeInOut" }}
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
                 className="absolute inset-0"
               >
                 <Image
@@ -491,35 +450,6 @@ export default function AuthPage() {
             </AnimatePresence>
           </div>
 
-          {/* Smaller floating text elements */}
-          {floatingElements.map((element) => (
-            <motion.div
-              key={element.text}
-              className={`absolute ${element.position} z-30`}
-              initial={{ opacity: 0, scale: 0, y: 20 }}
-              animate={{
-                opacity: [0.7, 1, 0.7],
-                scale: [0.9, 1, 0.9],
-                y: [0, -5, 0],
-              }}
-              transition={{
-                duration: 6,
-                delay: element.delay,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "easeInOut",
-              }}
-            >
-              <div
-                className={`${element.color} text-white ${
-                  element.size === "tiny" ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
-                } rounded-full shadow-lg backdrop-blur-sm flex items-center space-x-2 border border-white/20`}
-              >
-                <element.icon className={element.size === "tiny" ? "w-3 h-3" : "w-4 h-4"} />
-                <span className="font-medium whitespace-nowrap">{element.text}</span>
-              </div>
-            </motion.div>
-          ))}
-
           {/* Content */}
           <div className="relative z-10 flex flex-col justify-between p-12 text-white h-full">
             {/* Logo */}
@@ -529,58 +459,34 @@ export default function AuthPage() {
               transition={{ duration: 0.6 }}
               className="flex items-center space-x-3"
             >
-              <Image
-                src="/assets/logo3.png"
-                alt="logo"
-                width={200}
-                height={180}
-                quality={100}
-                />
+              <Image src="/assets/logo3.png" alt="logo" width={200} height={180} quality={100} />
             </motion.div>
 
             {/* Main Content */}
             <div className="space-y-8 max-w-2xl">
-              <AnimatePresence mode="wait">
+              <AnimatePresence>
                 <motion.div
                   key={currentIndex}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
                   className="space-y-6"
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-white/15 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/25 shadow-lg">
-                      <currentContent.icon className="w-8 h-8 text-emerald-300" />
+                    <div className="w-16 h-16 bg-white backdrop-blur-md rounded-full flex items-center justify-center border border-white/25 shadow-lg">
+                      <currentContent.icon className="w-8 h-8 text-emerald-500" />
                     </div>
                     <div>
-                      <div className="text-emerald-300 text-sm font-semibold mb-1">{currentContent.tagline}</div>
+                      <div className="text-emerald-400 text-sm font-semibold mb-1">{currentContent.tagline}</div>
                       <h2 className="text-4xl font-bold leading-tight">{currentContent.title}</h2>
-                      <p className="text-emerald-200 text-lg font-medium">{currentContent.subtitle}</p>
+                      <p className="text-emerald-400 text-lg font-medium">{currentContent.subtitle}</p>
                     </div>
                   </div>
 
                   <p className="text-xl text-white/90 leading-relaxed ml-20">{currentContent.description}</p>
                 </motion.div>
               </AnimatePresence>
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-6 ml-20">
-                {stats.map((stat) => (
-                  <motion.div
-                    key={stat.label}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: stat.delay, duration: 0.6 }}
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    className="bg-white/15 backdrop-blur-md rounded-xl p-4 border border-white/25 text-center cursor-default shadow-lg"
-                  >
-                    <stat.icon className="w-6 h-6 text-emerald-300 mx-auto mb-2" />
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <div className="text-sm text-white/80">{stat.label}</div>
-                  </motion.div>
-                ))}
-              </div>
             </div>
 
             {/* Bottom */}
@@ -596,39 +502,6 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
-
-      {/* Smaller floating cards that extend into form area */}
-      <motion.div
-        initial={{ opacity: 0, x: -30 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 1.5, duration: 0.8 }}
-        className="hidden lg:block absolute left-1/2 top-1/3 transform -translate-y-1/2 -translate-x-8 z-50"
-      >
-        <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-white/50 min-w-[200px]">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-lg flex items-center justify-center">
-              <HiSparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-semibold text-gray-900">AI Powered</span>
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, x: -30 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 2, duration: 0.8 }}
-        className="hidden lg:block absolute left-1/2 bottom-1/3 transform translate-y-1/2 -translate-x-4 z-50"
-      >
-        <div className="bg-white/95 backdrop-blur-xl rounded-xl p-3 shadow-xl border border-white/50 min-w-[160px]">
-          <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-md flex items-center justify-center">
-              <HiHeart className="w-3 h-3 text-white" />
-            </div>
-            <span className="font-medium text-gray-900 text-sm">Easy to use </span>
-          </div>
-        </div>
-      </motion.div>
 
       {/* Right Side - Full Height Login Form */}
       <div className="w-full lg:w-2/5 bg-white flex flex-col relative">
@@ -686,9 +559,7 @@ export default function AuthPage() {
                     setSignupSuccessMessage("")
                   }}
                   className={`px-4 py-2 rounded-full transition-all ${
-                    authMode === "login"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-500 hover:text-gray-800"
+                    authMode === "login" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"
                   }`}
                 >
                   Sign in
@@ -700,9 +571,7 @@ export default function AuthPage() {
                     resetSignupState()
                   }}
                   className={`px-4 py-2 rounded-full transition-all ${
-                    authMode === "signup"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-500 hover:text-gray-800"
+                    authMode === "signup" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"
                   }`}
                 >
                   Sign up
@@ -849,12 +718,12 @@ export default function AuthPage() {
                   <motion.button
                     type="submit"
                     disabled={isLoading || !!emailError || !!passwordError}
-                    whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.3)" }}
+                    whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.7, duration: 0.5 }}
-                    className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <>
@@ -867,7 +736,7 @@ export default function AuthPage() {
                       </>
                     ) : (
                       <>
-                        Access IntelliLearn
+                        Login
                         <HiArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
@@ -889,13 +758,21 @@ export default function AuthPage() {
                     className="grid grid-cols-3 gap-4"
                   >
                     {[
-                      { name: "Google", icon: SiGoogle, color: "hover:text-red-500 hover:border-red-200 hover:bg-red-50" },
+                      {
+                        name: "Google",
+                        icon: SiGoogle,
+                        color: "hover:text-red-500 hover:border-red-200 hover:bg-red-50",
+                      },
                       {
                         name: "Facebook",
                         icon: SiFacebook,
                         color: "hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50",
                       },
-                      { name: "Apple", icon: SiApple, color: "hover:text-gray-800 hover:border-gray-300 hover:bg-gray-50" },
+                      {
+                        name: "Apple",
+                        icon: SiApple,
+                        color: "hover:text-gray-800 hover:border-gray-300 hover:bg-gray-50",
+                      },
                     ].map((provider) => (
                       <motion.button
                         key={provider.name}
@@ -1029,12 +906,12 @@ export default function AuthPage() {
                     <motion.button
                       type="submit"
                       disabled={isSignupLoading || !!emailError}
-                      whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.3)" }}
+                      whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.7, duration: 0.5 }}
-                      className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSignupLoading ? (
                         <>
@@ -1222,12 +1099,12 @@ export default function AuthPage() {
                     <motion.button
                       type="submit"
                       disabled={isSignupLoading || !!emailError || !!passwordError}
-                      whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.3)" }}
+                      whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 1, duration: 0.5 }}
-                      className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSignupLoading ? (
                         <>
