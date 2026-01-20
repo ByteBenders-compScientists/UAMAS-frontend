@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 // Import the SASS file
-import "./LecturerSidebar.scss";
+ import "./LecturerSidebar.scss";
 
 interface SidebarProps {
   showMobileOnly?: boolean;
@@ -70,7 +70,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
 
   // Get display name without title for sidebar
   const getDisplayName = (profile: LecturerProfile) => {
-    const title = profile.title || "Dr.";
+    const title = profile.title;
     return `${title} ${profile.name} ${profile.surname}`;
   };
 

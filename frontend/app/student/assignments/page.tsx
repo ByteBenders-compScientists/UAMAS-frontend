@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useLayout } from "@/components/LayoutController";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import SubmitConfirmation from "@/components/SubmitConfirmation";
 import EmptyState from "@/components/EmptyState";
 import {
   ClipboardList,
@@ -74,7 +75,7 @@ export default function AssignmentsPage() {
   const [orderingAnswers, setOrderingAnswers] = useState<string[][]>([]);
   const [matchingAnswers, setMatchingAnswers] = useState<Record<string, string>[]>([]);
   const [dragDropAnswers, setDragDropAnswers] = useState<Record<string, string>[]>([]);
-  const [, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const hasFetched = useRef(false);
   const [openEndedAnswers, setOpenEndedAnswers] = useState<string[]>([]);
@@ -95,33 +96,36 @@ export default function AssignmentsPage() {
   }, [router, searchParams, activeAssignment]);
 
   // Submit current assignment
-  const handleSubmitAssignment = async () => {
-    setIsSubmitting(true);
-    try {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      // Send final submission request
-      if (activeAssignment) {
-        await fetch(`${apiBaseUrl}/bd/student/assessments/${activeAssignment}/submit`, {
-          method: "GET",
-          credentials: "include",
-        });
-      }
-      // Simulate submission delay
-      setTimeout(() => {
-        setIsTakingAssignment(false);
-        setIsSubmitting(false);
-        setShowConfirmSubmit(false);
-        // Refresh the assignments list to show updated status
-        window.location.reload();
-      }, 1500);
-    } catch (err) {
-      setIsSubmitting(false);
-      // Optionally handle error
+ const handleSubmitAssignment = async () => {
+  setIsSubmitting(true);
+  try {
+    // Stop the timer first
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
-  };
+    
+    // Send final submission request
+    if (activeAssignment) {
+      await fetch(`${apiBaseUrl}/bd/student/assessments/${activeAssignment}/submit`, {
+        method: "GET",
+        credentials: "include",
+      });
+    }
+    
+    // IMPORTANT: Don't reload immediately - wait for state to update
+    setIsTakingAssignment(false);
+    setShowConfirmSubmit(false);
+    
+    // Refresh after a brief delay to show success
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  } catch (err) {
+    console.error("Submission error:", err);
+    setIsSubmitting(false);
+  }
+}; 
 
   // Removed backend-linked timer
 
@@ -261,59 +265,63 @@ export default function AssignmentsPage() {
     setShowDisclaimer(true);
   };
 
-  const proceedToAssignment = async () => {
-    const assignment = assignments.find((a) => a.id === activeAssignment);
-    if (!assignment) return;
+const proceedToAssignment = async () => {
+  const assignment = assignments.find((a) => a.id === activeAssignment);
+  if (!assignment) return;
 
-    setShowDisclaimer(false);
-    setIsTakingAssignment(true);
-    setCurrentQuestion(0);
+  setShowDisclaimer(false);
+  setIsTakingAssignment(true);
+  setCurrentQuestion(0);
 
-    try {
-      // Use the questions from the assessment data
-      const questions = assignment.questions || [];
-      setQuestions(questions);
+  try {
+    const questions = assignment.questions || [];
+    setQuestions(questions);
 
-      setSelectedAnswers(Array(questions.length).fill(-1));
-      setMultipleAnswers(Array(questions.length).fill([]));
-      setOpenEndedAnswers(Array(questions.length).fill(""));
-      setOpenEndedImages(Array(questions.length).fill(null));
-      setOpenEndedInputModes(Array(questions.length).fill(null));
+    setSelectedAnswers(Array(questions.length).fill(-1));
+    setMultipleAnswers(Array(questions.length).fill([]));
+    setOpenEndedAnswers(Array(questions.length).fill(""));
+    setOpenEndedImages(Array(questions.length).fill(null));
+    setOpenEndedInputModes(Array(questions.length).fill(null));
 
-      setOrderingAnswers(
-        questions.map((q) => {
-          if (q.type === "close-ended-ordering") {
-            const choices = (q.choices || []).filter((c): c is string => typeof c === "string");
-            return [...choices];
-          }
-          return [];
-        })
-      );
-      setMatchingAnswers(questions.map(() => ({})));
-      setDragDropAnswers(questions.map(() => ({})));
+    setOrderingAnswers(
+      questions.map((q) => {
+        if (q.type === "close-ended-ordering") {
+          const choices = (q.choices || []).filter((c): c is string => typeof c === "string");
+          return [...choices];
+        }
+        return [];
+      })
+    );
+    setMatchingAnswers(questions.map(() => ({})));
+    setDragDropAnswers(questions.map(() => ({})));
 
-      const initial = (assignment.duration || 60) * 60;
-      setTimeRemaining(initial);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      timerRef.current = setInterval(() => {
-        setTimeRemaining(prev => {
-          const next = Math.max(0, prev - 1);
-          if (next === 0) {
-            if (timerRef.current) {
-              clearInterval(timerRef.current);
-              timerRef.current = null;
-            }
-            handleSubmitAssignment();
-          }
-          return next;
-        });
-      }, 1000);
-    } catch {
-      setQuestions([]);
+    const initial = (assignment.duration || 60) * 60;
+    setTimeRemaining(initial);
+    
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
     }
-  };
+    
+    // IMPORTANT FIX: Timer should show modal, not auto-submit
+    timerRef.current = setInterval(() => {
+      setTimeRemaining(prev => {
+        const next = Math.max(0, prev - 1);
+        if (next === 0) {
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          // CRITICAL FIX: Show confirmation modal when time runs out
+          // Don't auto-submit without confirmation
+          setShowConfirmSubmit(true);
+        }
+        return next;
+      });
+    }, 1000);
+  } catch {
+    setQuestions([]);
+  }
+}; 
 
   const handleSingleAnswerSelect = (questionIndex: number, optionIndex: number) => {
     const newAnswers = [...selectedAnswers];
@@ -962,8 +970,20 @@ export default function AssignmentsPage() {
               }}
             />
           )}
+          
           {!hasContent ? (
             <div className="max-w-4xl mx-auto">
+              {showConfirmSubmit && currentAssignment && (
+            <SubmitConfirmation
+              assessmentTitle={currentAssignment.title}
+              assessmentType="Assignment"
+              totalQuestions={questions.length}
+              answeredQuestions={getAnsweredCount()}
+              onConfirm={handleSubmitAssignment}
+              onCancel={() => setShowConfirmSubmit(false)}
+              isSubmitting={isSubmitting}
+            />
+          )}
               <EmptyState
                 title="No Assignments Available"
                 description="Your assignments will appear here once your lecturers create them. Check back regularly for updates."
@@ -972,6 +992,17 @@ export default function AssignmentsPage() {
             </div>
           ) : isTakingAssignment && questions.length > 0 ? (
             <div className="max-w-5xl mx-auto">
+              {showConfirmSubmit && currentAssignment && (
+                <SubmitConfirmation
+                  assessmentTitle={currentAssignment.title}
+                  assessmentType="Assignment"
+                  totalQuestions={questions.length}
+                  answeredQuestions={getAnsweredCount()}
+                  onConfirm={handleSubmitAssignment}
+                  onCancel={() => setShowConfirmSubmit(false)}
+                  isSubmitting={isSubmitting}
+                />
+              )}
               {/* Taking Assignment UI */}
               <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
                 <div className="p-4 md:p-6 border-b border-gray-200">
@@ -1014,45 +1045,49 @@ export default function AssignmentsPage() {
                         <div className="text-sm text-gray-600">
                           Question {currentQuestion + 1} of {questions.length}
                         </div>
-                        {currentQuestion < questions.length - 1 ? (
-                          <button
-                            onClick={async () => {
-                              setIsNextLoading(true);
-                              await submitCurrentAnswer(currentQuestion);
-                              setCurrentQuestion(currentQuestion + 1);
-                              setIsNextLoading(false);
-                            }}
-                            disabled={
-                              isNextLoading || questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered()
-                            }
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
-                          >
-                            {isNextLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
-                            {questions[currentQuestion]?.status === "answered" ? "Answered, Next" : "Next"}
-                            <ChevronRight size={16} className="ml-1" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={async () => {
-                              setIsNextLoading(true);
-                              await submitCurrentAnswer(currentQuestion);
-                              if (activeAssignment) {
-                                await fetch(`${apiBaseUrl}/bd/student/assessments/${activeAssignment}/submit`, {
-                                  method: "GET",
-                                  credentials: "include",
-                                });
-                              }
-                              setIsNextLoading(false);
-                              setIsTakingAssignment(false); // End the Assignment UI
-                            }}
-                            disabled={isNextLoading || questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered()}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
-                          >
-                            {isNextLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
-                            {questions[currentQuestion]?.status === "answered" ? "Answered, Finish & Submit" : "Finish & Submit"}
-                            <ChevronRight size={16} className="ml-1" />
-                          </button>
-                        )}
+                     {currentQuestion < questions.length - 1 ? (
+                      // Next button for non-final questions
+                      <button
+                        onClick={async () => {
+                          setIsNextLoading(true);
+                          await submitCurrentAnswer(currentQuestion);
+                          setCurrentQuestion(currentQuestion + 1);
+                          setIsNextLoading(false);
+                        }}
+                        disabled={
+                          isNextLoading || 
+                          (questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered())
+                        }
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                      >
+                        {isNextLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                        {questions[currentQuestion]?.status === "answered" ? "Answered, Next" : "Next"}
+                        <ChevronRight size={16} className="ml-1" />
+                      </button>
+                    ) : (
+                      // CRITICAL FIX: Finish button - ONLY show modal, DON'T submit
+                      <button
+                        onClick={async () => {
+                          // IMPORTANT: Submit the current answer first
+                          setIsNextLoading(true);
+                          await submitCurrentAnswer(currentQuestion);
+                          setIsNextLoading(false);
+                          
+                          // THEN show the confirmation modal
+                          // DO NOT call handleSubmitAssignment here!
+                          setShowConfirmSubmit(true);
+                        }}
+                        disabled={
+                          isNextLoading || 
+                          (questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered())
+                        }
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                      >
+                        {isNextLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                        Finish
+                        <ChevronRight size={16} className="ml-1" />
+                      </button>
+                    )} 
                       </div>
 
                       <div className="mt-4">

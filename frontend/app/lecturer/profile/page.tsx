@@ -144,7 +144,7 @@ const UserProfile = () => (
       </div>
     </div>
     <div className="text-white">
-      <div className="font-semibold">Dr. Alex Kimani</div>
+      <div className="font-semibold"> Alex Kimani</div>
       <div className="text-xs opacity-80">Senior Lecturer</div>
     </div>
   </div>

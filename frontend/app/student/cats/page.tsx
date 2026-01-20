@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useLayout } from "@/components/LayoutController";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import SubmitConfirmation from "@/components/SubmitConfirmation";
 import EmptyState from "@/components/EmptyState";
 import {
   BookOpen,
@@ -83,33 +84,37 @@ export default function CatsPage() {
   }, [router, searchParams, activeCat]);
 
   // Submit current CAT
-  const handleSubmitCat = async () => {
-    setIsSubmitting(true);
-    try {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      // Send final submission request
-      if (activeCat) {
-        await fetch(`${apiBaseUrl}/bd/student/assessments/${activeCat}/submit`, {
-          method: "GET",
-          credentials: "include",
-        });
-      }
-      // Simulate submission delay
-      setTimeout(() => {
-        setIsTakingCat(false);
-        setIsSubmitting(false);
-        setShowConfirmSubmit(false);
-        // Refresh the CATs list to show updated status
-        window.location.reload();
-      }, 1500);
-    } catch (err) {
-      setIsSubmitting(false);
-      // Optionally handle error
+ const handleSubmitCat = async () => {
+  setIsSubmitting(true);
+  try {
+    // Stop the timer first
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
-  };
+    
+    // Send final submission request
+    if (activeCat) {
+      await fetch(`${apiBaseUrl}/bd/student/assessments/${activeCat}/submit`, {
+        method: "GET",
+        credentials: "include",
+      });
+    }
+    
+    // IMPORTANT: Don't reload immediately - wait for state to update
+    setIsTakingCat(false);
+    setShowConfirmSubmit(false);
+    
+    // Refresh after a brief delay to show success
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  } catch (err) {
+    console.error("Submission error:", err);
+    setIsSubmitting(false);
+  }
+};
+ 
 
   // Removed backend-linked timer
 
@@ -244,41 +249,64 @@ export default function CatsPage() {
     setShowDisclaimer(true);
   };
 
-  const proceedToCat = async () => {
-    const cat = cats.find((c) => c.id === activeCat);
-    if (!cat) return;
+ const proceedToCat = async () => {
+  const cat = cats.find((c) => c.id === activeCat);
+  if (!cat) return;
 
-    setShowDisclaimer(false);
-    setIsTakingCat(true);
-    setCurrentQuestion(0);
+  setShowDisclaimer(false);
+  setIsTakingCat(true);
+  setCurrentQuestion(0);
 
-    try {
-      // Use the questions from the assessment data
-      const questions = cat.questions || [];
-      setQuestions(questions);
+  try {
+    // Use the questions from the assessment data
+    const questions = cat.questions || [];
+    setQuestions(questions);
 
-      setSelectedAnswers(Array(questions.length).fill(-1));
-      setMultipleAnswers(Array(questions.length).fill([]));
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
+    setSelectedAnswers(Array(questions.length).fill(-1));
+    setMultipleAnswers(Array(questions.length).fill([]));
+    setOpenEndedAnswers(Array(questions.length).fill(""));
+    setOpenEndedImages(Array(questions.length).fill(null));
+    setOpenEndedInputModes(Array(questions.length).fill(null));
+
+    setOrderingAnswers(
+      questions.map((q: Question) => {
+      if (q.type === "close-ended-ordering") {
+        const choices = (q.choices || []).filter((c): c is string => typeof c === "string");
+        return [...choices];
       }
-      timerRef.current = setInterval(() => {
-        setTimeRemaining(prev => {
-          const next = Math.max(0, prev - 1);
-          if (next === 0) {
-            if (timerRef.current) {
-              clearInterval(timerRef.current);
-              timerRef.current = null;
-            }
-            handleSubmitCat();
-          }
-          return next;
-        });
-      }, 1000);
-    } catch (err) {
-      setQuestions([]);
+      return [];
+      })
+    );
+    setMatchingAnswers(questions.map(() => ({})));
+    setDragDropAnswers(questions.map(() => ({})));
+
+    const initial = (cat.duration || 60) * 60;
+    setTimeRemaining(initial);
+    
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
     }
-  };
+    
+    // IMPORTANT FIX: Timer should show modal, not auto-submit
+    timerRef.current = setInterval(() => {
+      setTimeRemaining(prev => {
+        const next = Math.max(0, prev - 1);
+        if (next === 0) {
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          // CRITICAL FIX: Show confirmation modal when time runs out
+          // Don't auto-submit without confirmation
+          setShowConfirmSubmit(true);
+        }
+        return next;
+      });
+    }, 1000);
+  } catch (err) {
+    setQuestions([]);
+  }
+}; 
 
   const handleSingleAnswerSelect = (questionIndex: number, optionIndex: number) => {
     const newAnswers = [...selectedAnswers];
@@ -940,8 +968,20 @@ export default function CatsPage() {
               }}
             />
           )}
+          
           {!hasContent ? (
             <div className="max-w-4xl mx-auto">
+              {showConfirmSubmit && currentCat && (
+            <SubmitConfirmation
+              assessmentTitle={currentCat.title}
+              assessmentType="CAT"
+              totalQuestions={questions.length}
+              answeredQuestions={getAnsweredCount()}
+              onConfirm={handleSubmitCat}
+              onCancel={() => setShowConfirmSubmit(false)}
+              isSubmitting={isSubmitting}
+            />
+          )}
               <EmptyState
                 title="No CATs Available"
                 description="Your Continuous Assessment Tests will appear here once your lecturers create them. Check back regularly for updates."
@@ -950,6 +990,17 @@ export default function CatsPage() {
             </div>
           ) : isTakingCat && questions.length > 0 ? (
             <div className="max-w-5xl mx-auto">
+               {showConfirmSubmit && currentCat && (
+            <SubmitConfirmation
+              assessmentTitle={currentCat.title}
+              assessmentType="CAT"
+              totalQuestions={questions.length}
+              answeredQuestions={getAnsweredCount()}
+              onConfirm={handleSubmitCat}
+              onCancel={() => setShowConfirmSubmit(false)}
+              isSubmitting={isSubmitting}
+            />
+          )}
               {/* Taking CAT UI */}
               <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
                 <div className="p-4 md:p-6 border-b border-gray-200">
@@ -989,46 +1040,51 @@ export default function CatsPage() {
                         <div className="text-sm text-gray-600">
                           Question {currentQuestion + 1} of {questions.length}
                         </div>
-                        {currentQuestion < questions.length - 1 ? (
-                          <button
-                            onClick={async () => {
-                              setIsNextLoading(true);
-                              await submitCurrentAnswer(currentQuestion);
-                              setCurrentQuestion(currentQuestion + 1);
-                              setIsNextLoading(false);
-                            }}
-                            disabled={
-                              isNextLoading || questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered()
-                            }
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
-                          >
-                            {isNextLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
-                            {questions[currentQuestion]?.status === "answered" ? "Answered, Next" : "Next"}
-                            <ChevronRight size={16} className="ml-1" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={async () => {
-                              setIsNextLoading(true);
-                              await submitCurrentAnswer(currentQuestion);
-                              if (activeCat) {
-                                await fetch(`${apiBaseUrl}/bd/student/assessments/${activeCat}/submit`, {
-                                  method: "GET",
-                                  credentials: "include",
-                                });
-                              }
-                              setIsNextLoading(false);
-                              setIsTakingCat(false); // End the CAT UI
-                            }}
-                            disabled={isNextLoading || questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered()}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
-                          >
-                            {isNextLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
-                            {questions[currentQuestion]?.status === "answered" ? "Answered, Finish & Submit" : "Finish & Submit"}
-                            <ChevronRight size={16} className="ml-1" />
-                          </button>
-                        )}
-                      </div>
+                     {currentQuestion < questions.length - 1 ? (
+                // "NEXT" button for non-final questions
+                <button
+                  onClick={async () => {
+                    setIsNextLoading(true);
+                    await submitCurrentAnswer(currentQuestion);
+                    setCurrentQuestion(currentQuestion + 1);
+                    setIsNextLoading(false);
+                  }}
+                  disabled={
+                    isNextLoading || 
+                    (questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered())
+                  }
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                >
+                  {isNextLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                  {questions[currentQuestion]?.status === "answered" ? "Answered, Next" : "Next"}
+                  <ChevronRight size={16} className="ml-1" />
+                </button>
+              ) : (
+                // CRITICAL FIX: "FINISH" button - ONLY show modal, DON'T submit
+                <button
+                  onClick={async () => {
+                    
+                    setIsNextLoading(true);
+                    await submitCurrentAnswer(currentQuestion);
+                    setIsNextLoading(false);
+                    
+                    
+                    
+                    setShowConfirmSubmit(true);
+                    
+                  }}
+                  disabled={
+                    isNextLoading || 
+                    (questions[currentQuestion]?.status !== "answered" && !isCurrentQuestionAnswered())
+                  }
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                >
+                  {isNextLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                  Finish
+                  <ChevronRight size={16} className="ml-1" />
+                </button>
+              )} 
+                                          </div>
                       
                       <div className="mt-4">
                         <div className="w-full bg-gray-200 rounded-full h-2.5">

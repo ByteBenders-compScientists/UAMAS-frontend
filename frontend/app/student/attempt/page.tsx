@@ -15,6 +15,7 @@ import {
   Camera,
 } from "lucide-react";
 import type { QuestionType } from "@/types/assessment";
+import SubmitConfirmation from "@/components/SubmitConfirmation";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
@@ -50,6 +51,8 @@ export default function AttemptPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const assessmentId = searchParams.get("assessmentId");
+  const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [assessment, setAssessment] = useState<AttemptAssessment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,13 +139,14 @@ export default function AttemptPage() {
         timerRef.current = setInterval(() => {
           setTimeRemaining((prev) => {
             const next = Math.max(0, prev - 1);
-            if (next === 0) {
-              if (timerRef.current) {
-                clearInterval(timerRef.current);
-                timerRef.current = null;
-              }
-              void submitFinal();
+           if (next === 0) {
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
             }
+            // Show modal instead of auto-submit
+            setShowConfirmSubmit(true);
+          }
             return next;
           });
         }, 1000);
@@ -360,6 +364,42 @@ export default function AttemptPage() {
         return false;
     }
   };
+  const getAnsweredCount = () => {
+  return questions.reduce((count, q, index) => {
+    const isAnswered = (() => {
+      switch (q.type) {
+        case "open-ended": {
+          const inputMode = openEndedInputModes[index];
+          if (inputMode === "text") {
+            return !!openEndedAnswers[index]?.trim();
+          } else if (inputMode === "image") {
+            return !!imageUploadStates[index]?.file;
+          }
+          return false;
+        }
+        case "close-ended-multiple-single":
+        case "close-ended-bool":
+          return selectedAnswers[index] !== -1;
+        case "close-ended-multiple-multiple":
+          return (multipleAnswers[index] || []).length > 0;
+        case "close-ended-ordering":
+          return (orderingAnswers[index] || []).length > 0;
+        case "close-ended-matching": {
+          const mapping = matchingAnswers[index] || {};
+          return Object.keys(mapping).length > 0 && Object.values(mapping).every((v) => !!v);
+        }
+        case "close-ended-drag-drop": {
+          const mapping = dragDropAnswers[index] || {};
+          return Object.keys(mapping).length > 0 && Object.values(mapping).every((v) => !!v);
+        }
+        default:
+          return false;
+      }
+    })();
+
+    return count + (isAnswered ? 1 : 0);
+  }, 0);
+};
 
   const renderQuestion = (question: AttemptQuestion, index: number) => {
     if (question.type === "open-ended") {
@@ -1142,18 +1182,31 @@ export default function AttemptPage() {
   };
 
   const submitFinal = async () => {
-    if (!assessmentId) return;
-    try {
-      await fetch(`${apiBaseUrl}/bd/student/assessments/${assessmentId}/submit`, {
-        method: "GET",
-        credentials: "include",
-      });
-    } catch {
-      // ignore
-    } finally {
-      router.replace("/student/dashboard");
+  if (!assessmentId) return;
+  
+  setIsSubmitting(true);
+  
+  try {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
-  };
+    
+    await fetch(`${apiBaseUrl}/bd/student/assessments/${assessmentId}/submit`, {
+      method: "GET",
+      credentials: "include",
+    });
+    
+    setShowConfirmSubmit(false);
+    
+    setTimeout(() => {
+      router.replace("/student/dashboard");
+    }, 500);
+  } catch (err) {
+    console.error("Submission error:", err);
+    setIsSubmitting(false);
+  }
+};
 
   if (!assessmentId) return null;
 
@@ -1190,6 +1243,17 @@ export default function AttemptPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {showConfirmSubmit && assessment && (
+      <SubmitConfirmation
+        assessmentTitle={assessment.title || "Assessment"}
+        assessmentType={(assessment.type as "Assignment" | "CAT") || "Assignment"}
+        totalQuestions={questions.length}
+        answeredQuestions={getAnsweredCount()}
+        onConfirm={submitFinal}
+        onCancel={() => setShowConfirmSubmit(false)}
+        isSubmitting={isSubmitting}
+      />
+    )}
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
@@ -1229,21 +1293,20 @@ export default function AttemptPage() {
                 <ChevronRight className="h-4 w-4 ml-1" />
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={async () => {
-                  setIsNextLoading(true);
-                  await submitCurrentAnswer(currentQuestion);
-                  await submitFinal();
-                  setIsNextLoading(false);
-                }}
-                disabled={isNextLoading || !isCurrentQuestionAnswered()}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
-              >
-                {isNextLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Finish & Submit
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </button>
+            <button
+            onClick={async () => {
+              setIsNextLoading(true);
+              await submitCurrentAnswer(currentQuestion);
+              setIsNextLoading(false);
+              setShowConfirmSubmit(true);  
+            }}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isNextLoading}
+          >
+            {isNextLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Finish  
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </button>
             )}
           </div>
         </div>
