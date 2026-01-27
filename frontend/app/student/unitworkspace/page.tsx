@@ -1018,6 +1018,8 @@ export default function StudentUnitWorkspace() {
                                               const feedback = String(r.feedback || "");
                                               const correct = r.correct_answer;
                                               const rubric = String(r.rubric || "");
+                                              const imageUrl = r.image_url;
+                                              const textAnswer = r.text_answer;
 
                                               return (
                                                 <div
@@ -1068,6 +1070,17 @@ export default function StudentUnitWorkspace() {
                                                       </div>
                                                       <div className="mt-2 text-sm text-emerald-900 whitespace-pre-wrap">
                                                         {feedback}
+                                                      </div>
+                                                    </div>
+                                                  )}
+
+                                                  {!!textAnswer && (
+                                                    <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                                                      <div className="text-xs font-semibold uppercase tracking-wide text-blue-800">
+                                                        Your Answer
+                                                      </div>
+                                                      <div className="mt-2 text-sm text-blue-900 whitespace-pre-wrap">
+                                                        {textAnswer}
                                                       </div>
                                                     </div>
                                                   )}
