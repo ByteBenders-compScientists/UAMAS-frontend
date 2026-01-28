@@ -7,7 +7,7 @@ import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { useTheme, useThemeColors } from '@/context/ThemeContext';
 import { ColorScheme, FontSize } from '@/services/themeService';
-import { Sun, Moon, Check, RotateCcw, Sparkles, PaletteIcon } from 'lucide-react';
+import { Sun, Moon, Check, RotateCcw,PaletteIcon } from 'lucide-react';
 
 interface ColorSchemeOption {
   value: ColorScheme;

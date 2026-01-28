@@ -106,7 +106,6 @@ const WeekContent = ({ week, items, onEdit, onDelete, onAdd }: WeekContentProps)
             style={{
               backgroundColor: colors.cardBackground,
               borderColor: colors.border,
-              borderColor: colors.borderLight
             }}
           >
             {lectures.map(item => {
@@ -197,7 +196,6 @@ const WeekContent = ({ week, items, onEdit, onDelete, onAdd }: WeekContentProps)
             style={{
               backgroundColor: colors.cardBackground,
               borderColor: colors.border,
-              borderColor: colors.borderLight
             }}
           >
             {assignments.map(item => {
@@ -296,7 +294,6 @@ const WeekContent = ({ week, items, onEdit, onDelete, onAdd }: WeekContentProps)
             style={{
               backgroundColor: colors.cardBackground,
               borderColor: colors.border,
-              borderColor: colors.borderLight
             }}
           >
             {resources.map(item => {
