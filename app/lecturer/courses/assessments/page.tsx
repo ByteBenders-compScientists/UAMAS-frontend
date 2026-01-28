@@ -19,8 +19,8 @@ import {
 } from "lucide-react";
 
 // Import modularized components
-import { Assessment, Course, Message } from "../../../types/assessment";
-import { dummyCourses, dummyAssessments } from "../../../data/assessmentData";
+import { Assessment, Course, Message } from "@/types/assessment";
+import { dummyCourses, dummyAssessments } from "@/data/assessmentData";
 import Modal from "@/components/ui/Modal";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import MessageNotification from "@/components/ui/MessageNotification";
@@ -39,14 +39,14 @@ import StudentsWorkspace from "@/components/lecturer/courses/StudentsWorkspace";
 import CoursesManagerInline from "@/components/lecturer/CoursesManagerInline";
 
 // API imports
-import { courseApi, unitApi, assessmentApi } from "../../../services/api";
-import { useApi } from "../../../hooks/useApi";
+import { courseApi, unitApi, assessmentApi } from "@/services/api";
+import { useApi } from "@/hooks/useApi";
 import { 
   transformCourseToUI, 
   transformAssessmentToLegacy,
   transformLegacyToApiAssessment,
   groupUnitsByCourse 
-} from "../../../utils/dataTransformers";
+} from "@/utils/dataTransformers";
 
 // Theme imports
 import { useThemeColors } from "@/context/ThemeContext";
