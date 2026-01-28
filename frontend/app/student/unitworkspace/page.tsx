@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -16,19 +17,18 @@ import {
   ChevronRight,
   ChevronDown,
   Play,
-  // ExternalLink,
   Download,
   Eye,
   CheckCircle,
   Clock,
   AlertCircle,
-  // Info,
   BarChart3,
   TrendingUp,
   ListChecks,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Disclaimer from "@/components/Disclaimer";
+import { useTheme, useThemeColors } from "@/context/ThemeContext";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1";
 
@@ -148,6 +148,8 @@ function ActionTabs({
   activeAction: ActiveAction;
   onChange: (action: ActiveAction) => void;
 }) {
+  const colors = useThemeColors();
+  
   const tabs: { key: ActiveAction; label: string; icon: ReactNode }[] = [
     { key: "cats", label: "CATs", icon: <BookOpen className="h-4 w-4" /> },
     { key: "assignments", label: "Assignments", icon: <ClipboardList className="h-4 w-4" /> },
@@ -163,11 +165,12 @@ function ActionTabs({
           <button
             key={t.key}
             onClick={() => onChange(t.key)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-inset transition-colors ${
-              isActive
-                ? "bg-emerald-600 text-white ring-emerald-600"
-                : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50"
-            }`}
+            style={{
+              backgroundColor: isActive ? colors.primary : colors.cardBackground,
+              color: isActive ? '#ffffff' : colors.textPrimary,
+              borderColor: isActive ? colors.primary : colors.border,
+            }}
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-inset transition-colors hover:opacity-90"
           >
             {t.icon}
             {t.label}
@@ -191,6 +194,7 @@ function UnitSidePanel({
   isMinimized: boolean;
   onToggleMinimize: () => void;
 }) {
+  const colors = useThemeColors();
   const [expanded, setExpanded] = useState(true);
 
   useEffect(() => {
@@ -204,27 +208,45 @@ function UnitSidePanel({
       initial={{ width: 320 }}
       animate={{ width: isMinimized ? 60 : 320 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="bg-white border-r border-gray-100 shadow-lg flex flex-col relative z-20 h-full hidden md:flex"
+      style={{
+        backgroundColor: colors.sidebarBackground,
+        borderRightColor: colors.border,
+      }}
+      className="border-r shadow-lg flex flex-col relative z-20 h-full hidden md:flex"
     >
-      <div className="p-4 lg:p-6 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-white">
+      <div 
+        style={{
+          backgroundColor: colors.primaryLight,
+          borderBottomColor: colors.border,
+        }}
+        className="p-4 lg:p-6 border-b"
+      >
         <div className="flex items-center justify-between">
           {!isMinimized && (
             <div>
-              <h3 className="font-bold text-gray-900 flex items-center text-base">
-                <Filter className="w-5 h-5 mr-3 text-emerald-600" />
+              <h3 
+                style={{ color: colors.textPrimary }}
+                className="font-bold flex items-center text-base"
+              >
+                <Filter style={{ color: colors.primary }} className="w-5 h-5 mr-3" />
                 Unit Selection
               </h3>
-              <p className="text-sm text-gray-500 mt-1">Choose your unit context</p>
+              <p style={{ color: colors.textPrimary }}  className="text-sm mt-1 ">
+                Choose your unit context
+              </p>
             </div>
           )}
           <button
             onClick={onToggleMinimize}
-            className="p-2 hover:bg-emerald-100 rounded-xl transition-colors group"
+            style={{
+              backgroundColor: colors.sidebarHover,
+            }}
+            className="p-2 rounded-xl transition-colors group"
           >
             {isMinimized ? (
-              <ChevronRight className="w-5 h-5 text-emerald-600 group-hover:text-emerald-700" />
+              <ChevronRight style={{ color: colors.primary }} className="w-5 h-5" />
             ) : (
-              <ChevronLeft className="w-5 h-5 text-emerald-600 group-hover:text-emerald-700" />
+              <ChevronLeft style={{ color: colors.primary }} className="w-5 h-5" />
             )}
           </button>
         </div>
@@ -238,8 +260,11 @@ function UnitSidePanel({
             exit={{ opacity: 0 }}
             className="flex-1 overflow-y-auto p-4 lg:p-6"
           >
-            <label className="block text-xs font-bold text-gray-700 mb-4 uppercase tracking-wider flex items-center">
-              <BookOpen className="w-4 h-4 mr-2 text-emerald-600" />
+            <label 
+              style={{ color: colors.textPrimary }}
+              className="block text-xs font-bold mb-4 uppercase tracking-wider flex items-center"
+            >
+              <BookOpen style={{ color: colors.primary }} className="w-4 h-4 mr-2" />
               My Units
             </label>
 
@@ -253,17 +278,27 @@ function UnitSidePanel({
                   <button
                     key={unit.id}
                     onClick={() => onSelectUnit(unit.id)}
-                    className={`w-full p-4 rounded-xl border transition-all flex items-center justify-between group hover:shadow-md ${
-                      isSelected
-                        ? "border-emerald-300 bg-emerald-50 shadow-md"
-                        : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-                    }`}
+                    style={{
+                      backgroundColor: isSelected ? colors.sidebarActive : colors.cardBackground,
+                      borderColor: isSelected ? colors.primary : colors.border,
+                    }}
+                    className="w-full p-4 rounded-xl border transition-all flex items-center justify-between group hover:shadow-md"
                   >
                     <div className="text-left min-w-0">
-                      <div className="font-semibold text-sm text-gray-900 truncate">{label}</div>
-                      <div className="text-xs text-gray-500 font-medium truncate">{code}</div>
+                      <div 
+                        style={{ color: colors.textPrimary }}
+                        className="font-semibold text-sm truncate"
+                      >
+                        {label}
+                      </div>
+                      <div 
+                        style={{ color: colors.textSecondary }}
+                        className="text-xs font-medium truncate"
+                      >
+                        {code}
+                      </div>
                     </div>
-                    <ChevronDown className="w-4 h-4 text-gray-300" />
+                    <ChevronDown style={{ color: colors.textTertiary }} className="w-4 h-4" />
                   </button>
                 );
               })}
@@ -273,31 +308,33 @@ function UnitSidePanel({
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-6 relative p-5 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200 shadow-sm overflow-hidden"
+                style={{
+                  backgroundColor: colors.primaryLight,
+                  borderColor: colors.primary,
+                }}
+                className="mt-6 relative p-5 rounded-xl border shadow-sm overflow-hidden"
               >
-                <div className="absolute inset-0 opacity-10">
-                  <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                      <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                      </pattern>
-                    </defs>
-                    <rect width="100" height="100" fill="url(#grid)" />
-                  </svg>
-                </div>
-
                 <div className="relative z-10">
-                  <h4 className="font-bold text-emerald-900 mb-3 flex items-center text-sm">
+                  <h4 
+                    style={{ color: colors.textPrimary }}
+                    className="font-bold mb-3 flex items-center text-sm"
+                  >
                     <BookOpen className="w-4 h-4 mr-2" />
                     Current Unit
                   </h4>
                   <div className="space-y-2 text-sm">
-                    <div className="text-emerald-900 font-semibold">{getUnitLabel(selectedUnit)}</div>
+                    <div style={{ color: colors.textPrimary }} className="font-semibold">
+                      {getUnitLabel(selectedUnit)}
+                    </div>
                     {!!getUnitCode(selectedUnit) && (
-                      <div className="text-emerald-800">{getUnitCode(selectedUnit)}</div>
+                      <div style={{ color: colors.textSecondary }}>
+                        {getUnitCode(selectedUnit)}
+                      </div>
                     )}
                     {!!selectedUnit.course_name && (
-                      <div className="text-emerald-800">{selectedUnit.course_name}</div>
+                      <div style={{ color: colors.textSecondary }}>
+                        {selectedUnit.course_name}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -311,14 +348,23 @@ function UnitSidePanel({
         <div className="p-4 space-y-4">
           <button
             onClick={onToggleMinimize}
-            className="w-full p-4 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-colors shadow-sm"
+            style={{
+              backgroundColor: colors.primaryLight,
+              color: colors.primary,
+            }}
+            className="w-full p-4 rounded-xl transition-colors shadow-sm"
           >
             <Filter className="w-5 h-5 mx-auto" />
           </button>
 
           {selectedUnit && (
-            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center shadow-sm mx-auto">
-              <BookOpen className="w-5 h-5 text-emerald-700" />
+            <div 
+              style={{
+                backgroundColor: colors.primaryLight,
+              }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm mx-auto"
+            >
+              <BookOpen style={{ color: colors.primary }} className="w-5 h-5" />
             </div>
           )}
         </div>
@@ -329,6 +375,8 @@ function UnitSidePanel({
 
 export default function StudentUnitWorkspace() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const colors = useThemeColors();
+  const { config } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -535,7 +583,7 @@ export default function StudentUnitWorkspace() {
   const highestScore = allScores.length > 0 ? Math.max(...allScores) : 0;
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div style={{ backgroundColor: colors.background }} className="flex h-screen">
       <Sidebar />
 
       <motion.div
@@ -575,18 +623,37 @@ export default function StudentUnitWorkspace() {
           <div className="flex-1 overflow-auto">
             <div className="p-4 md:p-6 lg:p-8">
               {isMobileView || isTabletView ? (
-                <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div 
+                  style={{
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                  }}
+                  className="mb-4 rounded-2xl border p-4 shadow-sm"
+                >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Selected unit</div>
-                      <div className="mt-1 text-sm font-semibold text-gray-900">
+                      <div 
+                        style={{ color: colors.textSecondary }}
+                        className="text-xs font-semibold uppercase tracking-wide"
+                      >
+                        Selected unit
+                      </div>
+                      <div 
+                        style={{ color: colors.textPrimary }}
+                        className="mt-1 text-sm font-semibold"
+                      >
                         {selectedUnit ? getUnitLabel(selectedUnit) : "Select a unit"}
                       </div>
                     </div>
                     <select
                       value={selectedUnitId}
                       onChange={(e) => setSelectedUnitId(e.target.value)}
-                      className="w-full sm:w-80 rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
+                      style={{
+                        backgroundColor: colors.inputBackground,
+                        borderColor: colors.inputBorder,
+                        color: colors.textPrimary,
+                      }}
+                      className="w-full sm:w-80 rounded-xl border-2 px-4 py-3 text-sm font-medium focus:ring-2"
                     >
                       {units.map((u) => (
                         <option key={u.id} value={u.id}>
@@ -598,10 +665,18 @@ export default function StudentUnitWorkspace() {
                 </div>
               ) : null}
 
-              <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+              <div 
+                style={{
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                }}
+                className="flex flex-col gap-4 rounded-2xl border p-5 shadow-sm md:flex-row md:items-center md:justify-between"
+              >
                 <div className="min-w-0">
-                  <h2 className="text-lg font-bold text-gray-900">Workspace</h2>
-                  <p className="mt-1 text-sm text-gray-600">
+                  <h2 style={{ color: colors.textPrimary }} className="text-lg font-bold">
+                    Workspace
+                  </h2>
+                  <p style={{ color: colors.textSecondary }} className="mt-1 text-sm">
                     {selectedUnit ? (
                       <span>
                         Showing content for <span className="font-semibold">{getUnitLabel(selectedUnit)}</span>
@@ -627,7 +702,14 @@ export default function StudentUnitWorkspace() {
                   {activeAction === "cats" && (
                     <div className="space-y-4">
                       {assessmentsLoading ? (
-                        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+                        <div 
+                          style={{
+                            backgroundColor: colors.cardBackground,
+                            borderColor: colors.border,
+                            color: colors.textSecondary,
+                          }}
+                          className="rounded-2xl border p-6 text-sm"
+                        >
                           Loading CATs...
                         </div>
                       ) : filteredCats.length === 0 ? (
@@ -648,20 +730,50 @@ export default function StudentUnitWorkspace() {
                             return (
                               <div
                                 key={cat.id}
-                                className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+                                style={{
+                                  backgroundColor: colors.cardBackground,
+                                  borderColor: colors.border,
+                                }}
+                                className="rounded-2xl border p-6 shadow-sm hover:shadow-md transition-shadow"
                               >
                                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                   <div className="min-w-0">
-                                    <h3 className="text-base font-semibold text-gray-900 truncate">{cat.title || cat.topic || "CAT"}</h3>
-                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                                      <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                    <h3 
+                                      style={{ color: colors.textPrimary }}
+                                      className="text-base font-semibold truncate"
+                                    >
+                                      {cat.title || cat.topic || "CAT"}
+                                    </h3>
+                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                                      <span 
+                                        style={{
+                                          backgroundColor: colors.backgroundSecondary,
+                                          borderColor: colors.border,
+                                          color: colors.textSecondary,
+                                        }}
+                                        className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                      >
                                         Questions: {cat.number_of_questions ?? "-"}
                                       </span>
-                                      <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                      <span 
+                                        style={{
+                                          backgroundColor: colors.backgroundSecondary,
+                                          borderColor: colors.border,
+                                          color: colors.textSecondary,
+                                        }}
+                                        className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                      >
                                         Total Marks: {cat.total_marks ?? "-"}
                                       </span>
                                       {!!cat.duration && (
-                                        <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                        <span 
+                                          style={{
+                                            backgroundColor: colors.backgroundSecondary,
+                                            borderColor: colors.border,
+                                            color: colors.textSecondary,
+                                          }}
+                                          className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                        >
                                           <Clock className="mr-1 h-3.5 w-3.5" />
                                           {cat.duration} min
                                         </span>
@@ -673,7 +785,14 @@ export default function StudentUnitWorkspace() {
                                         </span>
                                       )}
                                       {!!deadlineValue && !Number.isNaN(parsedDeadline) && (
-                                        <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                        <span 
+                                          style={{
+                                            backgroundColor: colors.backgroundSecondary,
+                                            borderColor: colors.border,
+                                            color: colors.textSecondary,
+                                          }}
+                                          className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                        >
                                           Deadline: {new Date(parsedDeadline).toLocaleString()}
                                         </span>
                                       )}
@@ -690,8 +809,17 @@ export default function StudentUnitWorkspace() {
                                         </span>
                                       )}
                                       {!!status && (
-                                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                                        <span 
+                                          style={{
+                                            backgroundColor: colors.primaryLight,
+                                            color: colors.primary,
+                                          }}
+                                          className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                        >
+                                          <p style={{ color: colors.textPrimary }}>
                                           {status}
+                                          </p>
+                                         
                                         </span>
                                       )}
                                     </div>
@@ -701,11 +829,11 @@ export default function StudentUnitWorkspace() {
                                     <button
                                       onClick={() => startAssessment(cat)}
                                       disabled={isLockedBySchedule}
-                                      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
-                                        isLockedBySchedule
-                                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                          : "bg-emerald-600 text-white hover:bg-emerald-700"
-                                      }`}
+                                      style={{
+                                        backgroundColor: isLockedBySchedule ? colors.borderDark : colors.primary,
+                                        color: isLockedBySchedule ? colors.textTertiary : '#ffffff',
+                                      }}
+                                      className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors disabled:cursor-not-allowed"
                                     >
                                       <Play className="h-4 w-4" />
                                       {isLockedBySchedule ? "Locked" : "Open"}
@@ -729,7 +857,14 @@ export default function StudentUnitWorkspace() {
                   {activeAction === "assignments" && (
                     <div className="space-y-4">
                       {assessmentsLoading ? (
-                        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+                        <div 
+                          style={{
+                            backgroundColor: colors.cardBackground,
+                            borderColor: colors.border,
+                            color: colors.textSecondary,
+                          }}
+                          className="rounded-2xl border p-6 text-sm"
+                        >
                           Loading assignments...
                         </div>
                       ) : filteredAssignments.length === 0 ? (
@@ -750,20 +885,50 @@ export default function StudentUnitWorkspace() {
                             return (
                               <div
                                 key={a.id}
-                                className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+                                style={{
+                                  backgroundColor: colors.cardBackground,
+                                  borderColor: colors.border,
+                                }}
+                                className="rounded-2xl border p-6 shadow-sm hover:shadow-md transition-shadow"
                               >
                                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                   <div className="min-w-0">
-                                    <h3 className="text-base font-semibold text-gray-900 truncate">{a.title || a.topic || "Assignment"}</h3>
-                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                                      <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                    <h3 
+                                      style={{ color: colors.textPrimary }}
+                                      className="text-base font-semibold truncate"
+                                    >
+                                      {a.title || a.topic || "Assignment"}
+                                    </h3>
+                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                                      <span 
+                                        style={{
+                                          backgroundColor: colors.backgroundSecondary,
+                                          borderColor: colors.border,
+                                          color: colors.textSecondary,
+                                        }}
+                                        className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                      >
                                         Questions: {a.number_of_questions ?? "-"}
                                       </span>
-                                      <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                      <span 
+                                        style={{
+                                          backgroundColor: colors.backgroundSecondary,
+                                          borderColor: colors.border,
+                                          color: colors.textSecondary,
+                                        }}
+                                        className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                      >
                                         Total Marks: {a.total_marks ?? "-"}
                                       </span>
                                       {!!a.duration && (
-                                        <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                        <span 
+                                          style={{
+                                            backgroundColor: colors.backgroundSecondary,
+                                            borderColor: colors.border,
+                                            color: colors.textSecondary,
+                                          }}
+                                          className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                        >
                                           <Clock className="mr-1 h-3.5 w-3.5" />
                                           {a.duration} min
                                         </span>
@@ -775,7 +940,14 @@ export default function StudentUnitWorkspace() {
                                         </span>
                                       )}
                                       {!!deadlineValue && !Number.isNaN(parsedDeadline) && (
-                                        <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                        <span 
+                                          style={{
+                                            backgroundColor: colors.backgroundSecondary,
+                                            borderColor: colors.border,
+                                            color: colors.textSecondary,
+                                          }}
+                                          className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                        >
                                           Deadline: {new Date(parsedDeadline).toLocaleString()}
                                         </span>
                                       )}
@@ -792,8 +964,16 @@ export default function StudentUnitWorkspace() {
                                         </span>
                                       )}
                                       {!!status && (
-                                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                                        <span 
+                                          style={{
+                                            backgroundColor: colors.primaryLight,
+                                            color: colors.primary,
+                                          }}
+                                          className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                        >
+                                          <p style={{ color: colors.textPrimary }}>
                                           {status}
+                                          </p>
                                         </span>
                                       )}
                                     </div>
@@ -803,11 +983,11 @@ export default function StudentUnitWorkspace() {
                                     <button
                                       onClick={() => startAssessment(a)}
                                       disabled={isLockedBySchedule}
-                                      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
-                                        isLockedBySchedule
-                                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                          : "bg-emerald-600 text-white hover:bg-emerald-700"
-                                      }`}
+                                      style={{
+                                        backgroundColor: isLockedBySchedule ? colors.borderDark : colors.primary,
+                                        color: isLockedBySchedule ? colors.textTertiary : '#ffffff',
+                                      }}
+                                      className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors disabled:cursor-not-allowed"
                                     >
                                       <Play className="h-4 w-4" />
                                       {isLockedBySchedule ? "Locked" : "Open"}
@@ -831,7 +1011,14 @@ export default function StudentUnitWorkspace() {
                   {activeAction === "results" && (
                     <div className="space-y-4">
                       {submissionsLoading ? (
-                        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+                        <div 
+                          style={{
+                            backgroundColor: colors.cardBackground,
+                            borderColor: colors.border,
+                            color: colors.textSecondary,
+                          }}
+                          className="rounded-2xl border p-6 text-sm"
+                        >
                           Loading results...
                         </div>
                       ) : visibleSubmissions.length === 0 ? (
@@ -843,57 +1030,111 @@ export default function StudentUnitWorkspace() {
                       ) : (
                         <>
                           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 flex items-center space-x-4">
-                              <div className="p-2 rounded-full bg-blue-100 text-blue-600"><FileText className="w-6 h-6" /></div>
+                            <div 
+                              style={{
+                                backgroundColor: colors.cardBackground,
+                                borderColor: colors.border,
+                              }}
+                              className="rounded-2xl shadow-sm border p-4 flex items-center space-x-4"
+                            >
+                              <div style={{ backgroundColor: colors.info + '20', color: colors.info }} className="p-2 rounded-full">
+                                <FileText className="w-6 h-6" />
+                              </div>
                               <div>
-                                <div className="text-lg font-bold">{totalSubmissions}</div>
-                                <div className="text-sm text-gray-500">Submissions</div>
+                                <div style={{ color: colors.textPrimary }} className="text-lg font-bold">{totalSubmissions}</div>
+                                <div style={{ color: colors.textSecondary }} className="text-sm">Submissions</div>
                               </div>
                             </div>
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 flex items-center space-x-4">
-                              <div className="p-2 rounded-full bg-green-100 text-green-600"><CheckCircle className="w-6 h-6" /></div>
+                            <div 
+                              style={{
+                                backgroundColor: colors.cardBackground,
+                                borderColor: colors.border,
+                              }}
+                              className="rounded-2xl shadow-sm border p-4 flex items-center space-x-4"
+                            >
+                              <div style={{ backgroundColor: colors.success + '20', color: colors.success }} className="p-2 rounded-full">
+                                <CheckCircle className="w-6 h-6" />
+                              </div>
                               <div>
-                                <div className="text-lg font-bold">{gradedSubmissions}</div>
-                                <div className="text-sm text-gray-500">Graded</div>
+                                <div style={{ color: colors.textPrimary }} className="text-lg font-bold">{gradedSubmissions}</div>
+                                <div style={{ color: colors.textSecondary }} className="text-sm">Graded</div>
                               </div>
                             </div>
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 flex items-center space-x-4">
-                              <div className="p-2 rounded-full bg-amber-100 text-amber-600"><Clock className="w-6 h-6" /></div>
+                            <div 
+                              style={{
+                                backgroundColor: colors.cardBackground,
+                                borderColor: colors.border,
+                              }}
+                              className="rounded-2xl shadow-sm border p-4 flex items-center space-x-4"
+                            >
+                              <div style={{ backgroundColor: colors.warning + '20', color: colors.warning }} className="p-2 rounded-full">
+                                <Clock className="w-6 h-6" />
+                              </div>
                               <div>
-                                <div className="text-lg font-bold">{pendingSubmissions}</div>
-                                <div className="text-sm text-gray-500">Pending</div>
+                                <div style={{ color: colors.textPrimary }} className="text-lg font-bold">{pendingSubmissions}</div>
+                                <div style={{ color: colors.textSecondary }} className="text-sm">Pending</div>
                               </div>
                             </div>
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 flex items-center space-x-4">
-                              <div className="p-2 rounded-full bg-purple-100 text-purple-600"><ListChecks className="w-6 h-6" /></div>
+                            <div 
+                              style={{
+                                backgroundColor: colors.cardBackground,
+                                borderColor: colors.border,
+                              }}
+                              className="rounded-2xl shadow-sm border p-4 flex items-center space-x-4"
+                            >
+                              <div style={{ backgroundColor: colors.secondary + '20', color: colors.secondary }} className="p-2 rounded-full">
+                                <ListChecks className="w-6 h-6" />
+                              </div>
                               <div>
-                                <div className="text-lg font-bold">{totalQuestions}</div>
-                                <div className="text-sm text-gray-500">Questions</div>
+                                <div style={{ color: colors.textPrimary }} className="text-lg font-bold">{totalQuestions}</div>
+                                <div style={{ color: colors.textSecondary }} className="text-sm">Questions</div>
                               </div>
                             </div>
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 flex items-center space-x-4">
-                              <div className="p-2 rounded-full bg-blue-100 text-blue-600"><BarChart3 className="w-6 h-6" /></div>
+                            <div 
+                              style={{
+                                backgroundColor: colors.cardBackground,
+                                borderColor: colors.border,
+                              }}
+                              className="rounded-2xl shadow-sm border p-4 flex items-center space-x-4"
+                            >
+                              <div style={{ backgroundColor: colors.info + '20', color: colors.info }} className="p-2 rounded-full">
+                                <BarChart3 className="w-6 h-6" />
+                              </div>
                               <div>
-                                <div className="text-lg font-bold">{averageScore.toFixed(2)}</div>
-                                <div className="text-sm text-gray-500">Avg score</div>
+                                <div style={{ color: colors.textPrimary }} className="text-lg font-bold">{averageScore.toFixed(2)}</div>
+                                <div style={{ color: colors.textSecondary }} className="text-sm">Avg score</div>
                               </div>
                             </div>
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 flex items-center space-x-4">
-                              <div className="p-2 rounded-full bg-emerald-100 text-emerald-600"><TrendingUp className="w-6 h-6" /></div>
+                            <div 
+                              style={{
+                                backgroundColor: colors.cardBackground,
+                                borderColor: colors.border,
+                              }}
+                              className="rounded-2xl shadow-sm border p-4 flex items-center space-x-4"
+                            >
+                              <div style={{ backgroundColor: colors.success + '20', color: colors.success }} className="p-2 rounded-full">
+                                <TrendingUp className="w-6 h-6" />
+                              </div>
                               <div>
-                                <div className="text-lg font-bold">{highestScore}</div>
-                                <div className="text-sm text-gray-500">Highest</div>
+                                <div style={{ color: colors.textPrimary }} className="text-lg font-bold">{highestScore}</div>
+                                <div style={{ color: colors.textSecondary }} className="text-sm">Highest</div>
                               </div>
                             </div>
                           </div>
 
-                          <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                            <div className="text-sm font-semibold text-gray-900">
+                          <div 
+                            style={{
+                              backgroundColor: colors.cardBackground,
+                              borderColor: colors.border,
+                            }}
+                            className="mt-4 rounded-2xl border p-6 shadow-sm"
+                          >
+                            <div style={{ color: colors.textPrimary }} className="text-sm font-semibold">
                               {submissionsHaveUnitIdentifiers
                                 ? "Results are filtered by the selected unit."
                                 : "Results are currently shown across all units."}
                             </div>
-                            <div className="mt-1 text-sm text-gray-600">
+                            <div style={{ color: colors.textSecondary }} className="mt-1 text-sm">
                               {submissionsHaveUnitIdentifiers
                                 ? "Select a different unit to view its submissions and feedback."
                                 : "If your submissions API includes unit identifiers, we can filter these by the selected unit."}
@@ -935,7 +1176,11 @@ export default function StudentUnitWorkspace() {
                                 return (
                                   <div
                                     key={submissionId}
-                                    className="rounded-2xl border border-gray-200 bg-white shadow-sm"
+                                    style={{
+                                      backgroundColor: colors.cardBackground,
+                                      borderColor: colors.border,
+                                    }}
+                                    className="rounded-2xl border shadow-sm"
                                   >
                                     <button
                                       type="button"
@@ -944,7 +1189,12 @@ export default function StudentUnitWorkspace() {
                                     >
                                       <div className="min-w-0 text-left">
                                         <div className="flex flex-wrap items-center gap-2">
-                                          <div className="text-base font-semibold text-gray-900 truncate">{title}</div>
+                                          <div 
+                                            style={{ color: colors.textPrimary }}
+                                            className="text-base font-semibold truncate"
+                                          >
+                                            {title}
+                                          </div>
                                           <span
                                             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${
                                               s.graded
@@ -959,22 +1209,48 @@ export default function StudentUnitWorkspace() {
                                               className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${
                                                 isLocked
                                                   ? "bg-red-50 text-red-700 ring-red-200"
-                                                  : "bg-gray-50 text-gray-700 ring-gray-200"
+                                                  : ""
                                               }`}
+                                              style={!isLocked ? {
+                                                backgroundColor: colors.backgroundSecondary,
+                                                color: colors.textSecondary,
+                                                borderColor: colors.border,
+                                              } : {}}
                                             >
                                               Deadline: {new Date(parsedDeadline).toLocaleString()}
                                             </span>
                                           )}
                                         </div>
-                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                                          <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                                          <span 
+                                            style={{
+                                              backgroundColor: colors.backgroundSecondary,
+                                              borderColor: colors.border,
+                                              color: colors.textSecondary,
+                                            }}
+                                            className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                          >
                                             Questions: {questionsCount}
                                           </span>
-                                          <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                          <span 
+                                            style={{
+                                              backgroundColor: colors.backgroundSecondary,
+                                              borderColor: colors.border,
+                                              color: colors.textSecondary,
+                                            }}
+                                            className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                          >
                                             Score: {totalScore} / {totalMarks}
                                           </span>
                                           {!!s.created_at && (
-                                            <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 font-semibold ring-1 ring-inset ring-gray-200">
+                                            <span 
+                                              style={{
+                                                backgroundColor: colors.backgroundSecondary,
+                                                borderColor: colors.border,
+                                                color: colors.textSecondary,
+                                              }}
+                                              className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
+                                            >
                                               {new Date(s.created_at).toLocaleString()}
                                             </span>
                                           )}
@@ -983,7 +1259,8 @@ export default function StudentUnitWorkspace() {
 
                                       <div className="flex items-center justify-end gap-2">
                                         <ChevronDown
-                                          className={`h-5 w-5 text-gray-400 transition-transform ${
+                                          style={{ color: colors.textTertiary }}
+                                          className={`h-5 w-5 transition-transform ${
                                             expanded ? "rotate-180" : "rotate-0"
                                           }`}
                                         />
@@ -991,7 +1268,10 @@ export default function StudentUnitWorkspace() {
                                     </button>
 
                                     {expanded && (
-                                      <div className="border-t border-gray-100 px-6 py-5 space-y-4">
+                                      <div 
+                                        style={{ borderTopColor: colors.border }}
+                                        className="border-t px-6 py-5 space-y-4"
+                                      >
                                         {isLocked ? (
                                           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
                                             <div className="flex items-start gap-3">
@@ -1008,7 +1288,9 @@ export default function StudentUnitWorkspace() {
                                             </div>
                                           </div>
                                         ) : results.length === 0 ? (
-                                          <div className="text-sm text-gray-600">No question results provided.</div>
+                                          <div style={{ color: colors.textSecondary }} className="text-sm">
+                                            No question results provided.
+                                          </div>
                                         ) : (
                                           <div className="space-y-4">
                                             {results.map((r: any, idx: number) => {
@@ -1018,21 +1300,30 @@ export default function StudentUnitWorkspace() {
                                               const feedback = String(r.feedback || "");
                                               const correct = r.correct_answer;
                                               const rubric = String(r.rubric || "");
-                                              const imageUrl = r.image_url;
                                               const textAnswer = r.text_answer;
 
                                               return (
                                                 <div
                                                   key={String(r.id || r.question_id || idx)}
-                                                  className="rounded-2xl border border-gray-200 bg-white p-5"
+                                                  style={{
+                                                    backgroundColor: colors.cardBackground,
+                                                    borderColor: colors.border,
+                                                  }}
+                                                  className="rounded-2xl border p-5"
                                                 >
                                                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                                     <div className="min-w-0">
-                                                      <div className="text-sm font-semibold text-gray-900">
+                                                      <div 
+                                                        style={{ color: colors.textPrimary }}
+                                                        className="text-sm font-semibold"
+                                                      >
                                                         Q{idx + 1}. {questionText}
                                                       </div>
                                                       {!!r.blooms_level && (
-                                                        <div className="mt-1 text-xs text-gray-500">
+                                                        <div 
+                                                          style={{ color: colors.textSecondary }}
+                                                          className="mt-1 text-xs"
+                                                        >
                                                           Bloom&apos;s: {String(r.blooms_level)}
                                                         </div>
                                                       )}
@@ -1053,11 +1344,23 @@ export default function StudentUnitWorkspace() {
                                                   </div>
 
                                                   {!!correct && (
-                                                    <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                                                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                    <div 
+                                                      style={{
+                                                        backgroundColor: colors.backgroundSecondary,
+                                                        borderColor: colors.border,
+                                                      }}
+                                                      className="mt-4 rounded-xl border p-4"
+                                                    >
+                                                      <div 
+                                                        style={{ color: colors.textSecondary }}
+                                                        className="text-xs font-semibold uppercase tracking-wide"
+                                                      >
                                                         Correct answer
                                                       </div>
-                                                      <div className="mt-2 text-sm text-gray-800 whitespace-pre-wrap">
+                                                      <div 
+                                                        style={{ color: colors.textPrimary }}
+                                                        className="mt-2 text-sm whitespace-pre-wrap"
+                                                      >
                                                         {formatValue(correct)}
                                                       </div>
                                                     </div>
@@ -1086,26 +1389,51 @@ export default function StudentUnitWorkspace() {
                                                   )}
 
                                                   {!!rubric && (
-                                                    <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
-                                                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                    <div 
+                                                      style={{
+                                                        backgroundColor: colors.cardBackground,
+                                                        borderColor: colors.border,
+                                                      }}
+                                                      className="mt-4 rounded-xl border p-4"
+                                                    >
+                                                      <div 
+                                                        style={{ color: colors.textSecondary }}
+                                                        className="text-xs font-semibold uppercase tracking-wide"
+                                                      >
                                                         Rubric
                                                       </div>
-                                                      <div className="mt-2 text-sm text-gray-800 whitespace-pre-wrap">
+                                                      <div 
+                                                        style={{ color: colors.textPrimary }}
+                                                        className="mt-2 text-sm whitespace-pre-wrap"
+                                                      >
                                                         {rubric}
                                                       </div>
                                                     </div>
                                                   )}
 
                                                   {!!r.image_url && (
-                                                    <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
-                                                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
+                                                    <div 
+                                                      style={{
+                                                        backgroundColor: colors.cardBackground,
+                                                        borderColor: colors.border,
+                                                      }}
+                                                      className="mt-4 rounded-xl border p-4"
+                                                    >
+                                                      <div 
+                                                        style={{ color: colors.textSecondary }}
+                                                        className="text-xs font-semibold uppercase tracking-wide mb-2"
+                                                      >
                                                         Submitted Image
                                                       </div>
-                                                      <div className="rounded-lg border border-gray-200 overflow-hidden">
+                                                      <div 
+                                                        style={{ borderColor: colors.border }}
+                                                        className="rounded-lg border overflow-hidden"
+                                                      >
                                                         <img 
                                                           src={r.image_url} 
                                                           alt="Submitted work" 
-                                                          className="w-full h-auto max-h-64 object-contain bg-gray-50"
+                                                          style={{ backgroundColor: colors.backgroundSecondary }}
+                                                          className="w-full h-auto max-h-64 object-contain"
                                                           onError={(e) => {
                                                             e.currentTarget.style.display = 'none';
                                                           }}
@@ -1132,7 +1460,14 @@ export default function StudentUnitWorkspace() {
                   {activeAction === "library" && (
                     <div className="space-y-4">
                       {resourcesLoading ? (
-                        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+                        <div 
+                          style={{
+                            backgroundColor: colors.cardBackground,
+                            borderColor: colors.border,
+                            color: colors.textSecondary,
+                          }}
+                          className="rounded-2xl border p-6 text-sm"
+                        >
                           Loading library resources...
                         </div>
                       ) : filteredResources.length === 0 ? (
@@ -1146,24 +1481,43 @@ export default function StudentUnitWorkspace() {
                           {filteredResources.map((r) => (
                             <div
                               key={r.id}
-                              className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+                              style={{
+                                backgroundColor: colors.cardBackground,
+                                borderColor: colors.border,
+                              }}
+                              className="rounded-2xl border p-6 shadow-sm hover:shadow-md transition-shadow"
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                  <h3 className="text-base font-semibold text-gray-900 truncate">{r.title || "Resource"}</h3>
-                                  <div className="mt-2 text-xs text-gray-500">
+                                  <h3 
+                                    style={{ color: colors.textPrimary }}
+                                    className="text-base font-semibold truncate"
+                                  >
+                                    {r.title || "Resource"}
+                                  </h3>
+                                  <div style={{ color: colors.textSecondary }} className="mt-2 text-xs">
                                     {r.unit_name || ""}
                                   </div>
-                                  <div className="mt-1 text-xs text-gray-400">
+                                  <div style={{ color: colors.textTertiary }} className="mt-1 text-xs">
                                     {r.course_name || ""}
                                   </div>
                                 </div>
-                                <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200">
+                                <span 
+                                  style={{
+                                    backgroundColor: colors.backgroundSecondary,
+                                    borderColor: colors.border,
+                                    color: colors.textPrimary,
+                                  }}
+                                  className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset"
+                                >
                                   {(r.file_type || "FILE").toUpperCase()}
                                 </span>
                               </div>
 
-                              <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
+                              <div 
+                                style={{ color: colors.textSecondary }}
+                                className="mt-4 flex items-center justify-between text-xs"
+                              >
                                 <div className="inline-flex items-center">
                                   <Clock className="mr-1 h-3.5 w-3.5" />
                                   {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
@@ -1177,7 +1531,12 @@ export default function StudentUnitWorkspace() {
                                     href={`${apiBaseUrl}/bd/notes/${r.id}/download`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-800 ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
+                                    style={{
+                                      backgroundColor: colors.cardBackground,
+                                      borderColor: colors.border,
+                                      color: colors.textPrimary,
+                                    }}
+                                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold ring-1 ring-inset hover:opacity-90"
                                   >
                                     <Download className="h-4 w-4" />
                                     Download
@@ -1186,7 +1545,11 @@ export default function StudentUnitWorkspace() {
                                     href={`${apiBaseUrl}/bd/notes/${r.id}/download`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+                                    style={{
+                                      backgroundColor: colors.primary,
+                                      color: '#ffffff',
+                                    }}
+                                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm hover:opacity-90"
                                   >
                                     <Eye className="h-4 w-4" />
                                     View

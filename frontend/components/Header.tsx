@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Bell, Search, Calendar } from 'lucide-react';
 import { useLayout } from './LayoutController';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme, useThemeColors } from '@/context/ThemeContext';
 import WeekSelector from './WeekSelector';
 import { getCurrentWeek, getWeekDateRange, formatDateRange } from '@/utils/WeekSelector';
 
@@ -18,6 +18,7 @@ interface HeaderProps {
 const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
   const { isMobileView, isTabletView, setMobileMenuOpen } = useLayout();
   const { config } = useTheme();
+  const colors = useThemeColors();
   const isDark = config.mode === 'dark';
   
   const [currentWeek, setCurrentWeek] = useState(getCurrentWeek());
@@ -56,10 +57,10 @@ const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="px-4 md:px-6 py-4 h-20 sticky top-0 z-20 border-b"
+      className="px-4 md:px-6 py-4 h-20 sticky top-0 z-20"
       style={{
-        backgroundColor: isDark ? '#0f172a' : '#ffffff',
-        borderBottomColor: isDark ? '#1e293b' : '#e5e7eb',
+        backgroundColor: colors.background,
+        borderBottom: `1px solid ${colors.border}`,
       }}
     >
       <div className="flex items-center justify-between">
@@ -69,11 +70,11 @@ const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
               onClick={() => setMobileMenuOpen(true)}
               className="mr-4 p-2 rounded-lg transition-colors"
               style={{
-                color: isDark ? '#94a3b8' : '#4b5563',
+                color: colors.textSecondary,
                 backgroundColor: 'transparent',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f3f4f6';
+                e.currentTarget.style.backgroundColor = colors.backgroundSecondary;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -86,14 +87,14 @@ const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
           <div>
             <h1 
               className="text-xl md:text-2xl font-bold"
-              style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+              style={{ color: colors.textPrimary }}
             >
               {title}
             </h1>
             {showWeekSelector && (
               <div 
                 className="flex items-center text-sm mt-1"
-                style={{ color: isDark ? '#94a3b8' : '#6b7280' }}
+                style={{ color: colors.textSecondary }}
               >
                 <Calendar size={14} className="mr-1" />
                 {formatDateRange(weekRange.start, weekRange.end)}
@@ -116,7 +117,7 @@ const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
             <Search 
               size={16} 
               className="absolute left-3 top-1/2 transform -translate-y-1/2"
-              style={{ color: isDark ? '#64748b' : '#9ca3af' }}
+              style={{ color: colors.textTertiary }}
             />
             <input
               type="text"
@@ -125,17 +126,17 @@ const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4 py-2 rounded-lg text-sm transition-all duration-200"
               style={{
-                backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`,
-                color: isDark ? '#f8fafc' : '#1f2937',
+                backgroundColor: colors.inputBackground,
+                border: `1px solid ${colors.inputBorder}`,
+                color: colors.textPrimary,
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--color-primary)';
+                e.currentTarget.style.borderColor = colors.inputFocus;
                 e.currentTarget.style.outline = '2px solid';
-                e.currentTarget.style.outlineColor = isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)';
+                e.currentTarget.style.outlineColor = `${colors.primary}20`;
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = isDark ? '#334155' : '#e5e7eb';
+                e.currentTarget.style.borderColor = colors.inputBorder;
                 e.currentTarget.style.outline = 'none';
               }}
             />
@@ -145,11 +146,11 @@ const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
           <button 
             className="relative p-2 rounded-lg transition-colors"
             style={{
-              color: isDark ? '#94a3b8' : '#4b5563',
+              color: colors.textSecondary,
               backgroundColor: 'transparent',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f3f4f6';
+              e.currentTarget.style.backgroundColor = colors.backgroundSecondary;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
@@ -159,7 +160,7 @@ const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
             {notificationCount > 0 && (
               <span 
                 className="absolute -top-1 -right-1 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium"
-                style={{ backgroundColor: '#ef4444' }}
+                style={{ backgroundColor: colors.error }}
               >
                 {notificationCount}
               </span>
@@ -170,11 +171,11 @@ const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
           <button 
             className="flex items-center p-1.5 rounded-lg transition-colors"
             style={{
-              color: isDark ? '#94a3b8' : '#4b5563',
+              color: colors.textSecondary,
               backgroundColor: 'transparent',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f3f4f6';
+              e.currentTarget.style.backgroundColor = colors.backgroundSecondary;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
@@ -183,11 +184,14 @@ const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
             <div 
               className="w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm"
               style={{
-                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'var(--color-primary-light)',
-                color: 'var(--color-primary)',
+                backgroundColor: colors.primaryLight,
+                color: colors.primary,
               }}
             >
-              {getInitials()}
+                <p style={{ color: colors.textPrimary }}>
+                {getInitials()}
+                                          </p>
+              
             </div>
           </button>
         </div>
