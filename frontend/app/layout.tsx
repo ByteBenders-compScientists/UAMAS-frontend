@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import LayoutController from "@/components/LayoutController";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -38,7 +39,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.variable} font-sans antialiased`}>
-        <LayoutController>{children}</LayoutController>
+        <ThemeProvider>
+          <LayoutController>{children}</LayoutController>
+        </ThemeProvider>
       </body>
     </html>
   );
