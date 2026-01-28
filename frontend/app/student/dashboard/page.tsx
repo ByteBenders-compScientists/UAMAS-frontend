@@ -4,9 +4,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLayout } from '@/components/LayoutController';
+import { useTheme } from '@/context/ThemeContext';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
-// import EmptyState from '@/components/EmptyState';
 import { 
   BookOpen, 
   ClipboardList, 
@@ -16,18 +16,15 @@ import {
   GraduationCap,
   Bell,
   ArrowRight,
-  BookMarked,
   FileText,
-  LucideIcon,
   KeyRound,
   CheckCircle2,
   AlertCircle,
   X
 } from 'lucide-react';
-// import { getCurrentWeek } from '@/utils/WeekSelector';
 import Link from 'next/link';
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1"
 
 type QuickLinkProps = {
   icon: React.ReactNode;
@@ -39,14 +36,36 @@ type QuickLinkProps = {
 };
 
 const QuickLink = ({ icon, title, description, color, href, onClick }: QuickLinkProps) => {
+  const { config } = useTheme();
+  const isDark = config.mode === 'dark';
+
   const content = (
-    <div className={`bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group`}>
+    <div 
+      className="rounded-xl p-6 border shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group"
+      style={{
+        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+        borderColor: isDark ? '#1e293b' : '#f3f4f6',
+      }}
+    >
       <div className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
         {icon}
       </div>
-      <h3 className="font-semibold text-gray-800 mb-1">{title}</h3>
-      <p className="text-sm text-gray-500">{description}</p>
-      <div className="flex items-center mt-3 text-sm font-medium text-emerald-600 group-hover:translate-x-1 transition-transform duration-300">
+      <h3 
+        className="font-semibold mb-1"
+        style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+      >
+        {title}
+      </h3>
+      <p 
+        className="text-sm"
+        style={{ color: isDark ? '#94a3b8' : '#6b7280' }}
+      >
+        {description}
+      </p>
+      <div 
+        className="flex items-center mt-3 text-sm font-medium group-hover:translate-x-1 transition-transform duration-300"
+        style={{ color: 'var(--color-primary)' }}
+      >
         <span>Explore</span>
         <ArrowRight size={14} className="ml-1" />
       </div>
@@ -67,6 +86,9 @@ export default function Dashboard() {
     isTabletView 
   } = useLayout();
 
+  const { config } = useTheme();
+  const isDark = config.mode === 'dark';
+
   const [hasContent, setHasContent] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<{ name: string; surname: string; reg_number: string } | null>(null);
@@ -77,7 +99,6 @@ export default function Dashboard() {
   const [joinSuccess, setJoinSuccess] = useState("");
 
   useEffect(() => {
-    // Simulate loading data
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 800);
@@ -129,7 +150,6 @@ export default function Dashboard() {
             : data.message || "You have successfully joined the unit."
         );
         setJoinCode("");
-        // Close modal after 2 seconds on success
         setTimeout(() => {
           setShowJoinUnitModal(false);
           setJoinSuccess("");
@@ -190,7 +210,10 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div 
+      className="flex h-screen"
+      style={{ backgroundColor: isDark ? '#020617' : '#f9fafb' }}
+    >
       <Sidebar />
       
       <motion.div 
@@ -207,27 +230,40 @@ export default function Dashboard() {
         
         <main className="p-4 md:p-6 lg:p-8">
           {isLoading ? (
-            // Loading state
             <div className="max-w-8xl mx-auto">
               <div className="animate-pulse space-y-8">
-                <div className="h-32 bg-gray-200 rounded-xl"></div>
+                <div 
+                  className="h-32 rounded-xl"
+                  style={{ backgroundColor: isDark ? '#1e293b' : '#e5e7eb' }}
+                />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className="h-48 bg-gray-200 rounded-xl"></div>
+                    <div 
+                      key={i} 
+                      className="h-48 rounded-xl"
+                      style={{ backgroundColor: isDark ? '#1e293b' : '#e5e7eb' }}
+                    />
                   ))}
                 </div>
-                <div className="h-64 bg-gray-200 rounded-xl"></div>
+                <div 
+                  className="h-64 rounded-xl"
+                  style={{ backgroundColor: isDark ? '#1e293b' : '#e5e7eb' }}
+                />
               </div>
             </div>
           ) : !hasContent ? (
-            // Empty State
             <div className="max-w-8xl mx-auto">
               {/* Welcome Banner */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="mb-8 bg-gradient-to-br from-slate-400 to-gray-300 rounded-xl p-6 md:p-8 shadow-md text-white relative overflow-hidden"
+                className="mb-8 rounded-xl p-6 md:p-8 shadow-md text-white relative overflow-hidden"
+                style={{
+                  background: isDark 
+                    ? 'linear-gradient(to bottom right, #334155, #1e293b)'
+                    : 'linear-gradient(to bottom right, #94a3b8, #cbd5e1)',
+                }}
               >
                 <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
                   <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
@@ -240,11 +276,14 @@ export default function Dashboard() {
                     <h2 className="text-2xl md:text-3xl font-bold mb-2">
                       Welcome back, {profile ? `${profile.name} ${profile.surname}` : 'John Opondo'}!
                     </h2>
-                    <p className="text-emerald-50">
-                      {/* Remove all references to mockData */}
-                    </p>
                     
-                    <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 max-w-md">
+                    <div 
+                      className="mt-4 rounded-lg p-4 max-w-md"
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                      }}
+                    >
                       <div className="flex items-start">
                         <Bell size={18} className="text-white mr-3 mt-0.5 flex-shrink-0" />
                         <div>
@@ -257,7 +296,13 @@ export default function Dashboard() {
                   </div>
                   
                   <div className="hidden md:block">
-                    <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <div 
+                      className="w-24 h-24 rounded-full flex items-center justify-center"
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                      }}
+                    >
                       <GraduationCap size={40} className="text-white" />
                     </div>
                   </div>
@@ -270,7 +315,12 @@ export default function Dashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Access</h3>
+                <h3 
+                  className="text-lg font-semibold mb-4"
+                  style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                >
+                  Quick Access
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   {quickLinks.map((link, index) => (
                     <motion.div
@@ -290,19 +340,54 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className="mb-8 bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+                className="mb-8 rounded-xl p-6 shadow-sm border"
+                style={{
+                  backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                  borderColor: isDark ? '#1e293b' : '#f3f4f6',
+                }}
               >
-                <h3 className="text-lg font-semibold text-gray-800 mb-6">Recent Activity</h3>
+                <h3 
+                  className="text-lg font-semibold mb-6"
+                  style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                >
+                  Recent Activity
+                </h3>
                 
                 <div className="flex flex-col items-center justify-center py-12">
-                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
+                  <div 
+                    className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
+                    style={{
+                      backgroundColor: isDark ? '#1e293b' : '#f3f4f6',
+                      color: isDark ? '#64748b' : '#9ca3af',
+                    }}
+                  >
                     <FileText size={32} />
                   </div>
-                  <h4 className="text-lg font-medium text-gray-700 mb-2">No Recent Activity</h4>
-                  <p className="text-gray-500 text-center max-w-md mb-6">
+                  <h4 
+                    className="text-lg font-medium mb-2"
+                    style={{ color: isDark ? '#cbd5e1' : '#374151' }}
+                  >
+                    No Recent Activity
+                  </h4>
+                  <p 
+                    className="text-center max-w-md mb-6"
+                    style={{ color: isDark ? '#94a3b8' : '#6b7280' }}
+                  >
                     Your recent activities, assignments, and notifications will appear here once your courses begin.
                   </p>
-                  <button className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors font-medium text-sm">
+                  <button 
+                    className="px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+                    style={{
+                      backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'var(--color-primary-light)',
+                      color: 'var(--color-primary)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? 'rgba(16, 185, 129, 0.15)' : '#d1fae5';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? 'rgba(16, 185, 129, 0.1)' : 'var(--color-primary-light)';
+                    }}
+                  >
                     Explore Your Courses
                   </button>
                 </div>
@@ -313,35 +398,75 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
-                className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+                className="rounded-xl p-6 shadow-sm border"
+                style={{
+                  backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                  borderColor: isDark ? '#1e293b' : '#f3f4f6',
+                }}
               >
-                <h3 className="text-lg font-semibold text-gray-800 mb-6">Upcoming Events</h3>
+                <h3 
+                  className="text-lg font-semibold mb-6"
+                  style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                >
+                  Upcoming Events
+                </h3>
                 
                 <div className="flex flex-col items-center justify-center py-12">
-                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
+                  <div 
+                    className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
+                    style={{
+                      backgroundColor: isDark ? '#1e293b' : '#f3f4f6',
+                      color: isDark ? '#64748b' : '#9ca3af',
+                    }}
+                  >
                     <Calendar size={32} />
                   </div>
-                  <h4 className="text-lg font-medium text-gray-700 mb-2">No Upcoming Events</h4>
-                  <p className="text-gray-500 text-center max-w-md">
+                  <h4 
+                    className="text-lg font-medium mb-2"
+                    style={{ color: isDark ? '#cbd5e1' : '#374151' }}
+                  >
+                    No Upcoming Events
+                  </h4>
+                  <p 
+                    className="text-center max-w-md"
+                    style={{ color: isDark ? '#94a3b8' : '#6b7280' }}
+                  >
                     Your schedule is clear. Events, deadlines, and important dates will be displayed here.
                   </p>
                 </div>
               </motion.div>
             </div>
           ) : (
-            // Content State (when lecturer adds materials)
             <div className="max-w-8xl mx-auto">
-              {/* This section would show actual content */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Course materials, assignments, etc. would go here */}
-                <div className="md:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Materials</h3>
-                  {/* Content would be populated here */}
+                <div 
+                  className="md:col-span-2 rounded-xl p-6 shadow-sm border"
+                  style={{
+                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                    borderColor: isDark ? '#1e293b' : '#e5e7eb',
+                  }}
+                >
+                  <h3 
+                    className="text-lg font-semibold mb-4"
+                    style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                  >
+                    Recent Materials
+                  </h3>
                 </div>
                 
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Upcoming</h3>
-                  {/* Content would be populated here */}
+                <div 
+                  className="rounded-xl p-6 shadow-sm border"
+                  style={{
+                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                    borderColor: isDark ? '#1e293b' : '#e5e7eb',
+                  }}
+                >
+                  <h3 
+                    className="text-lg font-semibold mb-4"
+                    style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                  >
+                    Upcoming
+                  </h3>
                 </div>
               </div>
             </div>
@@ -366,7 +491,10 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.3 }}
-              className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6 md:p-8"
+              className="relative w-full max-w-md rounded-2xl shadow-xl p-6 md:p-8"
+              style={{
+                backgroundColor: isDark ? '#0f172a' : '#ffffff',
+              }}
             >
               <button
                 onClick={() => {
@@ -375,7 +503,14 @@ export default function Dashboard() {
                   setJoinError("");
                   setJoinSuccess("");
                 }}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute top-4 right-4 transition-colors"
+                style={{ color: isDark ? '#64748b' : '#9ca3af' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = isDark ? '#94a3b8' : '#6b7280';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = isDark ? '#64748b' : '#9ca3af';
+                }}
               >
                 <X size={20} />
               </button>
@@ -388,18 +523,29 @@ export default function Dashboard() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">
                     Join a unit
                   </p>
-                  <h2 className="text-xl font-semibold text-gray-900">Enter join code</h2>
+                  <h2 
+                    className="text-xl font-semibold"
+                    style={{ color: isDark ? '#f8fafc' : '#111827' }}
+                  >
+                    Enter join code
+                  </h2>
                 </div>
               </div>
 
-              <p className="text-sm text-gray-600 mb-6">
+              <p 
+                className="text-sm mb-6"
+                style={{ color: isDark ? '#94a3b8' : '#4b5563' }}
+              >
                 Ask your lecturer for the unit join code and paste it below. Once you join, the
                 unit will appear in your courses and assessments.
               </p>
 
               <form onSubmit={handleJoinUnit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label 
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: isDark ? '#cbd5e1' : '#374151' }}
+                  >
                     Unit join code
                   </label>
                   <div className="relative">
@@ -408,11 +554,28 @@ export default function Dashboard() {
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                       placeholder="e.g. ABCD1234"
-                      className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full px-4 py-3 pr-10 rounded-lg text-sm transition-all"
+                      style={{
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                        border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`,
+                        color: isDark ? '#f8fafc' : '#1f2937',
+                      }}
                       maxLength={16}
                       disabled={isJoining}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--color-primary)';
+                        e.currentTarget.style.outline = '2px solid';
+                        e.currentTarget.style.outlineColor = 'rgba(16, 185, 129, 0.2)';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = isDark ? '#334155' : '#d1d5db';
+                        e.currentTarget.style.outline = 'none';
+                      }}
                     />
-                    <KeyRound className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                    <KeyRound 
+                      className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2"
+                      style={{ color: isDark ? '#64748b' : '#9ca3af' }}
+                    />
                   </div>
                 </div>
 
@@ -439,7 +602,18 @@ export default function Dashboard() {
                       setJoinError("");
                       setJoinSuccess("");
                     }}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    style={{
+                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                      border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`,
+                      color: isDark ? '#cbd5e1' : '#374151',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? '#334155' : '#f9fafb';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#ffffff';
+                    }}
                   >
                     Cancel
                   </button>

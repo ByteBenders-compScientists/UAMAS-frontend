@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion} from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLayout } from './LayoutController';
+import { useTheme } from '@/context/ThemeContext';
 import { easeInOut } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -31,10 +32,13 @@ type NavItemType = {
   badge?: number | string;
 };
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1";
 
 const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const pathname = usePathname();
+  const { config } = useTheme();
+  const isDark = config.mode === 'dark';
+  
   const { 
     sidebarCollapsed, 
     setSidebarCollapsed, 
@@ -49,8 +53,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
 
   useEffect(() => {
     setMounted(true);
-    // Fetch student profile
-   
+    
     fetch(`${apiBaseUrl}/auth/me`, {
       credentials: 'include',
     })
@@ -65,10 +68,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
 
   if (!mounted) return null;
 
-  // Only show the mobile version if explicitly requested
   if (showMobileOnly && !isMobileView && !isTabletView) return null;
-
-  // Hide desktop sidebar on mobile/tablet unless menu is open
   if (!showMobileOnly && (isMobileView || isTabletView) && !isMobileMenuOpen) return null;
 
   const navItems: NavItemType[] = [
@@ -83,24 +83,21 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     { name: 'Logout', icon: <LogOut size={20} />, path: '/logout' },
   ];
 
- 
-  
   const sidebarVariants = {
-      desktop: {
-        width: sidebarCollapsed ? 80 : 240,
-        transition: { duration: 0.3, ease: easeInOut }
-      },
-      mobile: {
-        x: 0,
-        transition: { duration: 0.3, ease: easeInOut }
-      },
-      mobileHidden: {
-        x: "-100%",
-        transition: { duration: 0.3, ease: easeInOut }
-      }
-    };
+    desktop: {
+      width: sidebarCollapsed ? 80 : 240,
+      transition: { duration: 0.3, ease: easeInOut }
+    },
+    mobile: {
+      x: 0,
+      transition: { duration: 0.3, ease: easeInOut }
+    },
+    mobileHidden: {
+      x: "-100%",
+      transition: { duration: 0.3, ease: easeInOut }
+    }
+  };
 
-  // Mobile/tablet overlay when sidebar is open
   const renderOverlay = () => {
     if ((isMobileView || isTabletView) && isMobileMenuOpen) {
       return (
@@ -121,31 +118,61 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     
     return (
       <Link
-      key={item.path}
-      href={item.path}
-      className={`
-        flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
-        ${isActive 
-          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium' 
-          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
-        }
-        ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
-      `}
-    >
-      <div className={`${isActive ? 'text-emerald-600' : 'text-gray-500'}`}>
-        {item.icon}
-      </div>
-      
-      {(!sidebarCollapsed || isMobileView || isTabletView) && (
-        <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{item.name}</span>
-      )}
-      
-      {(!sidebarCollapsed || isMobileView || isTabletView) && item.badge && (
-        <div className={`ml-auto ${typeof item.badge === 'number' ? 'bg-emerald-500' : 'bg-amber-500'} text-white text-xs px-2 py-0.5 rounded-full`}>
-          {item.badge}
+        key={item.path}
+        href={item.path}
+        className={`
+          flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
+          ${isActive 
+            ? 'font-medium' 
+            : ''
+          }
+          ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
+        `}
+        style={{
+          backgroundColor: isActive 
+            ? isDark ? 'rgba(16, 185, 129, 0.1)' : 'var(--color-primary-light)'
+            : 'transparent',
+          color: isActive 
+            ? 'var(--color-primary)' 
+            : 'var(--color-text-secondary)',
+          border: isActive 
+            ? `1px solid ${isDark ? 'rgba(16, 185, 129, 0.2)' : 'var(--color-primary-light)'}` 
+            : '1px solid transparent',
+        }}
+        onMouseEnter={(e) => {
+          if (!isActive) {
+            e.currentTarget.style.backgroundColor = isDark 
+              ? 'rgba(148, 163, 184, 0.05)' 
+              : 'var(--color-background-secondary)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive) {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }
+        }}
+      >
+        <div style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}>
+          {item.icon}
         </div>
-      )}
-    </Link>
+        
+        {(!sidebarCollapsed || isMobileView || isTabletView) && (
+          <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{item.name}</span>
+        )}
+        
+        {(!sidebarCollapsed || isMobileView || isTabletView) && item.badge && (
+          <div 
+            className="ml-auto text-white text-xs px-2 py-0.5 rounded-full font-medium"
+            style={{
+              backgroundColor: typeof item.badge === 'number' 
+                ? 'var(--color-primary)' 
+                : 'var(--color-warning)'
+            }}
+          >
+            {item.badge}
+          </div>
+        )}
+      </Link>
     );
   };
 
@@ -161,42 +188,70 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
         }
         variants={sidebarVariants}
         className={`
-          h-screen fixed left-0 top-0 z-40 flex flex-col
-          bg-white text-gray-700 shadow-xl border-r border-gray-200
+          h-screen fixed left-0 top-0 z-40 flex flex-col shadow-xl
           ${(isMobileView || isTabletView) ? 'w-[270px]' : ''}
         `}
+        style={{
+          backgroundColor: isDark ? '#0f172a' : '#ffffff',
+          color: isDark ? '#f8fafc' : '#1f2937',
+          borderRight: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`,
+        }}
       >
         {/* Header Section */}
-      <div className="flex items-center mt-3 justify-between p-4 border-b border-gray-200">
-        <div className="container mx-auto px-6">
-          <div className="flex justify-between items-center h-16">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center space-x-2"
-            >
-              {(!sidebarCollapsed || isMobileView) && (
-                <Image
-                  src="/assets/logo3.png"
-                  alt="logo"
-                  width={200}
-                  height={160}
-                  quality={100}
-                />
-              )}
-            </motion.div>
+        <div 
+          className="flex items-center mt-3 justify-between p-4"
+          style={{ borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}
+        >
+          <div className="container mx-auto px-6">
+            <div className="flex justify-between items-center h-16">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center space-x-2"
+              >
+                {(!sidebarCollapsed || isMobileView) && (
+                  <Image
+                    src="/assets/logo3.png"
+                    alt="logo"
+                    width={200}
+                    height={160}
+                    quality={100}
+                    className={isDark ? 'brightness-110' : ''}
+                  />
+                )}
+              </motion.div>
             </div>
           </div>
           {(isMobileView || isTabletView) ? (
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
+              className="rounded-full p-1.5 transition-colors"
+              style={{
+                color: isDark ? '#94a3b8' : '#6b7280',
+                backgroundColor: 'transparent',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f3f4f6';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               <X size={18} />
             </button>
           ) : (
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
+              className="rounded-full p-1.5 transition-colors"
+              style={{
+                color: isDark ? '#94a3b8' : '#6b7280',
+                backgroundColor: 'transparent',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f3f4f6';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </button>
@@ -205,14 +260,36 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
 
         {/* User Profile Section */}
         {(!sidebarCollapsed || isMobileView || isTabletView) && (
-          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+          <div 
+            className="px-4 py-3"
+            style={{
+              borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`,
+              backgroundColor: isDark ? '#0f172a' : '#f9fafb',
+            }}
+          >
             <div className="flex items-center">
-              <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-medium text-sm shadow-sm">
+              <div 
+                className="h-10 w-10 rounded-xl flex items-center justify-center font-medium text-sm shadow-sm"
+                style={{
+                  backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'var(--color-primary-light)',
+                  color: 'var(--color-primary)',
+                }}
+              >
                 {profile ? (profile.name[0] + (profile.surname ? profile.surname[0] : '')) : 'JO'}
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-800">{profile ? `${profile.name} ${profile.surname}` : 'John Opondo'}</p>
-                <p className="text-xs text-gray-500">Student ID: {profile ? profile.reg_number : '2028061'}</p>
+                <p 
+                  className="text-sm font-medium"
+                  style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                >
+                  {profile ? `${profile.name} ${profile.surname}` : 'John Opondo'}
+                </p>
+                <p 
+                  className="text-xs"
+                  style={{ color: isDark ? '#94a3b8' : '#6b7280' }}
+                >
+                  Student ID: {profile ? profile.reg_number : '2028061'}
+                </p>
               </div>
             </div>
           </div>
@@ -225,27 +302,46 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
           </nav>
           
           {/* Bottom Navigation Section */}
-          <div className="mt-auto px-3 py-4 border-t border-gray-200">
+          <div 
+            className="mt-auto px-3 py-4"
+            style={{ borderTop: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}
+          >
             {bottomNavItems.map((item) => renderNavItem(item))}
           </div>
           
           {/* Bottom SVG Illustration */}
           {(!sidebarCollapsed || isMobileView || isTabletView) && (
             <div className="px-4 pb-4">
-              <div className="bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl p-4 text-center">
-                {/* We'll use an inline SVG instead of an Image component */}
+              <div 
+                className="rounded-xl p-4 text-center"
+                style={{
+                  background: isDark 
+                    ? 'linear-gradient(to bottom right, rgba(16, 185, 129, 0.1), rgba(20, 184, 166, 0.15))'
+                    : 'linear-gradient(to bottom right, #d1fae5, #a7f3d0)',
+                }}
+              >
                 <div className="mx-auto mb-2 -mt-6 h-24 w-full flex justify-center">
                   <Image
-                  src='/assets/academic-excellence.svg'
-                  width={150}
-                  height={150}
-                  quality={100}
-                  className=''
-                  alt='svg'
+                    src='/assets/academic-excellence.svg'
+                    width={150}
+                    height={150}
+                    quality={100}
+                    className={isDark ? 'brightness-110' : ''}
+                    alt='svg'
                   />
                 </div>
-                <p className="text-xs text-emerald-800 font-medium">Academic Excellence</p>
-                <p className="text-xs text-emerald-600 mt-1">Track your progress</p>
+                <p 
+                  className="text-xs font-medium"
+                  style={{ color: isDark ? '#10b981' : '#047857' }}
+                >
+                  Academic Excellence
+                </p>
+                <p 
+                  className="text-xs mt-1"
+                  style={{ color: isDark ? '#34d399' : '#059669' }}
+                >
+                  Track your progress
+                </p>
               </div>
             </div>
           )}

@@ -26,7 +26,7 @@ import Disclaimer from "@/components/Disclaimer";
 import type { QuestionType } from "@/types/assessment";
 
 const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1";
 
 interface Assignment {
   id: string;
