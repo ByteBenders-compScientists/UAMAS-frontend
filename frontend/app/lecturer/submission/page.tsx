@@ -1152,7 +1152,7 @@ const Page: React.FC = () => {
                           <FileText className="w-8 h-8 text-gray-400" />
                         </div>
                         <h4 className="text-lg font-semibold text-gray-900 mb-2">No results available</h4>
-                        <p className="text-sm text-gray-500">This submission doesn't have any graded results yet.</p>
+                        <p className="text-sm text-gray-500">This submission doesn&apos;t have any graded results yet.</p>
                       </div>
                     )}
                   </div>
