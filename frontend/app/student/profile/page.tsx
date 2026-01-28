@@ -23,6 +23,7 @@ import {
   X,
   CheckCircle
 } from 'lucide-react';
+import FloatingThemeButton from '@/components/FloatingThemeButton';
 
 // Profile type
 type Profile = {
@@ -739,6 +740,7 @@ export default function ProfilePage() {
           </div>
         </main>
       </motion.div>
+      <FloatingThemeButton/>
     </div>
   );
 }

@@ -50,6 +50,7 @@ import {
 
 // Theme imports
 import { useThemeColors } from "@/context/ThemeContext";
+import FloatingThemeButton from "@/components/FloatingThemeButton";
 
 const AssessmentsDashboard: React.FC = () => {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
@@ -878,6 +879,7 @@ const AssessmentsDashboard: React.FC = () => {
           />
         )}
       </Modal>
+      <FloatingThemeButton/>
     </div>
   );
 };

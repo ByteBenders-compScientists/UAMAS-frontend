@@ -5,7 +5,6 @@ import {
   themeService,
   ThemeConfig,
   ThemeColors,
-  ThemeMode,
   ColorScheme,
   FontSize,
 } from '@/services/themeService';

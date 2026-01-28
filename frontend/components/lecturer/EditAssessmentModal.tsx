@@ -5,6 +5,7 @@ import { Course, Assessment, Question, QuestionType } from '../../types/assessme
 import { assessmentApi } from '../../services/api';
 import QuestionEditor from './QuestionsEditor';
 import { formatDateForInput } from '../../utils/assessmentUtils';
+import { useThemeColors } from '@/context/ThemeContext';
 
 interface EditAssessmentModalProps {
   assessment: Assessment;
@@ -24,6 +25,7 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
   loading,
   onQuestionCountUpdate,
 }) => {
+  const colors = useThemeColors();
   const [formData, setFormData] = useState({
   title: assessment.title,
   description: assessment.description,
@@ -320,14 +322,21 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
   return (
     <div className="p-6">
       {/* Tab Navigation */}
-      <div className="flex space-x-4 mb-6 border-b border-gray-200">
+      <div 
+        className="flex space-x-4 mb-6 border-b"
+        style={{ borderColor: colors.border }}
+      >
         <button
           onClick={() => setActiveTab('details')}
           className={`pb-3 px-1 font-medium text-sm border-b-2 transition-colors ${
             activeTab === 'details'
-              ? 'border-emerald-500 text-emerald-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? ''
+              : ''
           }`}
+          style={{
+            borderColor: activeTab === 'details' ? colors.primary : 'transparent',
+            color: activeTab === 'details' ? colors.primary : colors.textSecondary,
+          }}
         >
           Assessment Details
         </button>
@@ -335,9 +344,13 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
           onClick={() => setActiveTab('questions')}
           className={`pb-3 px-1 font-medium text-sm border-b-2 transition-colors ${
             activeTab === 'questions'
-              ? 'border-emerald-500 text-emerald-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? ''
+              : ''
           }`}
+          style={{
+            borderColor: activeTab === 'questions' ? colors.primary : 'transparent',
+            color: activeTab === 'questions' ? colors.primary : colors.textSecondary,
+          }}
         >
           Questions ({questions.length})
         </button>
@@ -348,20 +361,30 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-3">Assessment Title</label>
+              <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>Assessment Title</label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-3">Assessment Type</label>
+              <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>Assessment Type</label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({...formData, type: e.target.value as "CAT" | "Assignment" | "Case Study"})}
-                className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
               >
                 <option value="CAT">CAT</option>
                 <option value="Assignment">Assignment</option>
@@ -371,32 +394,47 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">Description</label>
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
               rows={4}
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-3">Total Marks</label>
+              <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>Total Marks</label>
               <input
                 type="number"
                 value={formData.total_marks}
                 onChange={(e) => setFormData({...formData, total_marks: parseInt(e.target.value)})}
-                className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
                 min="1"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-3">Difficulty</label>
+              <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>Difficulty</label>
               <select
                 value={formData.difficulty}
                 onChange={(e) => setFormData({...formData, difficulty: e.target.value as "Easy" | "Intermediate" | "Advance"})}
-                className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
               >
                 <option value="Easy">Easy</option>
                 <option value="Intermediate">Intermediate</option>
@@ -404,12 +442,17 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-3">Duration (min)</label>
+              <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>Duration (min)</label>
               <input
                 type="number"
                 value={formData.duration}
                 onChange={(e) => setFormData({...formData, duration: parseInt(e.target.value)})}
-                className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
                 min="1"
               />
             </div>
@@ -417,21 +460,31 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-3">Schedule Date (Optional)</label>
+              <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>Schedule Date (Optional)</label>
               <input
                 type="datetime-local"
                 value={formData.schedule_date}
                 onChange={(e) => setFormData({...formData, schedule_date: e.target.value})}
-                className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-3">Deadline Date (Optional)</label>
+              <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>Deadline Date (Optional)</label>
               <input
                 type="datetime-local"
                 value={formData.deadline_date}
                 onChange={(e) => setFormData({...formData, deadline_date: e.target.value})}
-                className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
               />
             </div>
           </div>
@@ -443,8 +496,8 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
         <div className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold text-gray-900">Add questions</div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm font-semibold" style={{ color: colors.textPrimary }}>Add questions</div>
+              <div className="text-sm" style={{ color: colors.textSecondary }}>
                 Allowed types: {allowedQuestionTypes.length > 0 ? allowedQuestionTypes.join(', ') : 'None set'}
               </div>
             </div>
@@ -454,7 +507,8 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                 setAddQuestionError(null);
                 setShowAddQuestion((v) => !v);
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition-colors"
+              style={{ backgroundColor: colors.primary }}
               disabled={allowedQuestionTypes.length === 0}
             >
               <Plus className="w-4 h-4" />
@@ -463,23 +517,37 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
           </div>
 
           {showAddQuestion && (
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-5">
+            <div 
+              className="rounded-2xl border p-6 shadow-sm space-y-5"
+              style={{
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              }}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-base font-semibold text-gray-900">New Question</div>
-                  <div className="text-sm text-gray-600">Create and attach a new question to this assessment.</div>
+                  <div className="text-base font-semibold" style={{ color: colors.textPrimary }}>New Question</div>
+                  <div className="text-sm" style={{ color: colors.textSecondary }}>Create and attach a new question to this assessment.</div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowAddQuestion(false)}
-                  className="p-2 rounded-lg hover:bg-gray-50 text-gray-500"
+                  className="p-2 rounded-lg hover:opacity-90 transition-colors"
+                  style={{ color: colors.textSecondary }}
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {addQuestionError && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 flex items-start gap-2">
+                <div 
+                  className="rounded-xl border p-4 text-sm flex items-start gap-2"
+                  style={{
+                    backgroundColor: `${colors.error}15`,
+                    borderColor: colors.error,
+                    color: colors.error,
+                  }}
+                >
                   <AlertCircle className="w-4 h-4 mt-0.5" />
                   <div>{addQuestionError}</div>
                 </div>
@@ -487,7 +555,7 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Question Type</label>
+                  <label className="block text-sm font-bold mb-2" style={{ color: colors.textPrimary }}>Question Type</label>
                   <select
                     value={newQuestionType}
                     onChange={(e) => {
@@ -495,7 +563,12 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                       setNewQuestionType(nextType);
                       resetAddQuestionForm(nextType);
                     }}
-                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                    style={{
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.inputBorder,
+                      color: colors.textPrimary,
+                    }}
                   >
                     {questionTypeOptions
                       .filter((opt) => allowedQuestionTypes.includes(opt.value))
@@ -508,56 +581,81 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Marks</label>
+                  <label className="block text-sm font-bold mb-2" style={{ color: colors.textPrimary }}>Marks</label>
                   <input
                     type="number"
                     value={newQuestionMarks}
                     onChange={(e) => setNewQuestionMarks(Number(e.target.value))}
                     min={1}
-                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                    style={{
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.inputBorder,
+                      color: colors.textPrimary,
+                    }}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Question Text</label>
+                <label className="block text-sm font-bold mb-2" style={{ color: colors.textPrimary }}>Question Text</label>
                 <textarea
                   value={newQuestionText}
                   onChange={(e) => setNewQuestionText(e.target.value)}
                   rows={3}
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                  style={{
+                    backgroundColor: colors.inputBackground,
+                    borderColor: colors.inputBorder,
+                    color: colors.textPrimary,
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Rubric</label>
+                <label className="block text-sm font-bold mb-2" style={{ color: colors.textPrimary }}>Rubric</label>
                 <textarea
                   value={newQuestionRubric}
                   onChange={(e) => setNewQuestionRubric(e.target.value)}
                   rows={2}
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                  style={{
+                    backgroundColor: colors.inputBackground,
+                    borderColor: colors.inputBorder,
+                    color: colors.textPrimary,
+                  }}
                 />
               </div>
 
               {newQuestionType === 'open-ended' && (
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Model Answer (Optional)</label>
+                  <label className="block text-sm font-bold mb-2" style={{ color: colors.textPrimary }}>Model Answer (Optional)</label>
                   <textarea
                     value={newOpenEndedModelAnswer}
                     onChange={(e) => setNewOpenEndedModelAnswer(e.target.value)}
                     rows={3}
-                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                    style={{
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.inputBorder,
+                      color: colors.textPrimary,
+                    }}
                   />
                 </div>
               )}
 
               {newQuestionType === 'close-ended-bool' && (
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Correct Answer</label>
+                  <label className="block text-sm font-bold mb-2" style={{ color: colors.textPrimary }}>Correct Answer</label>
                   <select
                     value={newCorrectBool}
                     onChange={(e) => setNewCorrectBool(e.target.value as 'True' | 'False')}
-                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                    style={{
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.inputBorder,
+                      color: colors.textPrimary,
+                    }}
                   >
                     <option value="True">True</option>
                     <option value="False">False</option>
@@ -568,11 +666,12 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
               {(newQuestionType === 'close-ended-multiple-single' || newQuestionType === 'close-ended-multiple-multiple') && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-bold text-gray-700">Choices</label>
+                    <label className="block text-sm font-bold" style={{ color: colors.textPrimary }}>Choices</label>
                     <button
                       type="button"
                       onClick={() => setNewChoices((prev) => [...prev, ''])}
-                      className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+                      className="text-sm font-semibold hover:opacity-90 transition-colors"
+                      style={{ color: colors.primary }}
                     >
                       Add choice
                     </button>
@@ -590,7 +689,7 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                               name="new-correct-single"
                               checked={checkedSingle}
                               onChange={() => setNewCorrectSingle(cleanedChoice)}
-                              className="text-emerald-600"
+                              style={{ color: colors.primary }}
                             />
                           ) : (
                             <input
@@ -603,7 +702,7 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                                     : [...prev, cleanedChoice]
                                 );
                               }}
-                              className="text-emerald-600"
+                              style={{ color: colors.primary }}
                             />
                           )}
                           <input
@@ -622,7 +721,12 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                                 );
                               }
                             }}
-                            className="flex-1 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                            className="flex-1 p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                            style={{
+                              backgroundColor: colors.inputBackground,
+                              borderColor: colors.inputBorder,
+                              color: colors.textPrimary,
+                            }}
                             placeholder={`Option ${idx + 1}`}
                           />
                           <button
@@ -636,7 +740,11 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                                 setNewCorrectMultiple((prev) => prev.filter((v) => v !== removed));
                               }
                             }}
-                            className="px-3 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50"
+                            className="px-3 py-2 text-sm rounded-xl border hover:opacity-90 transition-colors"
+                            style={{
+                              borderColor: colors.border,
+                              color: colors.textPrimary,
+                            }}
                           >
                             Remove
                           </button>
@@ -650,11 +758,12 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
               {newQuestionType === 'close-ended-matching' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-bold text-gray-700">Matching pairs</label>
+                    <label className="block text-sm font-bold" style={{ color: colors.textPrimary }}>Matching pairs</label>
                     <button
                       type="button"
                       onClick={() => setNewMatchingPairs((prev) => [...prev, ['', '']])}
-                      className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+                      className="text-sm font-semibold hover:opacity-90 transition-colors"
+                      style={{ color: colors.primary }}
                     >
                       Add pair
                     </button>
@@ -670,10 +779,15 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                             next[idx] = [e.target.value, pair[1]];
                             setNewMatchingPairs(next);
                           }}
-                          className="md:col-span-2 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          className="md:col-span-2 p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                          style={{
+                            backgroundColor: colors.inputBackground,
+                            borderColor: colors.inputBorder,
+                            color: colors.textPrimary,
+                          }}
                           placeholder="Left item"
                         />
-                        <div className="hidden md:block text-center text-gray-400">→</div>
+                        <div className="hidden md:block text-center" style={{ color: colors.textTertiary }}>→</div>
                         <input
                           type="text"
                           value={pair[1]}
@@ -682,13 +796,22 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                             next[idx] = [pair[0], e.target.value];
                             setNewMatchingPairs(next);
                           }}
-                          className="md:col-span-2 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          className="md:col-span-2 p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                          style={{
+                            backgroundColor: colors.inputBackground,
+                            borderColor: colors.inputBorder,
+                            color: colors.textPrimary,
+                          }}
                           placeholder="Right item"
                         />
                         <button
                           type="button"
                           onClick={() => setNewMatchingPairs((prev) => prev.filter((_, i) => i !== idx))}
-                          className="px-3 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50"
+                          className="px-3 py-2 text-sm rounded-xl border hover:opacity-90 transition-colors"
+                          style={{
+                            borderColor: colors.border,
+                            color: colors.textPrimary,
+                          }}
                         >
                           Remove
                         </button>
@@ -701,11 +824,12 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
               {newQuestionType === 'close-ended-ordering' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-bold text-gray-700">Correct order</label>
+                    <label className="block text-sm font-bold" style={{ color: colors.textPrimary }}>Correct order</label>
                     <button
                       type="button"
                       onClick={() => setNewOrderingItems((prev) => [...prev, ''])}
-                      className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+                      className="text-sm font-semibold hover:opacity-90 transition-colors"
+                      style={{ color: colors.primary }}
                     >
                       Add item
                     </button>
@@ -713,7 +837,7 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                   <div className="space-y-2">
                     {newOrderingItems.map((it, idx) => (
                       <div key={idx} className="flex items-center gap-3">
-                        <div className="w-10 text-xs font-semibold text-gray-500">#{idx + 1}</div>
+                        <div className="w-10 text-xs font-semibold" style={{ color: colors.textTertiary }}>#{idx + 1}</div>
                         <input
                           type="text"
                           value={it}
@@ -722,13 +846,22 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                             next[idx] = e.target.value;
                             setNewOrderingItems(next);
                           }}
-                          className="flex-1 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          className="flex-1 p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                          style={{
+                            backgroundColor: colors.inputBackground,
+                            borderColor: colors.inputBorder,
+                            color: colors.textPrimary,
+                          }}
                           placeholder="Item"
                         />
                         <button
                           type="button"
                           onClick={() => setNewOrderingItems((prev) => prev.filter((_, i) => i !== idx))}
-                          className="px-3 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50"
+                          className="px-3 py-2 text-sm rounded-xl border hover:opacity-90 transition-colors"
+                          style={{
+                            borderColor: colors.border,
+                            color: colors.textPrimary,
+                          }}
                         >
                           Remove
                         </button>
@@ -741,11 +874,12 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
               {newQuestionType === 'close-ended-drag-drop' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-bold text-gray-700">Drag & Drop pairs</label>
+                    <label className="block text-sm font-bold" style={{ color: colors.textPrimary }}>Drag & Drop pairs</label>
                     <button
                       type="button"
                       onClick={() => setNewDragDropPairs((prev) => [...prev, { item: '', target: '' }])}
-                      className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+                      className="text-sm font-semibold hover:opacity-90 transition-colors"
+                      style={{ color: colors.primary }}
                     >
                       Add pair
                     </button>
@@ -761,10 +895,15 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                             next[idx] = { ...pair, item: e.target.value };
                             setNewDragDropPairs(next);
                           }}
-                          className="md:col-span-2 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          className="md:col-span-2 p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                          style={{
+                            backgroundColor: colors.inputBackground,
+                            borderColor: colors.inputBorder,
+                            color: colors.textPrimary,
+                          }}
                           placeholder="Item"
                         />
-                        <div className="hidden md:block text-center text-gray-400">→</div>
+                        <div className="hidden md:block text-center" style={{ color: colors.textTertiary }}>→</div>
                         <input
                           type="text"
                           value={pair.target}
@@ -773,13 +912,22 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                             next[idx] = { ...pair, target: e.target.value };
                             setNewDragDropPairs(next);
                           }}
-                          className="md:col-span-2 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          className="md:col-span-2 p-3 border rounded-xl focus:ring-2 focus:border-transparent"
+                          style={{
+                            backgroundColor: colors.inputBackground,
+                            borderColor: colors.inputBorder,
+                            color: colors.textPrimary,
+                          }}
                           placeholder="Target"
                         />
                         <button
                           type="button"
                           onClick={() => setNewDragDropPairs((prev) => prev.filter((_, i) => i !== idx))}
-                          className="px-3 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50"
+                          className="px-3 py-2 text-sm rounded-xl border hover:opacity-90 transition-colors"
+                          style={{
+                            borderColor: colors.border,
+                            color: colors.textPrimary,
+                          }}
                         >
                           Remove
                         </button>
@@ -796,7 +944,11 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                     setAddQuestionError(null);
                     setShowAddQuestion(false);
                   }}
-                  className="px-5 py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50"
+                  className="px-5 py-3 rounded-xl border font-semibold hover:opacity-90 transition-colors"
+                  style={{
+                    borderColor: colors.border,
+                    color: colors.textPrimary,
+                  }}
                   disabled={addingQuestion}
                 >
                   Cancel
@@ -804,7 +956,8 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                 <button
                   type="button"
                   onClick={handleCreateQuestion}
-                  className="px-5 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-50 inline-flex items-center justify-center"
+                  className="px-5 py-3 rounded-xl text-white font-semibold hover:opacity-90 disabled:opacity-50 inline-flex items-center justify-center"
+                  style={{ backgroundColor: colors.primary }}
                   disabled={addingQuestion}
                 >
                   {addingQuestion ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
@@ -816,9 +969,9 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
 
           {questions.length === 0 ? (
             <div className="text-center py-12">
-              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">No Questions Yet</h3>
-              <p className="text-gray-500">Questions will appear here after generation</p>
+              <FileText className="w-16 h-16 mx-auto mb-4" style={{ color: colors.textTertiary }} />
+              <h3 className="text-lg font-semibold mb-2" style={{ color: colors.textSecondary }}>No Questions Yet</h3>
+              <p className="" style={{ color: colors.textSecondary }}>Questions will appear here after generation</p>
             </div>
           ) : (
             questions.map((question, index) => (
@@ -835,10 +988,14 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
       )}
 
       {/* Footer */}
-      <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center">
+      <div 
+        className="mt-8 pt-6 border-t flex justify-between items-center"
+        style={{ borderColor: colors.border }}
+      >
         <button
           onClick={onCancel}
-          className="px-6 py-3 text-gray-600 hover:text-gray-800 font-semibold transition-colors rounded-xl hover:bg-gray-100"
+          className="px-6 py-3 font-semibold transition-colors rounded-xl hover:opacity-90"
+          style={{ color: colors.textSecondary }}
           disabled={loading}
         >
           Cancel
@@ -846,7 +1003,8 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="flex items-center px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-semibold shadow-lg"
+          className="flex items-center px-6 py-3 text-white rounded-xl hover:opacity-90 transition-colors font-semibold shadow-lg"
+          style={{ backgroundColor: colors.primary }}
         >
           {loading ? (
             <Loader2 className="w-5 h-5 mr-2 animate-spin" />

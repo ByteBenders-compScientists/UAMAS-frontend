@@ -23,6 +23,7 @@ import {
 import type { QuestionType } from "@/types/assessment";
 import { extractTextFromImage, validateImageForOCR } from "@/services/groqOCRService";
 import { extractTextFromAudio, validateAudioForTranscription } from "@/services/Groqvoice";
+import { useTheme } from "@/context/ThemeContext";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1";
 
@@ -74,7 +75,9 @@ export default function AttemptPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const assessmentId = searchParams.get("assessmentId");
-
+  // Get theme from context
+  const { colors, config } = useTheme();
+  
   const [assessment, setAssessment] = useState<AttemptAssessment | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -735,18 +738,33 @@ export default function AttemptPage() {
       if (!inputMode) {
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
               Question {index + 1}: {question.text}
             </h3>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-sm text-blue-900 mb-4">
+            <div 
+              className="rounded-xl p-4"
+              style={{ 
+                backgroundColor: config.mode === 'dark' ? colors.backgroundSecondary : colors.primaryLight,
+                borderColor: config.mode === 'dark' ? colors.borderLight : colors.primaryLight,
+                border: `1px solid ${config.mode === 'dark' ? colors.borderLight : colors.primary}`
+              }}
+            >
+              <p 
+                className="text-sm mb-4"
+                style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.primaryDark }}
+              >
                 Please choose how you would like to answer this question. This choice cannot be changed.
               </p>
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={() => handleInputModeChange("text")}
-                  className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-blue-500 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                  className="flex items-center gap-2 px-5 py-3 rounded-lg hover:opacity-90 transition-colors font-medium"
+                  style={{
+                    backgroundColor: config.mode === 'dark' ? colors.backgroundTertiary : 'white',
+                    color: colors.info,
+                    border: `2px solid ${colors.info}`
+                  }}
                 >
                   <FileText className="w-5 h-5" />
                   Answer with Text
@@ -754,7 +772,12 @@ export default function AttemptPage() {
                 <button
                   type="button"
                   onClick={() => handleInputModeChange("image")}
-                  className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-purple-500 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium"
+                  className="flex items-center gap-2 px-5 py-3 rounded-lg hover:opacity-90 transition-colors font-medium"
+                  style={{
+                    backgroundColor: config.mode === 'dark' ? colors.backgroundTertiary : 'white',
+                    color: colors.accent,
+                    border: `2px solid ${colors.accent}`
+                  }}
                 >
                   <ImageIcon className="w-5 h-5" />
                   Upload an Image (AI Text Extraction)
@@ -762,7 +785,12 @@ export default function AttemptPage() {
                 <button
                   type="button"
                   onClick={() => handleInputModeChange("voice")}
-                  className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-green-500 text-green-700 rounded-lg hover:bg-green-50 transition-colors font-medium"
+                  className="flex items-center gap-2 px-5 py-3 rounded-lg hover:opacity-90 transition-colors font-medium"
+                  style={{
+                    backgroundColor: config.mode === 'dark' ? colors.backgroundTertiary : 'white',
+                    color: colors.success,
+                    border: `2px solid ${colors.success}`
+                  }}
                 >
                   <Mic className="w-5 h-5" />
                   Answer with Voice (AI Transcription)
@@ -776,15 +804,25 @@ export default function AttemptPage() {
       return (
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
               Question {index + 1}: {question.text}
             </h3>
-            <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
+            <div 
+              className="text-sm font-medium"
+              style={{ color: colors.textSecondary }}
+            >
+              {question.marks} marks
+            </div>
           </div>
 
           {inputMode === "text" && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Your Answer</label>
+              <label 
+                className="block text-sm font-medium mb-2"
+                style={{ color: colors.textSecondary }}
+              >
+                Your Answer
+              </label>
               <textarea
                 rows={6}
                 value={openEndedAnswers[index] || ""}
@@ -793,8 +831,14 @@ export default function AttemptPage() {
                   next[index] = e.target.value;
                   setOpenEndedAnswers(next);
                 }}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 rounded-lg focus:ring-2 focus:outline-none"
                 placeholder="Type your answer here..."
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  border: `1px solid ${colors.inputBorder}`,
+                  color: colors.textPrimary,
+                }}
               />
             </div>
           )}
@@ -803,44 +847,63 @@ export default function AttemptPage() {
             <div className="space-y-4">
               {!voiceRecordingStates[index].audioFile ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: colors.textSecondary }}>
                     Record Voice Answer
                   </label>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm mb-4" style={{ color: colors.textSecondary }}>
                     Record your answer using your microphone. Our AI will automatically transcribe what you say for you to review and edit.
                   </p>
                   
                   {!voiceRecordingStates[index].isRecording ? (
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-green-400 transition-colors">
-                      <Mic className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <p className="text-sm text-gray-600 mb-4">
+                    <div 
+                      className="border-2 border-dashed rounded-xl p-8 text-center transition-colors"
+                      style={{
+                        borderColor: config.mode === 'dark' ? colors.borderLight : colors.success,
+                      }}
+                    >
+                      <Mic className="w-16 h-16 mx-auto mb-4" style={{ color: colors.textTertiary }} />
+                      <p className="text-sm mb-4" style={{ color: colors.textSecondary }}>
                         Click below to start recording your answer
                       </p>
                       <button
                         onClick={() => startVoiceRecording(index)}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                        className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-lg transition-colors font-medium"
+                        style={{ backgroundColor: colors.success }}
                       >
                         <Mic className="w-5 h-5" />
                         Start Recording
                       </button>
                     </div>
                   ) : (
-                    <div className="border-2 border-red-500 rounded-xl p-8 text-center bg-red-50 animate-pulse">
+                    <div 
+                      className="border-2 rounded-xl p-8 text-center animate-pulse"
+                      style={{
+                        backgroundColor: config.mode === 'dark' ? `${colors.error}20` : `${colors.error}10`,
+                        borderColor: colors.error
+                      }}
+                    >
                       <div className="flex justify-center mb-4">
                         <div className="relative">
-                          <Mic className="w-16 h-16 text-red-600" />
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full animate-ping"></div>
+                          <Mic className="w-16 h-16" style={{ color: colors.error }} />
+                          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full animate-ping" style={{ backgroundColor: colors.error }}></div>
                         </div>
                       </div>
-                      <p className="text-lg font-semibold text-red-900 mb-2">
+                      <p 
+                        className="text-lg font-semibold mb-2"
+                        style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.error }}
+                      >
                         Recording in progress...
                       </p>
-                      <p className="text-2xl font-bold text-red-700 mb-4">
+                      <p 
+                        className="text-2xl font-bold mb-4"
+                        style={{ color: colors.error }}
+                      >
                         {formatRecordingDuration(voiceRecordingStates[index].recordingDuration)}
                       </p>
                       <button
                         onClick={() => stopVoiceRecording(index)}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                        className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-lg transition-colors font-medium"
+                        style={{ backgroundColor: colors.error }}
                       >
                         <MicOff className="w-5 h-5" />
                         Stop Recording
@@ -848,14 +911,27 @@ export default function AttemptPage() {
                     </div>
                   )}
                   
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
+                  <div 
+                    className="rounded-lg p-4 mt-4"
+                    style={{
+                      backgroundColor: config.mode === 'dark' ? `${colors.warning}20` : `${colors.warning}10`, 
+                      borderColor: colors.warning,
+                      border: `1px solid ${colors.warning}`
+                    }}
+                  >
                     <div className="flex items-start gap-3">
-                      <Volume2 className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <Volume2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: colors.warning }} />
                       <div>
-                        <p className="text-sm font-medium text-yellow-900 mb-1">
+                        <p 
+                          className="text-sm font-medium mb-1"
+                          style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.warning }}
+                        >
                           Voice Recording Tips
                         </p>
-                        <ul className="text-xs text-yellow-800 space-y-1 list-disc ml-4">
+                        <ul 
+                          className="text-xs space-y-1 list-disc ml-4"
+                          style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.warning }}
+                        >
                           <li>Speak clearly and at a moderate pace</li>
                           <li>Find a quiet environment to minimize background noise</li>
                           <li>Hold your device close to your mouth (but not too close)</li>
@@ -869,12 +945,34 @@ export default function AttemptPage() {
               ) : (
                 <div className="space-y-4">
                   {/* Audio Player */}
-                  <div className="border border-gray-200 rounded-xl overflow-hidden">
-                    <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Recorded Audio</span>
+                  <div 
+                    className="rounded-xl overflow-hidden"
+                    style={{ 
+                      border: `1px solid ${colors.border}`
+                    }}
+                  >
+                    <div 
+                      className="px-4 py-2 flex items-center justify-between"
+                      style={{ 
+                        backgroundColor: colors.backgroundSecondary,
+                        borderBottom: `1px solid ${colors.border}` 
+                      }}
+                    >
+                      <span 
+                        className="text-sm font-medium"
+                        style={{ color: colors.textSecondary }}
+                      >
+                        Recorded Audio
+                      </span>
                       <div className="flex items-center gap-3">
                         {voiceRecordingStates[index].transcriptionCompleted && !voiceRecordingStates[index].isTranscribing && (
-                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded flex items-center gap-1">
+                          <span 
+                            className="text-xs px-2 py-1 rounded flex items-center gap-1"
+                            style={{ 
+                              backgroundColor: config.mode === 'dark' ? `${colors.success}20` : `${colors.success}10`,
+                              color: colors.success 
+                            }}
+                          >
                             <CheckCircle className="w-3 h-3" />
                             Transcribed
                           </span>
@@ -882,14 +980,18 @@ export default function AttemptPage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveVoiceRecording(index)}
-                          className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
+                          className="text-sm flex items-center gap-1"
+                          style={{ color: colors.error }}
                         >
                           <XCircle className="w-4 h-4" />
                           Remove
                         </button>
                       </div>
                     </div>
-                    <div className="p-4 bg-white">
+                    <div 
+                      className="p-4"
+                      style={{ backgroundColor: colors.cardBackground }}
+                    >
                       {voiceRecordingStates[index].audioUrl && (
                         <div className="flex flex-col items-center">
                           <audio
@@ -897,7 +999,10 @@ export default function AttemptPage() {
                             src={voiceRecordingStates[index].audioUrl!}
                             className="w-full max-w-md"
                           />
-                          <p className="text-xs text-gray-500 mt-2">
+                          <p 
+                            className="text-xs mt-2"
+                            style={{ color: colors.textTertiary }}
+                          >
                             Duration: {formatRecordingDuration(voiceRecordingStates[index].recordingDuration)}
                           </p>
                         </div>
@@ -907,14 +1012,26 @@ export default function AttemptPage() {
 
                   {/* Transcription Status */}
                   {voiceRecordingStates[index].isTranscribing && (
-                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                    <div 
+                      className="rounded-xl p-4"
+                      style={{ 
+                        backgroundColor: config.mode === 'dark' ? `${colors.accent}20` : `${colors.accent}10`,
+                        border: `1px solid ${colors.accent}` 
+                      }}
+                    >
                       <div className="flex items-center gap-3">
-                        <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
+                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: colors.accent }} />
                         <div>
-                          <div className="text-sm font-medium text-purple-900">
+                          <div 
+                            className="text-sm font-medium"
+                            style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.accent }}
+                          >
                             Transcribing audio...
                           </div>
-                          <div className="text-xs text-purple-700">
+                          <div 
+                            className="text-xs"
+                            style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.accent }}
+                          >
                             AI is converting your speech to text. This may take a few seconds.
                           </div>
                         </div>
@@ -924,14 +1041,26 @@ export default function AttemptPage() {
 
                   {/* Transcription Success */}
                   {voiceRecordingStates[index].transcriptionCompleted && !voiceRecordingStates[index].isTranscribing && (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <div 
+                      className="rounded-xl p-4"
+                      style={{ 
+                        backgroundColor: config.mode === 'dark' ? `${colors.success}20` : `${colors.success}10`,
+                        border: `1px solid ${colors.success}` 
+                      }}
+                    >
                       <div className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: colors.success }} />
                         <div className="flex-1">
-                          <div className="text-sm font-medium text-green-900 mb-1">
+                          <div 
+                            className="text-sm font-medium mb-1"
+                            style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.success }}
+                          >
                             Audio transcribed successfully!
                           </div>
-                          <div className="text-xs text-green-700">
+                          <div 
+                            className="text-xs"
+                            style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.success }}
+                          >
                             Please review the transcribed text below and make any necessary corrections.
                           </div>
                         </div>
@@ -941,20 +1070,33 @@ export default function AttemptPage() {
 
                   {/* Transcription Error */}
                   {voiceRecordingStates[index].transcriptionError && !voiceRecordingStates[index].isTranscribing && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div 
+                      className="rounded-xl p-4"
+                      style={{ 
+                        backgroundColor: config.mode === 'dark' ? `${colors.error}20` : `${colors.error}10`,
+                        border: `1px solid ${colors.error}` 
+                      }}
+                    >
                       <div className="flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: colors.error }} />
                         <div className="flex-1">
-                          <div className="text-sm font-medium text-red-900 mb-1">
+                          <div 
+                            className="text-sm font-medium mb-1"
+                            style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.error }}
+                          >
                             Transcription failed
                           </div>
-                          <div className="text-xs text-red-700 mb-2">
+                          <div 
+                            className="text-xs mb-2"
+                            style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.error }}
+                          >
                             {voiceRecordingStates[index].transcriptionError}
                           </div>
                           <button
                             type="button"
                             onClick={() => handleRetryTranscription(index)}
-                            className="inline-flex items-center gap-1 text-sm text-red-700 hover:text-red-800 font-medium"
+                            className="inline-flex items-center gap-1 text-sm font-medium"
+                            style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.error }}
                           >
                             <RefreshCw className="w-3 h-3" />
                             Retry Transcription
@@ -966,11 +1108,17 @@ export default function AttemptPage() {
 
                   {/* Transcribed Text Field (Editable) */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label 
+                      className="block text-sm font-medium"
+                      style={{ color: colors.textSecondary }}
+                    >
                       <Edit3 className="w-4 h-4 inline mr-1" />
                       Transcribed Text (You can edit this)
                     </label>
-                    <p className="text-xs text-gray-500 mb-2">
+                    <p 
+                      className="text-xs mb-2"
+                      style={{ color: colors.textTertiary }}
+                    >
                       Review the AI-transcribed text below. Make any corrections needed before submitting your answer.
                     </p>
                     <textarea
@@ -981,25 +1129,43 @@ export default function AttemptPage() {
                         next[index] = e.target.value;
                         setOpenEndedAnswers(next);
                       }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                      className="w-full p-3 rounded-lg focus:ring-2 focus:outline-none font-mono text-sm"
                       placeholder={voiceRecordingStates[index].isTranscribing ? "Transcribing audio..." : "Transcribed text will appear here..."}
                       disabled={voiceRecordingStates[index].isTranscribing}
+                      style={{
+                        backgroundColor: colors.inputBackground,
+                        border: `1px solid ${colors.inputBorder}`,
+                        color: colors.textPrimary,
+                      }}
                     />
-                    <p className="text-xs text-gray-500 italic">
+                    <p 
+                      className="text-xs italic"
+                      style={{ color: colors.textTertiary }}
+                    >
                       💡 Tip: The AI does its best to transcribe accurately, but please double-check for any errors, especially with technical terms or names.
                     </p>
                   </div>
 
                   {/* Record Another Audio Option */}
-                  <div className="border-t pt-4">
-                    <p className="text-sm text-gray-600 mb-3">
+                  <div 
+                    className="pt-4"
+                    style={{ borderTop: `1px solid ${colors.border}` }}
+                  >
+                    <p 
+                      className="text-sm mb-3"
+                      style={{ color: colors.textSecondary }}
+                    >
                       Need to record a different answer?
                     </p>
                     <button
                       onClick={() => {
                         handleRemoveVoiceRecording(index);
                       }}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm"
+                      style={{ 
+                        backgroundColor: config.mode === 'dark' ? colors.backgroundTertiary : colors.backgroundTertiary,
+                        color: colors.textSecondary
+                      }}
                     >
                       <Mic className="w-3 h-3" />
                       Record New Answer
@@ -1014,19 +1180,19 @@ export default function AttemptPage() {
             <div className="space-y-4">
               {/* Camera Modal */}
               {showCamera && (
-                <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex flex-col items-center justify-center p-4">
+                <div className="fixed inset-0 z-50 bg-opacity-90 flex flex-col items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}>
                   <div className="w-full max-w-2xl">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-white text-lg font-semibold">Take a Photo</h3>
+                      <h3 className="text-lg font-semibold" style={{ color: '#ffffff' }}>Take a Photo</h3>
                       <button
                         onClick={stopCamera}
-                        className="text-white hover:text-gray-300"
+                        style={{ color: '#ffffff' }}
                       >
                         <XCircle className="w-6 h-6" />
                       </button>
                     </div>
                     
-                    <div className="relative bg-black rounded-lg overflow-hidden">
+                    <div className="relative rounded-lg overflow-hidden" style={{ backgroundColor: '#000000' }}>
                       <video
                         ref={videoRef}
                         autoPlay
@@ -1039,14 +1205,16 @@ export default function AttemptPage() {
                     <div className="flex justify-center gap-4 mt-4">
                       <button
                         onClick={capturePhoto}
-                        className="px-6 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 flex items-center gap-2"
+                        className="px-6 py-3 text-white rounded-full flex items-center gap-2"
+                        style={{ backgroundColor: colors.error }}
                       >
                         <Camera className="w-5 h-5" />
                         Capture Photo
                       </button>
                       <button
                         onClick={stopCamera}
-                        className="px-6 py-3 bg-gray-700 text-white rounded-full hover:bg-gray-600"
+                        className="px-6 py-3 text-white rounded-full"
+                        style={{ backgroundColor: '#4a4a4a' }}
                       >
                         Cancel
                       </button>
@@ -1057,17 +1225,29 @@ export default function AttemptPage() {
 
               {!imageUploadStates[index].file ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label 
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: colors.textSecondary }}
+                  >
                     Upload Image Answer
                   </label>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p 
+                    className="text-sm mb-4"
+                    style={{ color: colors.textSecondary }}
+                  >
                     Upload an image of your handwritten answer. Our AI will automatically extract the text for you to review and edit.
                   </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors">
-                      <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-sm text-gray-600 mb-4">
+                    <div 
+                      className="border-2 border-dashed rounded-xl p-6 text-center transition-colors"
+                      style={{ borderColor: config.mode === 'dark' ? colors.borderLight : colors.info }}
+                    >
+                      <ImageIcon className="w-12 h-12 mx-auto mb-3" style={{ color: colors.textTertiary }} />
+                      <p 
+                        className="text-sm mb-4"
+                        style={{ color: colors.textSecondary }}
+                      >
                         Upload from device
                       </p>
                       <input
@@ -1085,21 +1265,29 @@ export default function AttemptPage() {
                       />
                       <label
                         htmlFor={`image-upload-${index}`}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg cursor-pointer transition-colors"
+                        style={{ backgroundColor: colors.info }}
                       >
                         <ImageIcon className="w-4 h-4" />
                         Choose Image
                       </label>
                     </div>
                     
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors">
-                      <Camera className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-sm text-gray-600 mb-4">
+                    <div 
+                      className="border-2 border-dashed rounded-xl p-6 text-center transition-colors"
+                      style={{ borderColor: config.mode === 'dark' ? colors.borderLight : colors.accent }}
+                    >
+                      <Camera className="w-12 h-12 mx-auto mb-3" style={{ color: colors.textTertiary }} />
+                      <p 
+                        className="text-sm mb-4"
+                        style={{ color: colors.textSecondary }}
+                      >
                         Use camera (mobile)
                       </p>
                       <button
                         onClick={startCamera}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors"
+                        style={{ backgroundColor: colors.accent }}
                       >
                         <Camera className="w-4 h-4" />
                         Open Camera
@@ -1107,14 +1295,26 @@ export default function AttemptPage() {
                     </div>
                   </div>
                   
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div 
+                    className="rounded-lg p-4"
+                    style={{
+                      backgroundColor: config.mode === 'dark' ? `${colors.warning}20` : `${colors.warning}10`,
+                      border: `1px solid ${colors.warning}`
+                    }}
+                  >
                     <div className="flex items-start gap-3">
-                      <Edit3 className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <Edit3 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: colors.warning }} />
                       <div>
-                        <p className="text-sm font-medium text-yellow-900 mb-1">
+                        <p 
+                          className="text-sm font-medium mb-1"
+                          style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.warning }}
+                        >
                           AI Text Extraction Tips
                         </p>
-                        <ul className="text-xs text-yellow-800 space-y-1 list-disc ml-4">
+                        <ul 
+                          className="text-xs space-y-1 list-disc ml-4"
+                          style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.warning }}
+                        >
                           <li>Ensure your handwriting is clear and legible</li>
                           <li>Use good lighting when taking photos</li>
                           <li>Make sure the entire answer is visible in the frame</li>
@@ -1128,12 +1328,32 @@ export default function AttemptPage() {
               ) : (
                 <div className="space-y-4">
                   {/* Image Preview */}
-                  <div className="border border-gray-200 rounded-xl overflow-hidden">
-                    <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Uploaded Image</span>
+                  <div 
+                    className="rounded-xl overflow-hidden"
+                    style={{ border: `1px solid ${colors.border}` }}
+                  >
+                    <div 
+                      className="px-4 py-2 flex items-center justify-between"
+                      style={{ 
+                        backgroundColor: colors.backgroundSecondary,
+                        borderBottom: `1px solid ${colors.border}` 
+                      }}
+                    >
+                      <span 
+                        className="text-sm font-medium"
+                        style={{ color: colors.textSecondary }}
+                      >
+                        Uploaded Image
+                      </span>
                       <div className="flex items-center gap-3">
                         {imageUploadStates[index].imageId && !imageUploadStates[index].isExtractingText && (
-                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded flex items-center gap-1">
+                          <span 
+                            className="text-xs px-2 py-1 rounded flex items-center gap-1"
+                            style={{ 
+                              backgroundColor: config.mode === 'dark' ? `${colors.success}20` : `${colors.success}10`,
+                              color: colors.success 
+                            }}
+                          >
                             <CheckCircle className="w-3 h-3" />
                             Uploaded
                           </span>
@@ -1141,27 +1361,38 @@ export default function AttemptPage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveImage(index)}
-                          className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
+                          className="text-sm flex items-center gap-1"
+                          style={{ color: colors.error }}
                         >
                           <XCircle className="w-4 h-4" />
                           Remove
                         </button>
                       </div>
                     </div>
-                    <div className="p-4 bg-white">
+                    <div 
+                      className="p-4"
+                      style={{ backgroundColor: colors.cardBackground }}
+                    >
                       {imageUploadStates[index].previewUrl ? (
                         <div className="flex flex-col items-center">
                           <img
                             src={imageUploadStates[index].previewUrl!}
                             alt="Uploaded answer"
-                            className="max-w-full max-h-96 mx-auto rounded-lg shadow-sm object-contain border border-gray-200"
+                            className="max-w-full max-h-96 mx-auto rounded-lg shadow-sm object-contain"
+                            style={{ 
+                              borderColor: colors.borderLight,
+                              border: `1px solid ${colors.borderLight}`
+                            }}
                             onError={(e) => {
                               console.error('Image preview failed to load');
                               e.currentTarget.src = '';
                               e.currentTarget.alt = 'Preview unavailable';
                             }}
                           />
-                          <p className="text-xs text-gray-500 mt-2">
+                          <p 
+                            className="text-xs mt-2"
+                            style={{ color: colors.textTertiary }}
+                          >
                             {imageUploadStates[index].file?.name} • 
                             {(imageUploadStates[index].file?.size || 0) > 1024 * 1024 
                               ? `${(imageUploadStates[index].file!.size / (1024 * 1024)).toFixed(2)} MB`
@@ -1170,8 +1401,11 @@ export default function AttemptPage() {
                           </p>
                         </div>
                       ) : (
-                        <div className="flex items-center justify-center h-48 bg-gray-100 rounded-lg">
-                          <p className="text-gray-500">Loading preview...</p>
+                        <div 
+                          className="flex items-center justify-center h-48 rounded-lg"
+                          style={{ backgroundColor: colors.backgroundTertiary }}
+                        >
+                          <p style={{ color: colors.textTertiary }}>Loading preview...</p>
                         </div>
                       )}
                     </div>
@@ -1179,14 +1413,26 @@ export default function AttemptPage() {
 
                   {/* Uploading Status */}
                   {imageUploadStates[index].isUploading && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div 
+                      className="rounded-xl p-4"
+                      style={{ 
+                        backgroundColor: config.mode === 'dark' ? `${colors.info}20` : `${colors.info}10`,
+                        border: `1px solid ${colors.info}` 
+                      }}
+                    >
                       <div className="flex items-center gap-3">
-                        <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: colors.info }} />
                         <div>
-                          <div className="text-sm font-medium text-blue-900">
+                          <div 
+                            className="text-sm font-medium"
+                            style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.info }}
+                          >
                             Uploading image...
                           </div>
-                          <div className="text-xs text-blue-700">
+                          <div 
+                            className="text-xs"
+                            style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.info }}
+                          >
                             Preparing image for processing
                           </div>
                         </div>
@@ -1196,14 +1442,26 @@ export default function AttemptPage() {
 
                   {/* OCR Extraction Status */}
                   {imageUploadStates[index].isExtractingText && (
-                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                    <div 
+                      className="rounded-xl p-4"
+                      style={{ 
+                        backgroundColor: config.mode === 'dark' ? `${colors.accent}20` : `${colors.accent}10`,
+                        border: `1px solid ${colors.accent}` 
+                      }}
+                    >
                       <div className="flex items-center gap-3">
-                        <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
+                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: colors.accent }} />
                         <div>
-                          <div className="text-sm font-medium text-purple-900">
+                          <div 
+                            className="text-sm font-medium"
+                            style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.accent }}
+                          >
                             Extracting text from image...
                           </div>
-                          <div className="text-xs text-purple-700">
+                          <div 
+                            className="text-xs"
+                            style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.accent }}
+                          >
                             AI is reading your handwriting. This may take a few seconds.
                           </div>
                         </div>
@@ -1213,14 +1471,26 @@ export default function AttemptPage() {
 
                   {/* OCR Success */}
                   {imageUploadStates[index].ocrCompleted && !imageUploadStates[index].isExtractingText && (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <div 
+                      className="rounded-xl p-4"
+                      style={{ 
+                        backgroundColor: config.mode === 'dark' ? `${colors.success}20` : `${colors.success}10`,
+                        border: `1px solid ${colors.success}` 
+                      }}
+                    >
                       <div className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: colors.success }} />
                         <div className="flex-1">
-                          <div className="text-sm font-medium text-green-900 mb-1">
+                          <div 
+                            className="text-sm font-medium mb-1"
+                            style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.success }}
+                          >
                             Text extracted successfully!
                           </div>
-                          <div className="text-xs text-green-700">
+                          <div 
+                            className="text-xs"
+                            style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.success }}
+                          >
                             Please review the extracted text below and make any necessary corrections.
                           </div>
                         </div>
@@ -1230,20 +1500,33 @@ export default function AttemptPage() {
 
                   {/* OCR Error */}
                   {imageUploadStates[index].ocrError && !imageUploadStates[index].isExtractingText && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div 
+                      className="rounded-xl p-4"
+                      style={{ 
+                        backgroundColor: config.mode === 'dark' ? `${colors.error}20` : `${colors.error}10`,
+                        border: `1px solid ${colors.error}` 
+                      }}
+                    >
                       <div className="flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: colors.error }} />
                         <div className="flex-1">
-                          <div className="text-sm font-medium text-red-900 mb-1">
+                          <div 
+                            className="text-sm font-medium mb-1"
+                            style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.error }}
+                          >
                             Text extraction failed
                           </div>
-                          <div className="text-xs text-red-700 mb-2">
+                          <div 
+                            className="text-xs mb-2"
+                            style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.error }}
+                          >
                             {imageUploadStates[index].ocrError}
                           </div>
                           <button
                             type="button"
                             onClick={() => handleRetryOCR(index)}
-                            className="inline-flex items-center gap-1 text-sm text-red-700 hover:text-red-800 font-medium"
+                            className="inline-flex items-center gap-1 text-sm font-medium"
+                            style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.error }}
                           >
                             <RefreshCw className="w-3 h-3" />
                             Retry Extraction
@@ -1255,14 +1538,26 @@ export default function AttemptPage() {
 
                   {/* Upload Error */}
                   {imageUploadStates[index].error && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div 
+                      className="rounded-xl p-4"
+                      style={{ 
+                        backgroundColor: config.mode === 'dark' ? `${colors.error}20` : `${colors.error}10`,
+                        border: `1px solid ${colors.error}` 
+                      }}
+                    >
                       <div className="flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: colors.error }} />
                         <div>
-                          <div className="text-sm font-medium text-red-900 mb-1">
+                          <div 
+                            className="text-sm font-medium mb-1"
+                            style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.error }}
+                          >
                             Upload failed
                           </div>
-                          <div className="text-xs text-red-700">
+                          <div 
+                            className="text-xs"
+                            style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.error }}
+                          >
                             {imageUploadStates[index].error}
                           </div>
                           <button
@@ -1272,7 +1567,8 @@ export default function AttemptPage() {
                                 handleImageUpload(index, imageUploadStates[index].file!);
                               }
                             }}
-                            className="mt-2 text-sm text-red-700 hover:text-red-800 font-medium"
+                            className="mt-2 text-sm font-medium"
+                            style={{ color: config.mode === 'dark' ? colors.textSecondary : colors.error }}
                           >
                             Try Again
                           </button>
@@ -1283,11 +1579,17 @@ export default function AttemptPage() {
 
                   {/* Extracted Text Field (Editable) */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label 
+                      className="block text-sm font-medium"
+                      style={{ color: colors.textSecondary }}
+                    >
                       <Edit3 className="w-4 h-4 inline mr-1" />
                       Extracted Text (You can edit this)
                     </label>
-                    <p className="text-xs text-gray-500 mb-2">
+                    <p 
+                      className="text-xs mb-2"
+                      style={{ color: colors.textTertiary }}
+                    >
                       Review the AI-extracted text below. Make any corrections needed before submitting your answer.
                     </p>
                     <textarea
@@ -1298,18 +1600,32 @@ export default function AttemptPage() {
                         next[index] = e.target.value;
                         setOpenEndedAnswers(next);
                       }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                      className="w-full p-3 rounded-lg focus:outline-none font-mono text-sm"
                       placeholder={imageUploadStates[index].isExtractingText ? "Extracting text..." : "Extracted text will appear here..."}
                       disabled={imageUploadStates[index].isExtractingText}
+                      style={{ 
+                        backgroundColor: colors.inputBackground,
+                        border: `1px solid ${colors.inputBorder}`,
+                        color: colors.textPrimary,
+                      }}
                     />
-                    <p className="text-xs text-gray-500 italic">
+                    <p 
+                      className="text-xs italic"
+                      style={{ color: colors.textTertiary }}
+                    >
                       💡 Tip: The AI does its best to extract text accurately, but please double-check for any errors, especially with mathematical formulas or special characters.
                     </p>
                   </div>
 
                   {/* Upload Another Image Option */}
-                  <div className="border-t pt-4">
-                    <p className="text-sm text-gray-600 mb-3">
+                  <div 
+                    className="pt-4"
+                    style={{ borderTop: `1px solid ${colors.border}` }}
+                  >
+                    <p 
+                      className="text-sm mb-3"
+                      style={{ color: colors.textSecondary }}
+                    >
                       Need to upload a different image?
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -1327,14 +1643,22 @@ export default function AttemptPage() {
                       />
                       <label
                         htmlFor={`additional-upload-${index}`}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors text-sm"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors text-sm"
+                        style={{ 
+                          backgroundColor: config.mode === 'dark' ? colors.backgroundTertiary : colors.backgroundTertiary,
+                          color: colors.textSecondary
+                        }}
                       >
                         <ImageIcon className="w-3 h-3" />
                         Replace Image
                       </label>
                       <button
                         onClick={startCamera}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm"
+                        style={{ 
+                          backgroundColor: config.mode === 'dark' ? colors.backgroundTertiary : colors.backgroundTertiary,
+                          color: colors.textSecondary
+                        }}
                       >
                         <Camera className="w-3 h-3" />
                         Take New Photo
@@ -1355,10 +1679,15 @@ export default function AttemptPage() {
       return (
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
               Question {index + 1}: {question.text}
             </h3>
-            <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
+            <div 
+              className="text-sm font-medium"
+              style={{ color: colors.textSecondary }}
+            >
+              {question.marks} marks
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {boolOptions.map((label, choiceIndex) => {
@@ -1368,13 +1697,21 @@ export default function AttemptPage() {
                   key={label}
                   type="button"
                   onClick={() => handleSingleAnswerSelect(index, choiceIndex)}
-                  className={`p-4 rounded-xl border text-left transition-colors ${
-                    active
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 bg-white hover:bg-gray-50"
-                  }`}
+                  className="p-4 rounded-xl text-left transition-colors"
+                  style={{
+                    backgroundColor: active 
+                      ? config.mode === 'dark' 
+                        ? `${colors.primary}20` 
+                        : colors.primaryLight
+                      : colors.cardBackground,
+                    borderColor: active 
+                      ? colors.primary 
+                      : colors.border,
+                    border: `1px solid ${active ? colors.primary : colors.border}`,
+                    color: colors.textPrimary
+                  }}
                 >
-                  <div className="font-medium text-gray-900">{label}</div>
+                  <div className="font-medium">{label}</div>
                 </button>
               );
             })}
@@ -1393,10 +1730,15 @@ export default function AttemptPage() {
       return (
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
               Question {index + 1}: {question.text}
             </h3>
-            <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
+            <div 
+              className="text-sm font-medium"
+              style={{ color: colors.textSecondary }}
+            >
+              {question.marks} marks
+            </div>
           </div>
           <div className="space-y-2">
             {choices.map((choice: string, choiceIndex: number) => {
@@ -1406,9 +1748,18 @@ export default function AttemptPage() {
               return (
                 <label
                   key={choiceIndex}
-                  className={`flex items-center p-4 border rounded-xl cursor-pointer transition-colors ${
-                    checked ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
-                  }`}
+                  className="flex items-center p-4 rounded-xl cursor-pointer transition-colors"
+                  style={{
+                    backgroundColor: checked 
+                      ? config.mode === 'dark' 
+                        ? `${colors.primary}20` 
+                        : colors.primaryLight
+                      : colors.cardBackground,
+                    borderColor: checked 
+                      ? colors.primary 
+                      : colors.border,
+                    border: `1px solid ${checked ? colors.primary : colors.border}`,
+                  }}
                 >
                   <input
                     type={isMultiple ? "checkbox" : "radio"}
@@ -1420,8 +1771,9 @@ export default function AttemptPage() {
                         : handleSingleAnswerSelect(index, choiceIndex)
                     }
                     className="mr-3"
+                    style={{ accentColor: colors.primary }}
                   />
-                  <span className="text-gray-800">{choice}</span>
+                  <span style={{ color: colors.textPrimary }}>{choice}</span>
                 </label>
               );
             })}
@@ -1447,29 +1799,51 @@ export default function AttemptPage() {
       return (
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
               Question {index + 1}: {question.text}
             </h3>
-            <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
+            <div 
+              className="text-sm font-medium"
+              style={{ color: colors.textSecondary }}
+            >
+              {question.marks} marks
+            </div>
           </div>
           <div className="space-y-2">
             {currentOrder.map((item, itemIndex) => (
               <div
                 key={`${item}-${itemIndex}`}
-                className="flex items-center justify-between gap-3 p-3 border border-gray-200 rounded-xl bg-white"
+                className="flex items-center justify-between gap-3 p-3 rounded-xl"
+                style={{ 
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                  border: `1px solid ${colors.border}`
+                }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center text-sm font-semibold">
+                  <div 
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-semibold"
+                    style={{
+                      backgroundColor: colors.backgroundTertiary,
+                      color: colors.textSecondary
+                    }}
+                  >
                     {itemIndex + 1}
                   </div>
-                  <div className="text-gray-900">{item}</div>
+                  <div style={{ color: colors.textPrimary }}>{item}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => move(itemIndex, Math.max(0, itemIndex - 1))}
                     disabled={itemIndex === 0}
-                    className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                    className="px-3 py-1.5 text-sm rounded-lg disabled:opacity-50"
+                    style={{ 
+                      backgroundColor: colors.backgroundTertiary,
+                      color: colors.textSecondary,
+                      borderColor: colors.border,
+                      border: `1px solid ${colors.border}`
+                    }}
                   >
                     Up
                   </button>
@@ -1477,7 +1851,13 @@ export default function AttemptPage() {
                     type="button"
                     onClick={() => move(itemIndex, Math.min(currentOrder.length - 1, itemIndex + 1))}
                     disabled={itemIndex === currentOrder.length - 1}
-                    className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                    className="px-3 py-1.5 text-sm rounded-lg disabled:opacity-50"
+                    style={{ 
+                      backgroundColor: colors.backgroundTertiary,
+                      color: colors.textSecondary,
+                      borderColor: colors.border,
+                      border: `1px solid ${colors.border}`
+                    }}
                   >
                     Down
                   </button>
@@ -1526,21 +1906,50 @@ export default function AttemptPage() {
       return (
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
               Question {index + 1}: {question.text}
             </h3>
-            <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
+            <div 
+              className="text-sm font-medium"
+              style={{ color: colors.textSecondary }}
+            >
+              {question.marks} marks
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <div className="text-sm font-semibold text-gray-700">Items</div>
+              <div 
+                className="text-sm font-semibold"
+                style={{ color: colors.textSecondary }}
+              >
+                Items
+              </div>
               {leftItems.map((item) => (
-                <div key={item} className="p-3 rounded-xl border border-gray-200 bg-white">
-                  <div className="text-gray-900 font-medium mb-2">{item}</div>
+                <div 
+                  key={item} 
+                  className="p-3 rounded-xl"
+                  style={{ 
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                    border: `1px solid ${colors.border}`
+                  }}
+                >
+                  <div 
+                    className="font-medium mb-2"
+                    style={{ color: colors.textPrimary }}
+                  >
+                    {item}
+                  </div>
                   <select
                     value={mapping[item] || ""}
                     onChange={(e) => update(item, e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-2 rounded-lg focus:outline-none focus:ring-2"
+                    style={{ 
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.inputBorder,
+                      border: `1px solid ${colors.inputBorder}`,
+                      color: colors.textPrimary
+                    }}
                   >
                     <option value="" disabled>
                       Select a match
@@ -1555,16 +1964,38 @@ export default function AttemptPage() {
               ))}
             </div>
             <div className="space-y-2">
-              <div className="text-sm font-semibold text-gray-700">Matches</div>
-              <div className="p-3 rounded-xl border border-gray-200 bg-gray-50">
+              <div 
+                className="text-sm font-semibold"
+                style={{ color: colors.textSecondary }}
+              >
+                Matches
+              </div>
+              <div 
+                className="p-3 rounded-xl"
+                style={{ 
+                  backgroundColor: colors.backgroundTertiary,
+                  borderColor: colors.border,
+                  border: `1px solid ${colors.border}`
+                }}
+              >
                 {leftItems.length === 0 ? (
-                  <div className="text-sm text-gray-600">No matching data provided.</div>
+                  <div 
+                    className="text-sm"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    No matching data provided.
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {leftItems.map((item) => (
                       <div key={item} className="flex items-center justify-between text-sm">
-                        <div className="text-gray-800">{item}</div>
-                        <div className="text-gray-700 font-medium">{mapping[item] || "—"}</div>
+                        <div style={{ color: colors.textSecondary }}>{item}</div>
+                        <div 
+                          className="font-medium"
+                          style={{ color: colors.textSecondary }}
+                        >
+                          {mapping[item] || "—"}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1619,34 +2050,78 @@ export default function AttemptPage() {
       return (
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
               Question {index + 1}: {question.text}
             </h3>
-            <div className="text-sm font-medium text-gray-700">{question.marks} marks</div>
+            <div 
+              className="text-sm font-medium"
+              style={{ color: colors.textSecondary }}
+            >
+              {question.marks} marks
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl border border-gray-200 bg-white">
-              <div className="text-sm font-semibold text-gray-700 mb-3">Drag items</div>
+            <div 
+              className="p-4 rounded-xl"
+              style={{ 
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+                border: `1px solid ${colors.border}`
+              }}
+            >
+              <div 
+                className="text-sm font-semibold mb-3"
+                style={{ color: colors.textSecondary }}
+              >
+                Drag items
+              </div>
               <div className="flex flex-wrap gap-2">
                 {availableItems.map((item) => (
                   <div
                     key={item}
                     draggable
                     onDragStart={(e) => e.dataTransfer.setData("text/plain", item)}
-                    className="px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 cursor-grab active:cursor-grabbing"
+                    className="px-3 py-2 rounded-lg cursor-grab active:cursor-grabbing"
+                    style={{ 
+                      backgroundColor: colors.backgroundTertiary,
+                      borderColor: colors.border,
+                      border: `1px solid ${colors.border}`
+                    }}
                   >
-                    <span className="text-sm text-gray-900">{item}</span>
+                    <span 
+                      className="text-sm"
+                      style={{ color: colors.textPrimary }}
+                    >
+                      {item}
+                    </span>
                   </div>
                 ))}
                 {availableItems.length === 0 && (
-                  <div className="text-sm text-gray-600">All items placed.</div>
+                  <div 
+                    className="text-sm"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    All items placed.
+                  </div>
                 )}
               </div>
             </div>
 
-            <div className="p-4 rounded-xl border border-gray-200 bg-white">
-              <div className="text-sm font-semibold text-gray-700 mb-3">Drop targets</div>
+            <div 
+              className="p-4 rounded-xl"
+              style={{ 
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+                border: `1px solid ${colors.border}`
+              }}
+            >
+              <div 
+                className="text-sm font-semibold mb-3"
+                style={{ color: colors.textSecondary }}
+              >
+                Drop targets
+              </div>
               <div className="space-y-2">
                 {targets.map((target) => {
                   const placed = mapping[target];
@@ -1659,20 +2134,46 @@ export default function AttemptPage() {
                         const item = e.dataTransfer.getData("text/plain");
                         if (item) onDropToTarget(target, item);
                       }}
-                      className={`p-3 rounded-xl border transition-colors ${
-                        placed ? "border-blue-500 bg-blue-50" : "border-dashed border-gray-300 bg-gray-50"
-                      }`}
+                      className="p-3 rounded-xl transition-colors"
+                      style={{
+                        backgroundColor: placed 
+                          ? config.mode === 'dark' 
+                            ? `${colors.primary}20` 
+                            : colors.primaryLight
+                          : colors.backgroundTertiary,
+                        borderColor: placed 
+                          ? colors.primary 
+                          : colors.border,
+                        borderStyle: placed ? 'solid' : 'dashed',
+                        border: `1px ${placed ? 'solid' : 'dashed'} ${placed ? colors.primary : colors.border}`,
+                      }}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{target}</div>
-                          <div className="text-sm text-gray-700">{placed || "Drop an item here"}</div>
+                          <div 
+                            className="text-sm font-medium"
+                            style={{ color: colors.textPrimary }}
+                          >
+                            {target}
+                          </div>
+                          <div 
+                            className="text-sm"
+                            style={{ color: colors.textSecondary }}
+                          >
+                            {placed || "Drop an item here"}
+                          </div>
                         </div>
                         {placed && (
                           <button
                             type="button"
                             onClick={() => clearTarget(target)}
-                            className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-white"
+                            className="px-3 py-1.5 text-sm rounded-lg"
+                            style={{
+                              backgroundColor: colors.backgroundTertiary,
+                              borderColor: colors.border,
+                              border: `1px solid ${colors.border}`,
+                              color: colors.textSecondary
+                            }}
                           >
                             Remove
                           </button>
@@ -1682,7 +2183,12 @@ export default function AttemptPage() {
                   );
                 })}
                 {targets.length === 0 && (
-                  <div className="text-sm text-gray-600">No drag-drop data provided.</div>
+                  <div 
+                    className="text-sm"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    No drag-drop data provided.
+                  </div>
                 )}
               </div>
             </div>
@@ -1693,10 +2199,15 @@ export default function AttemptPage() {
 
     return (
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
           Question {index + 1}: {question.text}
         </h3>
-        <div className="text-sm text-gray-600">Unsupported question type.</div>
+        <div 
+          className="text-sm"
+          style={{ color: colors.textSecondary }}
+        >
+          Unsupported question type.
+        </div>
       </div>
     );
   };
@@ -1812,8 +2323,14 @@ export default function AttemptPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="flex items-center gap-3 text-gray-700">
+      <div 
+        className="min-h-screen flex items-center justify-center p-6"
+        style={{ backgroundColor: colors.background }}
+      >
+        <div 
+          className="flex items-center gap-3"
+          style={{ color: colors.textSecondary }}
+        >
           <Loader2 className="h-5 w-5 animate-spin" />
           Loading assessment...
         </div>
@@ -1823,16 +2340,30 @@ export default function AttemptPage() {
 
   if (!assessment || questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white border border-gray-200 rounded-2xl p-6">
-          <div className="flex items-center gap-2 text-red-600 font-semibold">
+      <div 
+        className="min-h-screen flex items-center justify-center p-6"
+        style={{ backgroundColor: colors.background }}
+      >
+        <div 
+          className="max-w-md w-full rounded-2xl p-6"
+          style={{ 
+            backgroundColor: colors.cardBackground,
+            borderColor: colors.border,
+            border: `1px solid ${colors.border}`
+          }}
+        >
+          <div 
+            className="flex items-center gap-2 font-semibold"
+            style={{ color: colors.error }}
+          >
             <AlertCircle className="h-5 w-5" />
             Unable to load assessment.
           </div>
           <button
             type="button"
             onClick={() => router.replace("/student/unitworkspace")}
-            className="mt-4 w-full px-4 py-2 bg-gray-900 text-white rounded-lg"
+            className="mt-4 w-full px-4 py-2 text-white rounded-lg"
+            style={{ backgroundColor: config.mode === 'dark' ? colors.sidebarActive : colors.primary }}
           >
             Back to Workspace
           </button>
@@ -1842,26 +2373,53 @@ export default function AttemptPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div 
+      className="min-h-screen"
+      style={{ backgroundColor: colors.background }}
+    >
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{assessment.title || "Assessment"}</h1>
-            <p className="text-sm text-gray-600">{assessment.topic || ""}</p>
+            <h1 
+              className="text-xl font-bold"
+              style={{ color: colors.textPrimary }}
+            >
+              {assessment.title || "Assessment"}
+            </h1>
+            <p 
+              className="text-sm"
+              style={{ color: colors.textSecondary }}
+            >
+              {assessment.topic || ""}
+            </p>
           </div>
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium ${
-            timeRemaining < 300 ? "bg-red-500" : "bg-blue-600"
-          }`}>
+          <div 
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium"
+            style={{
+              backgroundColor: timeRemaining < 300 ? colors.error : colors.primary
+            }}
+          >
             <Clock className="h-4 w-4" />
             {formatTime(timeRemaining)}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div 
+          className="rounded-2xl p-6"
+          style={{ 
+            backgroundColor: colors.cardBackground,
+            borderColor: colors.border,
+            border: `1px solid ${colors.border}`,
+            boxShadow: config.mode === 'dark' ? 'none' : '0 1px 3px rgba(0,0,0,0.1)'
+          }}
+        >
           {renderQuestion(questions[currentQuestion], currentQuestion)}
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
-            <div className="text-sm text-gray-600">
+            <div 
+              className="text-sm"
+              style={{ color: colors.textSecondary }}
+            >
               Question {currentQuestion + 1} of {questions.length}
             </div>
 
@@ -1875,7 +2433,8 @@ export default function AttemptPage() {
                   setIsNextLoading(false);
                 }}
                 disabled={isNextLoading || !isCurrentQuestionAnswered()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
+                className="px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 inline-flex items-center justify-center"
+                style={{ backgroundColor: colors.primary }}
               >
                 {isNextLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Next
@@ -1891,7 +2450,8 @@ export default function AttemptPage() {
                   setIsNextLoading(false);
                 }}
                 disabled={isNextLoading || !isCurrentQuestionAnswered()}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
+                className="px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 inline-flex items-center justify-center"
+                style={{ backgroundColor: colors.success }}
               >
                 {isNextLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Finish & Submit

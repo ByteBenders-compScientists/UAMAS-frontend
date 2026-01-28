@@ -1,6 +1,7 @@
 'use client';
 
 import { File, Video, Link as LinkIcon, Edit, Trash } from 'lucide-react';
+import { useThemeColors } from '@/context/ThemeContext';
 
 interface ContentItem {
   id: string;
@@ -19,6 +20,8 @@ interface WeekContentProps {
 }
 
 const WeekContent = ({ week, items, onEdit, onDelete, onAdd }: WeekContentProps) => {
+  const colors = useThemeColors();
+
   // Group items by type
   const lectures = items.filter(item => item.type === 'lecture');
   const assignments = items.filter(item => item.type === 'assignment');
@@ -32,14 +35,58 @@ const WeekContent = ({ week, items, onEdit, onDelete, onAdd }: WeekContentProps)
       default: return <File size={18} />;
     }
   };
+
+  const getTypeStyles = (type: string) => {
+    switch (type) {
+      case 'lecture':
+        return {
+          bg: colors.info + '10',
+          color: colors.info,
+          iconColor: colors.info
+        };
+      case 'assignment':
+        return {
+          bg: colors.warning + '10',
+          color: colors.warning,
+          iconColor: colors.warning
+        };
+      case 'resource':
+        return {
+          bg: colors.success + '10',
+          color: colors.success,
+          iconColor: colors.success
+        };
+      default:
+        return {
+          bg: colors.backgroundSecondary,
+          color: colors.textSecondary,
+          iconColor: colors.textSecondary
+        };
+    }
+  };
   
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-800">Week {week} Content</h2>
+        <h2 
+          className="text-xl font-semibold"
+          style={{ color: colors.textPrimary }}
+        >
+          Week {week} Content
+        </h2>
         <button
           onClick={onAdd}
-          className="px-3 py-1.5 bg-gray-800 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+          className="px-3 py-1.5 text-sm rounded-lg hover:bg-gray-700 transition-colors"
+          style={{
+            backgroundColor: colors.textPrimary,
+            color: colors.background
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = colors.textSecondary;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = colors.textPrimary;
+          }}
         >
           Add Content
         </button>
@@ -48,35 +95,90 @@ const WeekContent = ({ week, items, onEdit, onDelete, onAdd }: WeekContentProps)
       {/* Lectures */}
       {lectures.length > 0 && (
         <div>
-          <h3 className="text-lg font-medium text-gray-800 mb-3">Lectures</h3>
-          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-            {lectures.map(item => (
-              <div key={item.id} className="p-4 flex justify-between items-center">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center mr-3">
-                    {getIcon(item.type)}
+          <h3 
+            className="text-lg font-medium mb-3"
+            style={{ color: colors.textPrimary }}
+          >
+            Lectures
+          </h3>
+          <div 
+            className="rounded-xl border divide-y overflow-hidden"
+            style={{
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.border,
+              borderColor: colors.borderLight
+            }}
+          >
+            {lectures.map(item => {
+              const styles = getTypeStyles(item.type);
+              return (
+                <div 
+                  key={item.id} 
+                  className="p-4 flex justify-between items-center"
+                  style={{ borderColor: colors.borderLight }}
+                >
+                  <div className="flex items-center">
+                    <div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+                      style={{
+                        backgroundColor: styles.bg,
+                        color: styles.iconColor
+                      }}
+                    >
+                      {getIcon(item.type)}
+                    </div>
+                    <div>
+                      <h4 
+                        className="font-medium"
+                        style={{ color: colors.textPrimary }}
+                      >
+                        {item.title}
+                      </h4>
+                      {item.description && (
+                        <p 
+                          className="text-sm"
+                          style={{ color: colors.textSecondary }}
+                        >
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-800">{item.title}</h4>
-                    {item.description && <p className="text-sm text-gray-500">{item.description}</p>}
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => onEdit(item.id)}
+                      className="p-1.5 rounded-lg transition-colors"
+                      style={{ color: colors.textTertiary }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.backgroundSecondary;
+                        e.currentTarget.style.color = colors.textSecondary;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = colors.textTertiary;
+                      }}
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button 
+                      onClick={() => onDelete(item.id)}
+                      className="p-1.5 rounded-lg transition-colors"
+                      style={{ color: colors.textTertiary }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.error + '10';
+                        e.currentTarget.style.color = colors.error;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = colors.textTertiary;
+                      }}
+                    >
+                      <Trash size={16} />
+                    </button>
                   </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={() => onEdit(item.id)}
-                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button 
-                    onClick={() => onDelete(item.id)}
-                    className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -84,36 +186,98 @@ const WeekContent = ({ week, items, onEdit, onDelete, onAdd }: WeekContentProps)
       {/* Assignments */}
       {assignments.length > 0 && (
         <div>
-          <h3 className="text-lg font-medium text-gray-800 mb-3">Assignments</h3>
-          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-            {assignments.map(item => (
-              <div key={item.id} className="p-4 flex justify-between items-center">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center mr-3">
-                    {getIcon(item.type)}
+          <h3 
+            className="text-lg font-medium mb-3"
+            style={{ color: colors.textPrimary }}
+          >
+            Assignments
+          </h3>
+          <div 
+            className="rounded-xl border divide-y overflow-hidden"
+            style={{
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.border,
+              borderColor: colors.borderLight
+            }}
+          >
+            {assignments.map(item => {
+              const styles = getTypeStyles(item.type);
+              return (
+                <div 
+                  key={item.id} 
+                  className="p-4 flex justify-between items-center"
+                  style={{ borderColor: colors.borderLight }}
+                >
+                  <div className="flex items-center">
+                    <div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+                      style={{
+                        backgroundColor: styles.bg,
+                        color: styles.iconColor
+                      }}
+                    >
+                      {getIcon(item.type)}
+                    </div>
+                    <div>
+                      <h4 
+                        className="font-medium"
+                        style={{ color: colors.textPrimary }}
+                      >
+                        {item.title}
+                      </h4>
+                      {item.description && (
+                        <p 
+                          className="text-sm"
+                          style={{ color: colors.textSecondary }}
+                        >
+                          {item.description}
+                        </p>
+                      )}
+                      {item.date && (
+                        <p 
+                          className="text-xs"
+                          style={{ color: colors.textTertiary }}
+                        >
+                          Due: {item.date}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-800">{item.title}</h4>
-                    {item.description && <p className="text-sm text-gray-500">{item.description}</p>}
-                    {item.date && <p className="text-xs text-gray-400">Due: {item.date}</p>}
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => onEdit(item.id)}
+                      className="p-1.5 rounded-lg transition-colors"
+                      style={{ color: colors.textTertiary }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.backgroundSecondary;
+                        e.currentTarget.style.color = colors.textSecondary;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = colors.textTertiary;
+                      }}
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button 
+                      onClick={() => onDelete(item.id)}
+                      className="p-1.5 rounded-lg transition-colors"
+                      style={{ color: colors.textTertiary }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.error + '10';
+                        e.currentTarget.style.color = colors.error;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = colors.textTertiary;
+                      }}
+                    >
+                      <Trash size={16} />
+                    </button>
                   </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={() => onEdit(item.id)}
-                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button 
-                    onClick={() => onDelete(item.id)}
-                    className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -121,46 +285,119 @@ const WeekContent = ({ week, items, onEdit, onDelete, onAdd }: WeekContentProps)
       {/* Resources */}
       {resources.length > 0 && (
         <div>
-          <h3 className="text-lg font-medium text-gray-800 mb-3">Resources</h3>
-          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-            {resources.map(item => (
-              <div key={item.id} className="p-4 flex justify-between items-center">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center mr-3">
-                    {getIcon(item.type)}
+          <h3 
+            className="text-lg font-medium mb-3"
+            style={{ color: colors.textPrimary }}
+          >
+            Resources
+          </h3>
+          <div 
+            className="rounded-xl border divide-y overflow-hidden"
+            style={{
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.border,
+              borderColor: colors.borderLight
+            }}
+          >
+            {resources.map(item => {
+              const styles = getTypeStyles(item.type);
+              return (
+                <div 
+                  key={item.id} 
+                  className="p-4 flex justify-between items-center"
+                  style={{ borderColor: colors.borderLight }}
+                >
+                  <div className="flex items-center">
+                    <div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+                      style={{
+                        backgroundColor: styles.bg,
+                        color: styles.iconColor
+                      }}
+                    >
+                      {getIcon(item.type)}
+                    </div>
+                    <div>
+                      <h4 
+                        className="font-medium"
+                        style={{ color: colors.textPrimary }}
+                      >
+                        {item.title}
+                      </h4>
+                      {item.description && (
+                        <p 
+                          className="text-sm"
+                          style={{ color: colors.textSecondary }}
+                        >
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-800">{item.title}</h4>
-                    {item.description && <p className="text-sm text-gray-500">{item.description}</p>}
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => onEdit(item.id)}
+                      className="p-1.5 rounded-lg transition-colors"
+                      style={{ color: colors.textTertiary }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.backgroundSecondary;
+                        e.currentTarget.style.color = colors.textSecondary;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = colors.textTertiary;
+                      }}
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button 
+                      onClick={() => onDelete(item.id)}
+                      className="p-1.5 rounded-lg transition-colors"
+                      style={{ color: colors.textTertiary }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.error + '10';
+                        e.currentTarget.style.color = colors.error;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = colors.textTertiary;
+                      }}
+                    >
+                      <Trash size={16} />
+                    </button>
                   </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={() => onEdit(item.id)}
-                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button 
-                    onClick={() => onDelete(item.id)}
-                    className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
       
       {/* If no content at all, show mini empty state */}
       {items.length === 0 && (
-        <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 text-center">
-          <p className="text-gray-500">No content has been added for Week {week} yet.</p>
+        <div 
+          className="rounded-xl border p-6 text-center"
+          style={{
+            backgroundColor: colors.backgroundSecondary,
+            borderColor: colors.border
+          }}
+        >
+          <p style={{ color: colors.textTertiary }}>
+            No content has been added for Week {week} yet.
+          </p>
           <button
             onClick={onAdd}
-            className="mt-3 px-3 py-1.5 bg-gray-800 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+            className="mt-3 px-3 py-1.5 text-sm rounded-lg transition-colors"
+            style={{
+              backgroundColor: colors.textPrimary,
+              color: colors.background
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.textSecondary;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = colors.textPrimary;
+            }}
           >
             Add First Content
           </button>

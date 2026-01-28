@@ -23,6 +23,7 @@ import {
   X
 } from 'lucide-react';
 import Link from 'next/link';
+import FloatingThemeButton from '@/components/FloatingThemeButton';
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1"
 
@@ -670,6 +671,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <FloatingThemeButton/>
     </div>
   );
 }

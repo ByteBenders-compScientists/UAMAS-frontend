@@ -29,6 +29,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import Disclaimer from "@/components/Disclaimer";
 import { useTheme, useThemeColors } from "@/context/ThemeContext";
+import FloatingThemeButton from "@/components/FloatingThemeButton";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1";
 
@@ -1574,6 +1575,7 @@ export default function StudentUnitWorkspace() {
           </div>
         </main>
       </motion.div>
+      <FloatingThemeButton/>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Bell, Search, Calendar } from 'lucide-react';
 import { useLayout } from './LayoutController';
-import { useTheme, useThemeColors } from '@/context/ThemeContext';
+import {  useThemeColors } from '@/context/ThemeContext';
 import WeekSelector from './WeekSelector';
 import { getCurrentWeek, getWeekDateRange, formatDateRange } from '@/utils/WeekSelector';
 
@@ -17,7 +17,6 @@ interface HeaderProps {
 
 const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
   const { isMobileView, isTabletView, setMobileMenuOpen } = useLayout();
-  const { config } = useTheme();
   const colors = useThemeColors();
   
   const [currentWeek, setCurrentWeek] = useState(getCurrentWeek());

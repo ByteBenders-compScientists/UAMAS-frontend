@@ -28,6 +28,7 @@ import {
 import Sidebar from "@/components/lecturerSidebar";
 import { useLayout } from "@/components/LayoutController";
 import { useTheme, useThemeColors } from "@/context/ThemeContext";
+import FloatingThemeButton from "@/components/FloatingThemeButton";
 
 // ===== TYPES =====
 interface StatData {
@@ -229,7 +230,7 @@ const CreativeLoader: React.FC = () => {
 // Main Dashboard Component with proper sidebar integration
 const LecturerDashboard: React.FC = () => {
   const router = useRouter();
-  const { config, isLoading: themeLoading } = useTheme();
+  const { isLoading: themeLoading } = useTheme();
   const colors = useThemeColors();
 
   const {
@@ -883,6 +884,7 @@ const LecturerDashboard: React.FC = () => {
           </div>
         </main>
       </motion.div>
+      <FloatingThemeButton/>
     </div>
   );
 };
