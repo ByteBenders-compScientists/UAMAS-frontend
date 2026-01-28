@@ -19,7 +19,6 @@ const Header = ({ title, showWeekSelector = false }: HeaderProps) => {
   const { isMobileView, isTabletView, setMobileMenuOpen } = useLayout();
   const { config } = useTheme();
   const colors = useThemeColors();
-  const isDark = config.mode === 'dark';
   
   const [currentWeek, setCurrentWeek] = useState(getCurrentWeek());
   const [searchQuery, setSearchQuery] = useState('');

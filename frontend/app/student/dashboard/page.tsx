@@ -385,7 +385,7 @@ export default function Dashboard() {
                     className="px-4 py-2 rounded-lg transition-colors font-medium text-sm"
                     style={{
                       backgroundColor: colors.primaryLight,
-                      color: colors.primary,
+                      color: colors.textPrimary,
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = colors.primary;
