@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useLayout } from "./LayoutController";
-import { useTheme } from "@/context/ThemeContext";
+import { useTheme, useThemeColors } from "@/context/ThemeContext";
 import {
   LayoutDashboard,
   GraduationCap,
@@ -41,6 +41,7 @@ interface LecturerProfile {
 const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const pathname = usePathname();
   const { config } = useTheme();
+  const colors = useThemeColors();
   const isDark = config.mode === 'dark';
   
   const {
@@ -64,7 +65,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   };
 
   const getDisplayName = (profile: LecturerProfile) => {
-    const title = profile.title || "Dr.";
+    const title = profile.title ;
     return `${title} ${profile.name} ${profile.surname}`;
   };
 
@@ -138,7 +139,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
 
   const bottomNavItems: NavItemType[] = [
     { name: "Profile", icon: <User size={20} />, path: "/lecturer/profile" },
-    { name: "Settings", icon: <Settings size={20} />, path: "/settings" },
+    { name: "Settings", icon: <Settings size={20} />, path: "/lecturer/settings" },
     { name: "Logout", icon: <LogOut size={20} />, path: "/logout" },
   ];
 
@@ -166,22 +167,14 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           ${sidebarCollapsed && !isMobileView && !isTabletView ? "justify-center" : ""}
         `}
         style={{
-          backgroundColor: isActive 
-            ? isDark ? 'rgba(16, 185, 129, 0.1)' : 'var(--color-primary-light)'
-            : 'transparent',
-          color: isActive 
-            ? 'var(--color-primary)' 
-            : 'var(--color-text-secondary)',
-          border: isActive 
-            ? `1px solid ${isDark ? 'rgba(16, 185, 129, 0.2)' : 'var(--color-primary-light)'}` 
-            : '1px solid transparent',
+          backgroundColor: isActive ? colors.sidebarActive : 'transparent',
+          color: isActive ? colors.primary : colors.textSecondary,
+          border: `1px solid ${isActive ? colors.primary : 'transparent'}`,
           fontWeight: isActive ? 500 : 400,
         }}
         onMouseEnter={(e) => {
           if (!isActive) {
-            e.currentTarget.style.backgroundColor = isDark 
-              ? 'rgba(148, 163, 184, 0.05)' 
-              : 'var(--color-background-secondary)';
+            e.currentTarget.style.backgroundColor = colors.sidebarHover;
           }
         }}
         onMouseLeave={(e) => {
@@ -190,7 +183,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           }
         }}
       >
-        <div style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}>
+        <div style={{ color: isActive ? colors.primary : colors.textTertiary }}>
           {item.icon}
         </div>
 
@@ -202,9 +195,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           <div
             className="ml-auto text-white text-xs px-2 py-0.5 rounded-full font-medium"
             style={{
-              backgroundColor: typeof item.badge === "number"
-                ? 'var(--color-primary)'
-                : 'var(--color-warning)',
+              backgroundColor: typeof item.badge === "number" ? colors.primary : colors.warning,
             }}
           >
             {item.badge}
@@ -222,28 +213,28 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
         <div
           className="px-4 py-3 transition-opacity duration-300"
           style={{
-            borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`,
-            backgroundColor: isDark ? '#0f172a' : '#f9fafb',
+            borderBottom: `1px solid ${colors.border}`,
+            backgroundColor: colors.backgroundSecondary,
             opacity: isProfileVisible ? 1 : 0,
           }}
         >
           <div className="flex items-center">
             <div 
               className="h-10 w-10 rounded-xl animate-pulse"
-              style={{ backgroundColor: isDark ? '#1e293b' : '#e5e7eb' }}
+              style={{ backgroundColor: colors.borderLight }}
             />
             <div className="ml-3 space-y-2 flex-1">
               <div 
                 className="h-4 rounded animate-pulse"
                 style={{ 
-                  backgroundColor: isDark ? '#1e293b' : '#e5e7eb',
+                  backgroundColor: colors.borderLight,
                   width: '60%'
                 }}
               />
               <div 
                 className="h-3 rounded animate-pulse"
                 style={{ 
-                  backgroundColor: isDark ? '#1e293b' : '#e5e7eb',
+                  backgroundColor: colors.borderLight,
                   width: '40%'
                 }}
               />
@@ -258,8 +249,8 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
         <div
           className="px-4 py-3 transition-opacity duration-300"
           style={{
-            borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`,
-            backgroundColor: isDark ? '#0f172a' : '#f9fafb',
+            borderBottom: `1px solid ${colors.border}`,
+            backgroundColor: colors.backgroundSecondary,
             opacity: isProfileVisible ? 1 : 0,
           }}
         >
@@ -267,8 +258,8 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
             <div
               className="h-10 w-10 rounded-xl flex items-center justify-center font-medium text-sm shadow-sm"
               style={{
-                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'var(--color-primary-light)',
-                color: 'var(--color-primary)',
+                backgroundColor: colors.primaryLight,
+                color: colors.primary,
               }}
             >
               <User size={16} />
@@ -276,13 +267,13 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
             <div className="ml-3">
               <p 
                 className="text-sm font-medium"
-                style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                style={{ color: colors.textPrimary }}
               >
                 Loading...
               </p>
               <p 
                 className="text-xs"
-                style={{ color: isDark ? '#94a3b8' : '#6b7280' }}
+                style={{ color: colors.textSecondary }}
               >
                 Please wait
               </p>
@@ -296,8 +287,8 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       <div
         className="px-4 py-3 transition-opacity duration-300"
         style={{
-          borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`,
-          backgroundColor: isDark ? '#0f172a' : '#f9fafb',
+          borderBottom: `1px solid ${colors.border}`,
+          backgroundColor: colors.backgroundSecondary,
           opacity: isProfileVisible ? 1 : 0,
         }}
       >
@@ -305,22 +296,27 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           <div
             className="h-10 w-10 rounded-xl flex items-center justify-center font-medium text-sm shadow-sm"
             style={{
-              backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'var(--color-primary-light)',
-              color: 'var(--color-primary)',
+              backgroundColor: colors.primaryLight,
+              color: colors.primary,
             }}
           >
+            
+            <p style={{ color: colors.textPrimary }}>
             {getInitials(profile.name, profile.surname)}
+
+                                          </p>
+              
           </div>
           <div className="ml-3 overflow-hidden">
             <p
               className="text-sm font-medium truncate max-w-[140px]"
-              style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+              style={{ color: colors.textPrimary }}
             >
               {getDisplayName(profile)}
             </p>
             <p
               className="text-xs truncate max-w-[140px]"
-              style={{ color: isDark ? '#94a3b8' : '#6b7280' }}
+              style={{ color: colors.textSecondary }}
             >
               {getStaffDisplay(profile)}
             </p>
@@ -340,15 +336,15 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           ${(isMobileView || isTabletView) && !isMobileMenuOpen ? '-translate-x-full' : 'translate-x-0'}
         `}
         style={{
-          backgroundColor: isDark ? '#0f172a' : '#ffffff',
-          color: isDark ? '#f8fafc' : '#1f2937',
-          borderRight: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`,
+          backgroundColor: colors.sidebarBackground,
+          color: colors.textPrimary,
+          borderRight: `1px solid ${colors.border}`,
         }}
       >
         {/* Header Section */}
         <div
           className="flex items-center mt-3 justify-between p-4"
-          style={{ borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}
+          style={{ borderBottom: `1px solid ${colors.border}` }}
         >
           <div className="container mx-auto px-6">
             <div className="flex justify-between items-center h-16">
@@ -371,11 +367,11 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
               onClick={() => setMobileMenuOpen(false)}
               className="rounded-full p-1.5 transition-colors"
               style={{
-                color: isDark ? '#94a3b8' : '#6b7280',
+                color: colors.textSecondary,
                 backgroundColor: 'transparent',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f3f4f6';
+                e.currentTarget.style.backgroundColor = colors.sidebarHover;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -388,12 +384,12 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="rounded-full p-1.5 transition-all duration-200"
               style={{
-                color: isDark ? '#94a3b8' : '#6b7280',
+                color: colors.textSecondary,
                 backgroundColor: 'transparent',
                 transform: sidebarCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f3f4f6';
+                e.currentTarget.style.backgroundColor = colors.sidebarHover;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -416,7 +412,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           {/* Bottom Navigation Section */}
           <div
             className="mt-auto px-3 py-4"
-            style={{ borderTop: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}
+            style={{ borderTop: `1px solid ${colors.border}` }}
           >
             {bottomNavItems.map((item) => renderNavItem(item))}
           </div>
@@ -427,9 +423,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
               <div
                 className="rounded-xl p-4 text-center"
                 style={{
-                  background: isDark
-                    ? 'linear-gradient(to bottom right, rgba(16, 185, 129, 0.1), rgba(20, 184, 166, 0.15))'
-                    : 'linear-gradient(to bottom right, #d1fae5, #a7f3d0)',
+                  backgroundColor: colors.primaryLight,
                 }}
               >
                 <div className="mx-auto mb-2 -mt-6 h-24 w-full flex justify-center">
@@ -442,52 +436,52 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
                   >
                     <path
                       d="M50 87.5C70.7107 87.5 87.5 70.7107 87.5 50C87.5 29.2893 70.7107 12.5 50 12.5C29.2893 12.5 12.5 29.2893 12.5 50C12.5 70.7107 29.2893 87.5 50 87.5Z"
-                      fill={isDark ? 'rgba(16, 185, 129, 0.1)' : '#E6F7F1'}
+                      fill={colors.primaryLight}
                     />
                     <path
                       d="M65 35H35C33.619 35 32.5 36.119 32.5 37.5V62.5C32.5 63.881 33.619 65 35 65H65C66.381 65 67.5 63.881 67.5 62.5V37.5C67.5 36.119 66.381 35 65 35Z"
-                      stroke={isDark ? '#10b981' : '#047857'}
+                      stroke={colors.primary}
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                     <path
                       d="M57.5 27.5V32.5"
-                      stroke={isDark ? '#10b981' : '#047857'}
+                      stroke={colors.primary}
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                     <path
                       d="M42.5 27.5V32.5"
-                      stroke={isDark ? '#10b981' : '#047857'}
+                      stroke={colors.primary}
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                     <path
                       d="M32.5 42.5H67.5"
-                      stroke={isDark ? '#10b981' : '#047857'}
+                      stroke={colors.primary}
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
-                    <path d="M45 50H40V55H45V50Z" fill={isDark ? '#10b981' : '#047857'} />
-                    <path d="M55 50H50V55H55V50Z" fill={isDark ? '#10b981' : '#047857'} />
-                    <path d="M45 57.5H40V62.5H45V57.5Z" fill={isDark ? '#10b981' : '#047857'} />
-                    <path d="M55 57.5H50V62.5H55V57.5Z" fill={isDark ? '#10b981' : '#047857'} />
-                    <path d="M65 50H60V55H65V50Z" fill={isDark ? '#10b981' : '#047857'} />
+                    <path d="M45 50H40V55H45V50Z" fill={colors.primary} />
+                    <path d="M55 50H50V55H55V50Z" fill={colors.primary} />
+                    <path d="M45 57.5H40V62.5H45V57.5Z" fill={colors.primary} />
+                    <path d="M55 57.5H50V62.5H55V57.5Z" fill={colors.primary} />
+                    <path d="M65 50H60V55H65V50Z" fill={colors.primary} />
                   </svg>
                 </div>
                 <p
                   className="text-xs font-medium"
-                  style={{ color: isDark ? '#10b981' : '#047857' }}
+                  style={{ color: colors.textPrimary }}
                 >
                   Academic excellence
                 </p>
                 <p
                   className="text-xs mt-1"
-                  style={{ color: isDark ? '#34d399' : '#059669' }}
+                  style={{ color: colors.textPrimary }}
                 >
                   Track your courses
                 </p>
@@ -501,15 +495,15 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
             width: 6px;
           }
           .custom-scrollbar::-webkit-scrollbar-track {
-            background: ${isDark ? '#0f172a' : '#f3f4f6'};
+            background: ${colors.backgroundSecondary};
             border-radius: 3px;
           }
           .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: ${isDark ? '#334155' : '#d1d5db'};
+            background: ${colors.border};
             border-radius: 3px;
           }
           .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: ${isDark ? '#475569' : '#9ca3af'};
+            background: ${colors.borderLight};
           }
         `}</style>
       </div>

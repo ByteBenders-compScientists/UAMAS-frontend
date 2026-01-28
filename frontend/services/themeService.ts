@@ -285,215 +285,215 @@ const darkColorSchemes: Record<ColorScheme, ThemeColors> = {
   emerald: {
     primary: '#10b981',
     primaryHover: '#34d399',
-    primaryLight: '#064e3b',
-    primaryDark: '#047857',
+    primaryLight: '#10b981',
+    primaryDark: '#059669',
     
     secondary: '#10b981',
     secondaryHover: '#34d399',
-    secondaryLight: '#064e3b',
-    secondaryDark: '#047857',
+    secondaryLight: '#10b981',
+    secondaryDark: '#059669',
     
     accent: '#10b981',
     accentHover: '#34d399',
     
     background: '#000000',
-    backgroundSecondary: '#0a0a0a',
-    backgroundTertiary: '#141414',
+    backgroundSecondary: '#0f0f0f',
+    backgroundTertiary: '#1a1a1a',
     
     textPrimary: '#ffffff',
-    textSecondary: '#b8b8b8',
-    textTertiary: '#808080',
+    textSecondary: '#a3a3a3',
+    textTertiary: '#737373',
     
-    border: '#1a1a1a',
-    borderLight: '#2a2a2a',
-    borderDark: '#0a0a0a',
+    border: '#262626',
+    borderLight: '#333333',
+    borderDark: '#171717',
     
     success: '#10b981',
     warning: '#f59e0b',
     error: '#ef4444',
     info: '#10b981',
     
-    cardBackground: '#0a0a0a',
-    cardHover: '#141414',
+    cardBackground: '#0f0f0f',
+    cardHover: '#1a1a1a',
     
-    sidebarBackground: '#0a0a0a',
-    sidebarHover: '#141414',
+    sidebarBackground: '#000000',
+    sidebarHover: '#1a1a1a',
     sidebarActive: '#064e3b',
     
-    inputBackground: '#0a0a0a',
-    inputBorder: '#2a2a2a',
+    inputBackground: '#0f0f0f',
+    inputBorder: '#262626',
     inputFocus: '#10b981',
   },
   
   blue: {
     primary: '#3b82f6',
     primaryHover: '#60a5fa',
-    primaryLight: '#1e3a8a',
-    primaryDark: '#1d4ed8',
+    primaryLight: '#3b82f6',
+    primaryDark: '#2563eb',
     
     secondary: '#3b82f6',
     secondaryHover: '#60a5fa',
-    secondaryLight: '#1e3a8a',
-    secondaryDark: '#1d4ed8',
+    secondaryLight: '#3b82f6',
+    secondaryDark: '#2563eb',
     
     accent: '#3b82f6',
     accentHover: '#60a5fa',
     
     background: '#000000',
-    backgroundSecondary: '#0a0a0a',
-    backgroundTertiary: '#141414',
+    backgroundSecondary: '#0f0f0f',
+    backgroundTertiary: '#1a1a1a',
     
     textPrimary: '#ffffff',
-    textSecondary: '#b8b8b8',
-    textTertiary: '#808080',
+    textSecondary: '#a3a3a3',
+    textTertiary: '#737373',
     
-    border: '#1a1a1a',
-    borderLight: '#2a2a2a',
-    borderDark: '#0a0a0a',
+    border: '#262626',
+    borderLight: '#333333',
+    borderDark: '#171717',
     
     success: '#10b981',
     warning: '#f59e0b',
     error: '#ef4444',
     info: '#3b82f6',
     
-    cardBackground: '#0a0a0a',
-    cardHover: '#141414',
+    cardBackground: '#0f0f0f',
+    cardHover: '#1a1a1a',
     
-    sidebarBackground: '#0a0a0a',
-    sidebarHover: '#141414',
+    sidebarBackground: '#000000',
+    sidebarHover: '#1a1a1a',
     sidebarActive: '#1e3a8a',
     
-    inputBackground: '#0a0a0a',
-    inputBorder: '#2a2a2a',
+    inputBackground: '#0f0f0f',
+    inputBorder: '#262626',
     inputFocus: '#3b82f6',
   },
   
   purple: {
     primary: '#a78bfa',
     primaryHover: '#c4b5fd',
-    primaryLight: '#2e1065',
-    primaryDark: '#6d28d9',
+    primaryLight: '#a78bfa',
+    primaryDark: '#8b5cf6',
     
     secondary: '#a78bfa',
     secondaryHover: '#c4b5fd',
-    secondaryLight: '#2e1065',
-    secondaryDark: '#6d28d9',
+    secondaryLight: '#a78bfa',
+    secondaryDark: '#8b5cf6',
     
     accent: '#a78bfa',
     accentHover: '#c4b5fd',
     
     background: '#000000',
-    backgroundSecondary: '#0a0a0a',
-    backgroundTertiary: '#141414',
+    backgroundSecondary: '#0f0f0f',
+    backgroundTertiary: '#1a1a1a',
     
     textPrimary: '#ffffff',
-    textSecondary: '#b8b8b8',
-    textTertiary: '#808080',
+    textSecondary: '#a3a3a3',
+    textTertiary: '#737373',
     
-    border: '#1a1a1a',
-    borderLight: '#2a2a2a',
-    borderDark: '#0a0a0a',
+    border: '#262626',
+    borderLight: '#333333',
+    borderDark: '#171717',
     
     success: '#10b981',
     warning: '#f59e0b',
     error: '#ef4444',
     info: '#3b82f6',
     
-    cardBackground: '#0a0a0a',
-    cardHover: '#141414',
+    cardBackground: '#0f0f0f',
+    cardHover: '#1a1a1a',
     
-    sidebarBackground: '#0a0a0a',
-    sidebarHover: '#141414',
+    sidebarBackground: '#000000',
+    sidebarHover: '#1a1a1a',
     sidebarActive: '#2e1065',
     
-    inputBackground: '#0a0a0a',
-    inputBorder: '#2a2a2a',
+    inputBackground: '#0f0f0f',
+    inputBorder: '#262626',
     inputFocus: '#a78bfa',
   },
   
   orange: {
     primary: '#fb923c',
     primaryHover: '#fdba74',
-    primaryLight: '#431407',
-    primaryDark: '#c2410c',
+    primaryLight: '#fb923c',
+    primaryDark: '#f97316',
     
     secondary: '#fb923c',
     secondaryHover: '#fdba74',
-    secondaryLight: '#431407',
-    secondaryDark: '#c2410c',
+    secondaryLight: '#fb923c',
+    secondaryDark: '#f97316',
     
     accent: '#fb923c',
     accentHover: '#fdba74',
     
     background: '#000000',
-    backgroundSecondary: '#0a0a0a',
-    backgroundTertiary: '#141414',
+    backgroundSecondary: '#0f0f0f',
+    backgroundTertiary: '#1a1a1a',
     
     textPrimary: '#ffffff',
-    textSecondary: '#b8b8b8',
-    textTertiary: '#808080',
+    textSecondary: '#a3a3a3',
+    textTertiary: '#737373',
     
-    border: '#1a1a1a',
-    borderLight: '#2a2a2a',
-    borderDark: '#0a0a0a',
+    border: '#262626',
+    borderLight: '#333333',
+    borderDark: '#171717',
     
     success: '#10b981',
     warning: '#f59e0b',
     error: '#ef4444',
     info: '#3b82f6',
     
-    cardBackground: '#0a0a0a',
-    cardHover: '#141414',
+    cardBackground: '#0f0f0f',
+    cardHover: '#1a1a1a',
     
-    sidebarBackground: '#0a0a0a',
-    sidebarHover: '#141414',
+    sidebarBackground: '#000000',
+    sidebarHover: '#1a1a1a',
     sidebarActive: '#431407',
     
-    inputBackground: '#0a0a0a',
-    inputBorder: '#2a2a2a',
+    inputBackground: '#0f0f0f',
+    inputBorder: '#262626',
     inputFocus: '#fb923c',
   },
   
   rose: {
     primary: '#fb7185',
     primaryHover: '#fda4af',
-    primaryLight: '#4c0519',
-    primaryDark: '#be123c',
+    primaryLight: '#fb7185',
+    primaryDark: '#f43f5e',
     
     secondary: '#fb7185',
     secondaryHover: '#fda4af',
-    secondaryLight: '#4c0519',
-    secondaryDark: '#be123c',
+    secondaryLight: '#fb7185',
+    secondaryDark: '#f43f5e',
     
     accent: '#fb7185',
     accentHover: '#fda4af',
     
     background: '#000000',
-    backgroundSecondary: '#0a0a0a',
-    backgroundTertiary: '#141414',
+    backgroundSecondary: '#0f0f0f',
+    backgroundTertiary: '#1a1a1a',
     
     textPrimary: '#ffffff',
-    textSecondary: '#b8b8b8',
-    textTertiary: '#808080',
+    textSecondary: '#a3a3a3',
+    textTertiary: '#737373',
     
-    border: '#1a1a1a',
-    borderLight: '#2a2a2a',
-    borderDark: '#0a0a0a',
+    border: '#262626',
+    borderLight: '#333333',
+    borderDark: '#171717',
     
     success: '#10b981',
     warning: '#f59e0b',
     error: '#ef4444',
     info: '#3b82f6',
     
-    cardBackground: '#0a0a0a',
-    cardHover: '#141414',
+    cardBackground: '#0f0f0f',
+    cardHover: '#1a1a1a',
     
-    sidebarBackground: '#0a0a0a',
-    sidebarHover: '#141414',
+    sidebarBackground: '#000000',
+    sidebarHover: '#1a1a1a',
     sidebarActive: '#4c0519',
     
-    inputBackground: '#0a0a0a',
-    inputBorder: '#2a2a2a',
+    inputBackground: '#0f0f0f',
+    inputBorder: '#262626',
     inputFocus: '#fb7185',
   },
 };
@@ -627,8 +627,10 @@ class ThemeService {
     // Apply dark mode class
     if (config.mode === 'dark') {
       root.classList.add('dark');
+      document.body.style.backgroundColor = '#000000';
     } else {
       root.classList.remove('dark');
+      document.body.style.backgroundColor = '#ffffff';
     }
 
     // Set base font size

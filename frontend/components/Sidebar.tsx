@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useLayout } from './LayoutController';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme, useThemeColors } from '@/context/ThemeContext';
 import { easeInOut } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -37,6 +37,7 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.1
 const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const pathname = usePathname();
   const { config } = useTheme();
+  const colors = useThemeColors();
   const isDark = config.mode === 'dark';
   
   const { 
@@ -79,7 +80,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
 
   const bottomNavItems: NavItemType[] = [
     { name: 'Profile', icon: <User size={20} />, path: '/student/profile' },
-    { name: 'Settings', icon: <Settings size={20} />, path: '/settings' },
+    { name: 'Settings', icon: <Settings size={20} />, path: '/student/settings' },
     { name: 'Logout', icon: <LogOut size={20} />, path: '/logout' },
   ];
 
@@ -122,28 +123,17 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
         href={item.path}
         className={`
           flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
-          ${isActive 
-            ? 'font-medium' 
-            : ''
-          }
           ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
         `}
         style={{
-          backgroundColor: isActive 
-            ? isDark ? 'rgba(16, 185, 129, 0.1)' : 'var(--color-primary-light)'
-            : 'transparent',
-          color: isActive 
-            ? 'var(--color-primary)' 
-            : 'var(--color-text-secondary)',
-          border: isActive 
-            ? `1px solid ${isDark ? 'rgba(16, 185, 129, 0.2)' : 'var(--color-primary-light)'}` 
-            : '1px solid transparent',
+          backgroundColor: isActive ? colors.sidebarActive : 'transparent',
+          color: isActive ? colors.primary : colors.textSecondary,
+          border: `1px solid ${isActive ? colors.primary : 'transparent'}`,
+          fontWeight: isActive ? 500 : 400,
         }}
         onMouseEnter={(e) => {
           if (!isActive) {
-            e.currentTarget.style.backgroundColor = isDark 
-              ? 'rgba(148, 163, 184, 0.05)' 
-              : 'var(--color-background-secondary)';
+            e.currentTarget.style.backgroundColor = colors.sidebarHover;
           }
         }}
         onMouseLeave={(e) => {
@@ -152,21 +142,19 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
           }
         }}
       >
-        <div style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}>
+        <div style={{ color: isActive ? colors.primary : colors.textTertiary }}>
           {item.icon}
         </div>
         
         {(!sidebarCollapsed || isMobileView || isTabletView) && (
-          <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{item.name}</span>
+          <span className="ml-3">{item.name}</span>
         )}
         
         {(!sidebarCollapsed || isMobileView || isTabletView) && item.badge && (
           <div 
             className="ml-auto text-white text-xs px-2 py-0.5 rounded-full font-medium"
             style={{
-              backgroundColor: typeof item.badge === 'number' 
-                ? 'var(--color-primary)' 
-                : 'var(--color-warning)'
+              backgroundColor: typeof item.badge === 'number' ? colors.primary : colors.warning
             }}
           >
             {item.badge}
@@ -192,15 +180,15 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
           ${(isMobileView || isTabletView) ? 'w-[270px]' : ''}
         `}
         style={{
-          backgroundColor: isDark ? '#0f172a' : '#ffffff',
-          color: isDark ? '#f8fafc' : '#1f2937',
-          borderRight: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`,
+          backgroundColor: colors.sidebarBackground,
+          color: colors.textPrimary,
+          borderRight: `1px solid ${colors.border}`,
         }}
       >
         {/* Header Section */}
         <div 
           className="flex items-center mt-3 justify-between p-4"
-          style={{ borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}
+          style={{ borderBottom: `1px solid ${colors.border}` }}
         >
           <div className="container mx-auto px-6">
             <div className="flex justify-between items-center h-16">
@@ -226,11 +214,11 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
               onClick={() => setMobileMenuOpen(false)}
               className="rounded-full p-1.5 transition-colors"
               style={{
-                color: isDark ? '#94a3b8' : '#6b7280',
+                color: colors.textSecondary,
                 backgroundColor: 'transparent',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f3f4f6';
+                e.currentTarget.style.backgroundColor = colors.sidebarHover;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -243,11 +231,11 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="rounded-full p-1.5 transition-colors"
               style={{
-                color: isDark ? '#94a3b8' : '#6b7280',
+                color: colors.textSecondary,
                 backgroundColor: 'transparent',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f3f4f6';
+                e.currentTarget.style.backgroundColor = colors.sidebarHover;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -263,30 +251,33 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
           <div 
             className="px-4 py-3"
             style={{
-              borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`,
-              backgroundColor: isDark ? '#0f172a' : '#f9fafb',
+              borderBottom: `1px solid ${colors.border}`,
+              backgroundColor: colors.backgroundSecondary,
             }}
           >
             <div className="flex items-center">
               <div 
                 className="h-10 w-10 rounded-xl flex items-center justify-center font-medium text-sm shadow-sm"
                 style={{
-                  backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'var(--color-primary-light)',
-                  color: 'var(--color-primary)',
+                  backgroundColor: colors.primaryLight,
+                  color: colors.primary,
                 }}
               >
-                {profile ? (profile.name[0] + (profile.surname ? profile.surname[0] : '')) : 'JO'}
+                 <p style={{ color: colors.textPrimary }}>
+                 {profile ? (profile.name[0] + (profile.surname ? profile.surname[0] : '')) : 'JO'}
+
+                                          </p>
               </div>
               <div className="ml-3">
                 <p 
                   className="text-sm font-medium"
-                  style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                  style={{ color: colors.textPrimary }}
                 >
                   {profile ? `${profile.name} ${profile.surname}` : 'John Opondo'}
                 </p>
                 <p 
                   className="text-xs"
-                  style={{ color: isDark ? '#94a3b8' : '#6b7280' }}
+                  style={{ color: colors.textSecondary }}
                 >
                   Student ID: {profile ? profile.reg_number : '2028061'}
                 </p>
@@ -304,7 +295,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
           {/* Bottom Navigation Section */}
           <div 
             className="mt-auto px-3 py-4"
-            style={{ borderTop: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}
+            style={{ borderTop: `1px solid ${colors.border}` }}
           >
             {bottomNavItems.map((item) => renderNavItem(item))}
           </div>
@@ -315,9 +306,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
               <div 
                 className="rounded-xl p-4 text-center"
                 style={{
-                  background: isDark 
-                    ? 'linear-gradient(to bottom right, rgba(16, 185, 129, 0.1), rgba(20, 184, 166, 0.15))'
-                    : 'linear-gradient(to bottom right, #d1fae5, #a7f3d0)',
+                  backgroundColor: colors.primaryLight,
                 }}
               >
                 <div className="mx-auto mb-2 -mt-6 h-24 w-full flex justify-center">
@@ -332,13 +321,13 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
                 </div>
                 <p 
                   className="text-xs font-medium"
-                  style={{ color: isDark ? '#10b981' : '#047857' }}
+                  style={{ color: colors.textPrimary }}
                 >
                   Academic Excellence
                 </p>
                 <p 
                   className="text-xs mt-1"
-                  style={{ color: isDark ? '#34d399' : '#059669' }}
+                  style={{ color: colors.textPrimary }}
                 >
                   Track your progress
                 </p>
