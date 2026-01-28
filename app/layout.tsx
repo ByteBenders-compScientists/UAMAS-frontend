@@ -1,15 +1,25 @@
 import type { Metadata } from "next";
-// import { Outfit } from "next/font/google";  // COMMENT THIS OUT
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import LayoutController from "@/components/LayoutController";
 import { ThemeProvider } from "@/context/ThemeContext";
 
-// const outfit = Outfit({  // COMMENT THIS OUT
-//   subsets: ["latin"],
-//   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-//   variable: "--font-outfit",
-//   display: "swap",
-// });
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: [
+    "100",
+    "200",
+    "300",
+    "400",
+    "500",
+    "600",
+    "700",
+    "800",
+    "900",
+  ],
+  variable: "--font-outfit",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Intellimark",
@@ -19,7 +29,6 @@ export const metadata: Metadata = {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
   },
-  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -29,7 +38,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased">  {/* REMOVE outfit.variable */}
+      <body className={`${outfit.variable} font-sans antialiased`}>
         <ThemeProvider>
           <LayoutController>{children}</LayoutController>
         </ThemeProvider>
