@@ -1,87 +1,36 @@
-# 🎓 UAMAS Frontend
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-University Assessment & Marking Automation System (UAMAS) – Frontend
+## Getting Started
 
-This is the frontend for UAMAS, built with React, TypeScript, and Tailwind CSS. It allows lecturers, students, and administrators to interact with the assessment and exam management features of the platform.
-
----
-
-## ✨ Features
-
-- Responsive, modern UI with Tailwind CSS
-- Role-based views:
-  - Admin: manage users and roles
-  - Lecturer: create/upload assessments, proof AI results, monitor deadlines
-  - Student: take or upload handwritten quizzes/assignments
-- Real-time feedback from backend AI grading system
-- Secure login/authentication flow
-- Deadline notifications
-
----
-
-## ⚙️ Technologies Used
-
-- **React**
-- **TypeScript**
-- **Tailwind CSS**
-- **Axios** (for API calls)
-- **React Router**
-- **Context API / Redux** (for state management, if used)
-
----
-
-## 🛠️ Getting Started
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/GROUP-12-COMPUTER-SCIENCE/UAMAS-frontend.git
-cd uamas-frontend
-````
-
-### 2. Install dependencies
-
-```bash
-npm install
-```
-
-### 3. Start development server
+First, run the development server:
 
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
----
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 📁 Project Structure
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-```bash
-uamas-frontend/
-│
-├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── services/
-│   ├── assets/
-│   ├── App.tsx
-│   └── main.tsx
-├── public/
-├── tailwind.config.js
-└── vite.config.ts
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
----
+## Learn More
 
-## 🌐 API Integration
+To learn more about Next.js, take a look at the following resources:
 
-Make sure the backend is running and update the `.env` file with the correct base URL:
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-```env
-VITE_API_BASE_URL=http://localhost:5000/api/v1
-```
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
----
+## Deploy on Vercel
 
-## 📄 License
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-This project is licensed under the MIT License.
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
