@@ -2,6 +2,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   BookMarked,
   BarChart3,
@@ -21,9 +22,13 @@ import {
   ClipboardList,
   Library,
   Copy,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import Sidebar from "@/components/lecturerSidebar";
 import { useLayout } from "@/components/LayoutController";
+import { useTheme, useThemeColors } from "@/context/ThemeContext";
+import FloatingThemeButton from "@/components/FloatingThemeButton";
 
 // ===== TYPES =====
 interface StatData {
@@ -108,9 +113,125 @@ interface LecturerProfile {
   title?: string;
 }
 
+// Creative Loading Component
+const CreativeLoader: React.FC = () => {
+  const colors = useThemeColors();
+  
+  return (
+    <div 
+      className="min-h-screen flex items-center justify-center"
+      style={{ background: colors.background }}
+    >
+      <div className="relative">
+        {/* Orbiting particles */}
+        {[...Array(3)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute inset-0"
+            animate={{ rotate: 360 }}
+            transition={{ 
+              duration: 2 + i, 
+              repeat: Infinity, 
+              ease: "linear",
+              delay: i * 0.2
+            }}
+          >
+            <div 
+              className="w-32 h-32 rounded-full border-2"
+              style={{ 
+                borderColor: i === 0 ? `${colors.primary}40` : i === 1 ? `${colors.secondary}40` : `${colors.accent}40`,
+                borderTopColor: 'transparent',
+                borderRightColor: 'transparent'
+              }}
+            />
+          </motion.div>
+        ))}
+
+        {/* Center animated icon */}
+        <motion.div
+          className="relative w-32 h-32 flex items-center justify-center"
+          animate={{ 
+            scale: [1, 1.15, 1],
+            rotate: [0, 180, 360]
+          }}
+          transition={{ 
+            duration: 3, 
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+          <div 
+            className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg"
+            style={{ 
+              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`
+            }}
+          >
+            <motion.div
+              animate={{ rotate: [0, -180, -360] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            >
+              <Zap 
+                className="w-10 h-10"
+                style={{ color: colors.background }}
+              />
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Pulsing rings */}
+        {[...Array(2)].map((_, i) => (
+          <motion.div
+            key={`ring-${i}`}
+            className="absolute inset-0 rounded-full border-2"
+            style={{ 
+              borderColor: `${colors.primary}30`,
+            }}
+            animate={{ 
+              scale: [1, 1.5, 1],
+              opacity: [0.5, 0, 0.5]
+            }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity,
+              delay: i * 1,
+              ease: "easeOut"
+            }}
+          />
+        ))}
+
+        {/* Loading text */}
+        <motion.div
+          className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 whitespace-nowrap"
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles 
+              className="w-5 h-5"
+              style={{ color: colors.primary }}
+            />
+            <span 
+              className="text-lg font-bold"
+              style={{ color: colors.textPrimary }}
+            >
+              Loading Dashboard
+            </span>
+            <Sparkles 
+              className="w-5 h-5"
+              style={{ color: colors.secondary }}
+            />
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
 // Main Dashboard Component with proper sidebar integration
 const LecturerDashboard: React.FC = () => {
   const router = useRouter();
+  const { isLoading: themeLoading } = useTheme();
+  const colors = useThemeColors();
 
   const {
     sidebarCollapsed,
@@ -128,6 +249,7 @@ const LecturerDashboard: React.FC = () => {
   const [profile, setProfile] = useState<LecturerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [lecturerProfile, setLecturerProfile] = useState<LecturerProfile | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // API Base URL
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
@@ -142,11 +264,12 @@ const LecturerDashboard: React.FC = () => {
     return `${name.charAt(0)}${surname.charAt(0)}`.toUpperCase();
   };
 
-  // Get full display name with title
-  // const getDisplayName = (profile: LecturerProfile) => {
-  //   const title = profile.title || "Dr.";
-  //   return `${title} ${profile.name} ${profile.surname}`;
-  // };
+  // Copy to clipboard handler
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
 
   // Fetch lecturer profile
   const fetchProfile = async () => {
@@ -252,14 +375,6 @@ const LecturerDashboard: React.FC = () => {
       .catch(() => setLecturerProfile(null));
   }, []);
 
-  // Calculate proper margin based on sidebar state
-  const getMainContentMargin = () => {
-    if (isMobileView || isTabletView) {
-      return "ml-0";
-    }
-    return sidebarCollapsed ? "ml-20" : "ml-60";
-  };
-
   // Calculate statistics
   const statsData: StatData[] = [
     {
@@ -268,7 +383,7 @@ const LecturerDashboard: React.FC = () => {
       value: students.length.toString(),
       change: 5,
       changeLabel: "+12%",
-      color: "text-blue-600",
+      color: colors.primary,
     },
     {
       icon: FileText,
@@ -276,7 +391,7 @@ const LecturerDashboard: React.FC = () => {
       value: assessments.filter((a) => a.status === "start").length.toString(),
       change: -2,
       changeLabel: "+5%",
-      color: "text-green-600",
+      color: colors.success,
     },
     {
       icon: Clock,
@@ -284,7 +399,7 @@ const LecturerDashboard: React.FC = () => {
       value: submissions.filter((s) => !s.graded).length.toString(),
       change: 3,
       changeLabel: "+2%",
-      color: "text-orange-600",
+      color: colors.warning,
     },
     {
       icon: BookMarked,
@@ -292,7 +407,7 @@ const LecturerDashboard: React.FC = () => {
       value: courses.length.toString(),
       change: 0,
       changeLabel: "+8%",
-      color: "text-purple-600",
+      color: colors.secondary,
     },
   ];
 
@@ -303,113 +418,142 @@ const LecturerDashboard: React.FC = () => {
       title: "Create Assessment",
       description: "Generate new assignments and CATs with AI",
       path: "/lecturer/courses",
-      color: "text-blue-600",
-      iconBg: "bg-blue-100",
+      color: colors.primary,
+      iconBg: `${colors.primary}20`,
     },
     {
       icon: Users,
       title: "Manage Students",
       description: "View students who have joined your units",
       path: "/lecturer/students",
-      color: "text-green-600",
-      iconBg: "bg-green-100",
+      color: colors.success,
+      iconBg: `${colors.success}20`,
     },
     {
       icon: GraduationCap,
       title: "Course Management",
       description: "Create and manage your courses",
       path: "/lecturer/course",
-      color: "text-purple-600",
-      iconBg: "bg-purple-100",
+      color: colors.secondary,
+      iconBg: `${colors.secondary}20`,
     },
     {
       icon: ClipboardList,
       title: "Grade Submissions",
       description: "Review and grade student work",
       path: "/lecturer/submission",
-      color: "text-orange-600",
-      iconBg: "bg-orange-100",
+      color: colors.warning,
+      iconBg: `${colors.warning}20`,
     },
     {
       icon: BookOpen,
       title: "Manage Units",
       description: "Organize your teaching units",
       path: "/lecturer/units",
-      color: "text-indigo-600",
-      iconBg: "bg-indigo-100",
+      color: colors.accent,
+      iconBg: `${colors.accent}20`,
     },
     {
       icon: Library,
       title: "Library Resources",
       description: "Access teaching materials and resources",
       path: "/lecturer/library",
-      color: "text-red-600",
-      iconBg: "bg-red-100",
+      color: colors.error,
+      iconBg: `${colors.error}20`,
     },
     {
       icon: MessageSquare,
       title: "Discussion Forums",
       description: "Engage with students in forums",
       path: "/lecturer/forums",
-      color: "text-teal-600",
-      iconBg: "bg-teal-100",
+      color: colors.info,
+      iconBg: `${colors.info}20`,
     },
     {
       icon: BarChart3,
       title: "Analytics",
       description: "View performance analytics",
       path: "/lecturer/analytics",
-      color: "text-pink-600",
-      iconBg: "bg-pink-100",
+      color: colors.primary,
+      iconBg: `${colors.primary}20`,
     },
   ];
 
   // Components
   const TopHeader: React.FC = () => (
-    <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-20">
+    <header 
+      className="border-b shadow-sm sticky top-0 z-20"
+      style={{
+        background: colors.cardBackground,
+        borderColor: colors.border
+      }}
+    >
       <div className="flex items-center justify-between px-4 lg:px-6 py-4">
         <div className="flex items-center space-x-3">
           {(isMobileView || isTabletView) && (
             <button
-              className="text-emerald-600 hover:text-emerald-800 transition-colors"
+              className="transition-colors"
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle sidebar"
+              style={{ color: colors.primary }}
             >
               <Menu className="w-6 h-6" />
             </button>
           )}
           <div className="hidden sm:block">
-            <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-sm text-gray-600">
-
+            <h1 
+              className="text-xl font-bold"
+              style={{ color: colors.textPrimary }}
+            >
+              Dashboard
+            </h1>
+            <p 
+              className="text-sm"
+              style={{ color: colors.textSecondary }}
+            >
               Welcome back, {lecturerProfile ? `${lecturerProfile.name} ${lecturerProfile.surname}` : '...'}
-
             </p>
           </div>
         </div>
 
         <div className="flex items-center space-x-4">
-          <button className="relative text-gray-500 hover:text-emerald-600 transition-colors">
+          <button 
+            className="relative transition-colors"
+            style={{ color: colors.textSecondary }}
+          >
             <Bell className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs rounded-full px-1.5 py-0.5">
+            <span 
+              className="absolute -top-1 -right-1 text-xs rounded-full px-1.5 py-0.5"
+              style={{
+                background: colors.primary,
+                color: colors.background
+              }}
+            >
               3
             </span>
           </button>
 
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
+            <div 
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: `${colors.primary}30` }}
+            >
               {profile ? (
-                <span className="text-sm font-semibold text-emerald-700">
+                <span 
+                  className="text-sm font-semibold"
+                  style={{ color: colors.primary }}
+                >
                   {getInitials(profile.name, profile.surname)}
                 </span>
               ) : (
-                <User className="w-4 h-4 text-emerald-600" />
+                <User className="w-4 h-4" style={{ color: colors.primary }} />
               )}
             </div>
-            <span className="text-sm font-semibold text-gray-700 hidden md:inline">
-
+            <span 
+              className="text-sm font-semibold hidden md:inline"
+              style={{ color: colors.textPrimary }}
+            >
               {lecturerProfile ? `${lecturerProfile.name} ${lecturerProfile.surname}` : '...'}
-
             </span>
           </div>
         </div>
@@ -418,65 +562,182 @@ const LecturerDashboard: React.FC = () => {
   );
 
   const HeroSection: React.FC = () => (
-    <div className="bg-gradient-to-r from-emerald-900 to-gray-700 rounded-xl p-6 lg:p-8 mb-6 text-white relative overflow-hidden">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className="rounded-xl p-6 lg:p-8 mb-6 text-white relative overflow-hidden"
+      style={{
+        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`
+      }}
+    >
       <div className="relative z-10">
         <h1 className="text-xl lg:text-3xl font-bold mb-2">
-
           Welcome back, {lecturerProfile ? `${lecturerProfile.name} ${lecturerProfile.surname}` : '...'}
-
         </h1>
-        <p className="text-slate-200 mb-4">
+        <p 
+          className="mb-4"
+          style={{ color: `${colors.background}e6` }}
+        >
           Manage your courses and engage with students efficiently
         </p>
         {profile && profile.department && (
-          <div className="flex items-center space-x-2 bg-slate-700/50 px-3 py-2 rounded-lg w-fit mb-4">
-            <GraduationCap className="w-4 h-4 text-emerald-400" />
+          <div 
+            className="flex items-center space-x-2 px-3 py-2 rounded-lg w-fit mb-4"
+            style={{ background: `${colors.background}20` }}
+          >
+            <GraduationCap className="w-4 h-4" />
             <span className="text-sm">
               {profile.department}
               {profile.staff_number && ` • Staff ID: ${profile.staff_number}`}
             </span>
           </div>
         )}
-        <div className="flex items-center space-x-2 bg-slate-700/50 px-3 py-2 rounded-lg w-fit">
-          <CheckCircle className="w-4 h-4 text-green-400" />
+        <div 
+          className="flex items-center space-x-2 px-3 py-2 rounded-lg w-fit"
+          style={{ background: `${colors.background}20` }}
+        >
+          <CheckCircle className="w-4 h-4" />
           <span className="text-sm">
-            {courses.length} active courses • {students.length} students
-            enrolled
+            {courses.length} active courses • {students.length} students enrolled
           </span>
         </div>
       </div>
-      <div className="absolute top-0 right-0 w-32 lg:w-64 h-32 lg:h-64 bg-emerald-500/10 rounded-full -translate-y-16 lg:-translate-y-32 translate-x-16 lg:translate-x-32"></div>
-    </div>
+      <div 
+        className="absolute top-0 right-0 w-32 lg:w-64 h-32 lg:h-64 rounded-full -translate-y-16 lg:-translate-y-32 translate-x-16 lg:translate-x-32"
+        style={{ background: `${colors.background}10` }}
+      ></div>
+    </motion.div>
   );
 
-  const StatsCard: React.FC<{ stat: StatData }> = ({ stat }) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 hover:shadow-md transition-shadow">
+  const StatsCard: React.FC<{ stat: StatData; index: number }> = ({ stat, index }) => (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 + index * 0.1 }}
+      className="rounded-xl shadow-sm border p-4 lg:p-6 hover:shadow-md transition-all duration-300"
+      style={{
+        background: colors.cardBackground,
+        borderColor: colors.border
+      }}
+      whileHover={{ y: -4 }}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div
-            className={`p-2 lg:p-3 rounded-full bg-gray-100 ${
-              stat.color || "text-emerald-600"
-            }`}
+            className="p-2 lg:p-3 rounded-full"
+            style={{ background: `${stat.color}20` }}
           >
-            <stat.icon className="w-5 h-5 lg:w-6 lg:h-6" />
+            <stat.icon 
+              className="w-5 h-5 lg:w-6 lg:h-6"
+              style={{ color: stat.color }}
+            />
           </div>
           <div>
-            <div className="text-xl lg:text-2xl font-bold text-gray-900">
+            <div 
+              className="text-xl lg:text-2xl font-bold"
+              style={{ color: colors.textPrimary }}
+            >
               {stat.value}
             </div>
-            <div className="text-xs lg:text-sm text-gray-500">{stat.label}</div>
+            <div 
+              className="text-xs lg:text-sm"
+              style={{ color: colors.textSecondary }}
+            >
+              {stat.label}
+            </div>
           </div>
         </div>
         {stat.changeLabel && (
           <div className="flex items-center space-x-1">
-            <TrendingUp className="w-3 h-3 lg:w-4 lg:h-4 text-green-500" />
-            <span className="text-xs lg:text-sm font-semibold text-green-600">
+            <TrendingUp 
+              className="w-3 h-3 lg:w-4 lg:h-4"
+              style={{ color: colors.success }}
+            />
+            <span 
+              className="text-xs lg:text-sm font-semibold"
+              style={{ color: colors.success }}
+            >
               {stat.changeLabel}
             </span>
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
+  );
+
+  const QuickActionsGrid: React.FC = () => (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+      className="rounded-xl shadow-sm border p-4 lg:p-6 mb-6"
+      style={{
+        background: colors.cardBackground,
+        borderColor: colors.border
+      }}
+    >
+      <div className="flex items-center justify-between mb-6">
+        <h2 
+          className="text-xl font-bold"
+          style={{ color: colors.textPrimary }}
+        >
+          Quick Actions
+        </h2>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {quickActions.map((action, index) => (
+          <motion.button
+            key={action.title}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6 + index * 0.05 }}
+            onClick={() => handleNavigation(action.path)}
+            className="text-left p-4 rounded-xl border transition-all duration-300 group"
+            style={{
+              background: colors.backgroundSecondary,
+              borderColor: colors.borderLight
+            }}
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div 
+              className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-all duration-300"
+              style={{ background: action.iconBg }}
+            >
+              <action.icon 
+                className="w-6 h-6"
+                style={{ color: action.color }}
+              />
+            </div>
+            <h3 
+              className="font-semibold mb-1"
+              style={{ color: colors.textPrimary }}
+            >
+              {action.title}
+            </h3>
+            <p 
+              className="text-sm"
+              style={{ color: colors.textSecondary }}
+            >
+              {action.description}
+            </p>
+            <div className="mt-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <span 
+                className="text-xs font-medium"
+                style={{ color: action.color }}
+              >
+                Get started
+              </span>
+              <ChevronRight 
+                className="w-4 h-4"
+                style={{ color: action.color }}
+              />
+            </div>
+          </motion.button>
+        ))}
+      </div>
+    </motion.div>
   );
 
   const UnitsJoinCodeSection: React.FC = () => {
@@ -485,18 +746,36 @@ const LecturerDashboard: React.FC = () => {
     );
 
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="rounded-xl shadow-sm border p-4 lg:p-6"
+        style={{
+          background: colors.cardBackground,
+          borderColor: colors.border
+        }}
+      >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Unit Join Codes</h2>
+          <h2 
+            className="text-xl font-bold"
+            style={{ color: colors.textPrimary }}
+          >
+            Unit Join Codes
+          </h2>
           <button
             onClick={() => handleNavigation("/lecturer/course")}
-            className="text-emerald-600 hover:text-emerald-800 text-sm font-medium"
+            className="text-sm font-medium hover:underline"
+            style={{ color: colors.primary }}
           >
             Manage units
           </button>
         </div>
         {unitsWithCourse.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 text-sm">
+          <div 
+            className="text-center py-8 text-sm"
+            style={{ color: colors.textSecondary }}
+          >
             <p>No units found.</p>
             <p className="mt-1">
               Create courses and units in Course Management to generate join codes for students.
@@ -504,182 +783,108 @@ const LecturerDashboard: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-3 max-h-72 overflow-y-auto">
-            {unitsWithCourse.slice(0, 8).map(({ course, unit }) => (
-              <div
+            {unitsWithCourse.slice(0, 8).map(({ course, unit }, index) => (
+              <motion.div
                 key={unit.id}
-                className="flex items-start justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.8 + index * 0.05 }}
+                className="flex items-start justify-between p-3 rounded-lg border transition-all duration-300"
+                style={{
+                  background: colors.backgroundSecondary,
+                  borderColor: colors.borderLight
+                }}
+                whileHover={{ x: 4 }}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">
-                    {unit.unit_code}  b7 {unit.unit_name}
+                  <div 
+                    className="text-sm font-medium truncate"
+                    style={{ color: colors.textPrimary }}
+                  >
+                    {unit.unit_code} - {unit.unit_name}
                   </div>
-                  <div className="text-xs text-gray-500 truncate">
-                    {course.code}  b7 {course.name}
+                  <div 
+                    className="text-xs mt-1"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    {course.name} • Level {unit.level} • Sem {unit.semester}
                   </div>
-                  <div className="mt-1 text-xs text-gray-500">
-                    {(
-                      (unit as unknown as { unique_join_code?: string }).unique_join_code
-                    ) ? (
-                      <span className="font-mono text-xs">
-                        Join code: {(unit as unknown as { unique_join_code?: string }).unique_join_code}
-                      </span>
-                    ) : (
-                      <span className="italic text-gray-400">
-                        Join code not available yet
-                      </span>
-                    )}
+                  <div className="flex items-center gap-2 mt-2">
+                    <code 
+                      className="text-xs font-mono px-2 py-1 rounded"
+                      style={{
+                        background: `${colors.primary}15`,
+                        color: colors.primary
+                      }}
+                    >
+                      {unit.id}
+                    </code>
+                    <motion.button
+                      onClick={() => handleCopyCode(unit.id)}
+                      className="p-1 rounded transition-colors"
+                      style={{
+                        background: copiedCode === unit.id ? `${colors.success}20` : 'transparent',
+                        color: copiedCode === unit.id ? colors.success : colors.textSecondary
+                      }}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <Copy className="w-3 h-3" />
+                    </motion.button>
                   </div>
                 </div>
-                {(
-                  (unit as unknown as { unique_join_code?: string }).unique_join_code
-                ) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const code = (unit as unknown as { unique_join_code?: string }).unique_join_code || "";
-                      navigator.clipboard.writeText(code).catch(() => {
-                        return;
-                      });
-                    }}
-                    className="ml-3 inline-flex items-center px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100"
-                  >
-                    <Copy className="w-3 h-3 mr-1" />
-                    Copy
-                  </button>
-                )}
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
-      </div>
+      </motion.div>
     );
   };
 
-  const QuickActionCard: React.FC<{ action: QuickActionCard }> = ({
-    action,
-  }) => (
-    <div
-      onClick={() => handleNavigation(action.path)}
-      className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 hover:shadow-md transition-all hover:border-emerald-200 group cursor-pointer"
-    >
-      <div className="flex items-start space-x-3 lg:space-x-4">
-        <div
-          className={`p-2 lg:p-3 rounded-xl ${action.iconBg} ${action.color} group-hover:scale-110 transition-transform`}
-        >
-          <action.icon className="w-5 h-5 lg:w-6 lg:h-6" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-emerald-600 transition-colors text-sm lg:text-base">
-            {action.title}
-          </h3>
-          <p className="text-xs lg:text-sm text-gray-600 mb-3">
-            {action.description}
-          </p>
-          <div className="flex items-center text-emerald-600 text-xs lg:text-sm font-medium group-hover:translate-x-1 transition-transform">
-            <span>Access</span>
-            <ChevronRight className="w-3 h-3 lg:w-4 lg:h-4 ml-1" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const RecentActivitySection: React.FC = () => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
-        <button
-          onClick={() => handleNavigation("/lecturer/courses")}
-          className="text-emerald-600 hover:text-emerald-800 text-sm font-medium"
-        >
-          View All
-        </button>
-      </div>
-      <div className="space-y-4">
-        {assessments.slice(0, 5).map((assessment) => (
-          <div
-            key={assessment.id}
-            className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
-            onClick={() => handleNavigation("/lecturer/courses")}
-          >
-            <div className="p-2 rounded-lg bg-blue-100 text-blue-600 flex-shrink-0">
-              <FileText className="w-4 h-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-gray-900 truncate text-sm lg:text-base">
-                {assessment.title}
-              </h4>
-              <p className="text-xs lg:text-sm text-gray-600 truncate">
-                {assessment.description}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {assessment.type} • {assessment.total_marks} marks
-              </p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          </div>
-        ))}
-        {assessments.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>No recent assessments</p>
-            <button
-              onClick={() => handleNavigation("/lecturer/courses")}
-              className="mt-2 text-emerald-600 hover:text-emerald-800 text-sm font-medium"
-            >
-              Create your first assessment
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar />
-        <div
-          className={`${getMainContentMargin()} transition-all duration-300 ease-in-out`}
-        >
-          <div className="flex items-center justify-center h-screen">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading dashboard...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  // Show loading screen while theme or data is loading
+  if (themeLoading || loading) {
+    return <CreativeLoader />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div 
+      className="min-h-screen flex"
+      style={{ background: colors.background }}
+    >
       <Sidebar />
-      <div
-        className={`${getMainContentMargin()} transition-all duration-300 ease-in-out`}
+      
+      <motion.div
+        initial={{ 
+          marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+        }}
+        animate={{ 
+          marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+        }}
+        transition={{ duration: 0.3 }}
+        className="flex-1 flex flex-col"
       >
-        <div className="flex flex-col min-h-screen">
-          <TopHeader />
-
-          <main className="flex-1 p-4 lg:p-6 max-w-8xl mx-auto w-full">
+        <TopHeader />
+        
+        <main className="flex-1 p-4 lg:p-6">
+          <div className="max-w-7xl mx-auto">
             <HeroSection />
 
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
               {statsData.map((stat, index) => (
-                <StatsCard key={index} stat={stat} />
+                <StatsCard key={stat.label} stat={stat} index={index} />
               ))}
             </div>
 
-            {/* Units join codes & Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <UnitsJoinCodeSection />
-              <RecentActivitySection />
-            </div>
-          </main>
-        </div>
-      </div>
+            {/* Quick Actions */}
+            <QuickActionsGrid />
+
+            {/* Unit Join Codes */}
+            <UnitsJoinCodeSection />
+          </div>
+        </main>
+      </motion.div>
+      <FloatingThemeButton/>
     </div>
   );
 };

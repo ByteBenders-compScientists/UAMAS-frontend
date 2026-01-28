@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
+import { useThemeColors } from '@/context/ThemeContext';
 
 interface DisclaimerProps {
   onAgree: () => void;
@@ -18,25 +19,41 @@ export default function Disclaimer({
   duration,
   numberOfQuestions,
 }: DisclaimerProps) {
+  const colors = useThemeColors();
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{ backgroundColor: colors.textPrimary + '80' }}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-xl shadow-lg max-w-lg w-full p-6"
+        className="rounded-xl shadow-lg max-w-lg w-full p-6"
+        style={{ backgroundColor: colors.cardBackground }}
       >
         <div className="text-center">
           <AlertTriangle
             size={48}
-            className="mx-auto text-yellow-500 mb-4"
+            className="mx-auto mb-4"
+            style={{ color: colors.warning }}
           />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 
+            className="text-lg font-semibold mb-2"
+            style={{ color: colors.textPrimary }}
+          >
             Disclaimer for {title}
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p 
+            className="mb-4"
+            style={{ color: colors.textSecondary }}
+          >
             Please read the following rules carefully before starting:
           </p>
-          <ul className="text-left text-gray-600 list-disc list-inside mb-6 space-y-2">
+          <ul 
+            className="text-left list-disc list-inside mb-6 space-y-2"
+            style={{ color: colors.textSecondary }}
+          >
             <li>This assessment consists of {numberOfQuestions} questions.</li>
             {duration && (
               <li>
@@ -60,13 +77,33 @@ export default function Disclaimer({
           <div className="flex justify-center space-x-4">
             <button
               onClick={onCancel}
-              className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-6 py-2 rounded-lg transition-colors"
+              style={{
+                backgroundColor: colors.backgroundSecondary,
+                color: colors.textSecondary
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = colors.backgroundTertiary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colors.backgroundSecondary;
+              }}
             >
               Cancel
             </button>
             <button
               onClick={onAgree}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 text-white rounded-lg transition-colors"
+              style={{
+                backgroundColor: colors.primary,
+                color: colors.background
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = colors.primaryHover;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colors.primary;
+              }}
             >
               I Agree, Start Assessment
             </button>
@@ -75,4 +112,4 @@ export default function Disclaimer({
       </motion.div>
     </div>
   );
-} 
+}
