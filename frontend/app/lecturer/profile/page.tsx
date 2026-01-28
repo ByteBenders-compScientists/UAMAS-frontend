@@ -29,6 +29,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import Image from 'next/image';
+import FloatingThemeButton from '@/components/FloatingThemeButton';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1";
 
@@ -865,6 +866,7 @@ export default function LecturerProfilePage() {
           </div>
         </main>
       </motion.div>
+      <FloatingThemeButton/>
     </div>
   );
 }

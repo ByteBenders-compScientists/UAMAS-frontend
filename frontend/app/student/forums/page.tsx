@@ -7,12 +7,13 @@ import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { useThemeColors } from '@/context/ThemeContext';
 import { 
-  MessageSquare, Search, Filter, ChevronDown, 
-  User, ThumbsUp, MessageCircle, Clock,
+  MessageSquare, Search,
+  User, ThumbsUp, MessageCircle,
   Users, Pin, Bookmark, Plus, Send, BookOpen,
-  X, TrendingUp, Award, CheckCircle, AlertCircle,
-  Edit3, MoreVertical, Eye, Hash, Flame
+  X,Award, CheckCircle, AlertCircle,
+   Eye, Hash, Flame
 } from 'lucide-react';
+import FloatingThemeButton from '@/components/FloatingThemeButton';
 
 const StudentForums = () => {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
@@ -958,6 +959,7 @@ const StudentForums = () => {
           )}
         </main>
       </motion.div>
+      <FloatingThemeButton/>
     </div>
   );
 };

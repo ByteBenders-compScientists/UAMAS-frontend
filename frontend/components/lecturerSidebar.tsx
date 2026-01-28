@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useLayout } from "./LayoutController";
 import { useTheme, useThemeColors } from "@/context/ThemeContext";
+import ThemeCustomizer from "./ThemeCustomizer";
 import {
   LayoutDashboard,
   GraduationCap,
@@ -65,7 +66,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   };
 
   const getDisplayName = (profile: LecturerProfile) => {
-    const title = profile.title ;
+    const title = profile.title;
     return `${title} ${profile.name} ${profile.surname}`;
   };
 
@@ -98,6 +99,28 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       console.error("Error fetching profile:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        // Redirect to login page after successful logout
+        window.location.href = '/auth';
+      } else {
+        console.error('Logout failed');
+        // Still redirect even if logout fails
+        window.location.href = '/auth';
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Redirect to login on error
+      window.location.href = '/auth';
     }
   };
 
@@ -140,7 +163,6 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const bottomNavItems: NavItemType[] = [
     { name: "Profile", icon: <User size={20} />, path: "/lecturer/profile" },
     { name: "Settings", icon: <Settings size={20} />, path: "/lecturer/settings" },
-    { name: "Logout", icon: <LogOut size={20} />, path: "/logout" },
   ];
 
   const renderOverlay = () => {
@@ -300,12 +322,9 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
               color: colors.primary,
             }}
           >
-            
             <p style={{ color: colors.textPrimary }}>
-            {getInitials(profile.name, profile.surname)}
-
-                                          </p>
-              
+              {getInitials(profile.name, profile.surname)}
+            </p>
           </div>
           <div className="ml-3 overflow-hidden">
             <p
@@ -407,6 +426,18 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
         <div className="flex flex-col flex-1 overflow-y-auto py-4 custom-scrollbar">
           <nav className="flex-1 px-3 space-y-1">
             {navItems.map((item) => renderNavItem(item))}
+            
+            {/* Theme Customizer - Add after main nav items */}
+            <div 
+              className="pt-2 mt-2"
+              style={{ borderTop: `1px solid ${colors.border}` }}
+            >
+              <ThemeCustomizer 
+                isCollapsed={sidebarCollapsed} 
+                isMobileView={isMobileView}
+                isTabletView={isTabletView}
+              />
+            </div>
           </nav>
 
           {/* Bottom Navigation Section */}
@@ -415,75 +446,67 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
             style={{ borderTop: `1px solid ${colors.border}` }}
           >
             {bottomNavItems.map((item) => renderNavItem(item))}
+            
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className={`
+                flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200 w-full
+                ${sidebarCollapsed && !isMobileView && !isTabletView ? "justify-center" : ""}
+              `}
+              style={{
+                backgroundColor: 'transparent',
+                color: colors.textSecondary,
+                border: `1px solid transparent`,
+                fontWeight: 400,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = colors.sidebarHover;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <div style={{ color: colors.textTertiary }}>
+                <LogOut size={20} />
+              </div>
+
+              {(!sidebarCollapsed || isMobileView || isTabletView) && (
+                <span className="ml-3">Logout</span>
+              )}
+            </button>
           </div>
 
           {/* Bottom SVG Illustration */}
           {(!sidebarCollapsed || isMobileView || isTabletView) && (
             <div className="px-4 pb-4">
-              <div
+              <div 
                 className="rounded-xl p-4 text-center"
                 style={{
                   backgroundColor: colors.primaryLight,
                 }}
               >
                 <div className="mx-auto mb-2 -mt-6 h-24 w-full flex justify-center">
-                  <svg
-                    width="100"
-                    height="100"
-                    viewBox="0 0 100 100"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M50 87.5C70.7107 87.5 87.5 70.7107 87.5 50C87.5 29.2893 70.7107 12.5 50 12.5C29.2893 12.5 12.5 29.2893 12.5 50C12.5 70.7107 29.2893 87.5 50 87.5Z"
-                      fill={colors.primaryLight}
-                    />
-                    <path
-                      d="M65 35H35C33.619 35 32.5 36.119 32.5 37.5V62.5C32.5 63.881 33.619 65 35 65H65C66.381 65 67.5 63.881 67.5 62.5V37.5C67.5 36.119 66.381 35 65 35Z"
-                      stroke={colors.primary}
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M57.5 27.5V32.5"
-                      stroke={colors.primary}
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M42.5 27.5V32.5"
-                      stroke={colors.primary}
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M32.5 42.5H67.5"
-                      stroke={colors.primary}
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path d="M45 50H40V55H45V50Z" fill={colors.primary} />
-                    <path d="M55 50H50V55H55V50Z" fill={colors.primary} />
-                    <path d="M45 57.5H40V62.5H45V57.5Z" fill={colors.primary} />
-                    <path d="M55 57.5H50V62.5H55V57.5Z" fill={colors.primary} />
-                    <path d="M65 50H60V55H65V50Z" fill={colors.primary} />
-                  </svg>
+                  <Image
+                    src='/assets/lec.svg'
+                    width={150}
+                    height={150}
+                    quality={100}
+                    className={isDark ? 'brightness-110' : ''}
+                    alt='svg'
+                  />
                 </div>
-                <p
+                <p 
                   className="text-xs font-medium"
                   style={{ color: colors.textPrimary }}
                 >
-                  Academic excellence
+                  Academic Excellence
                 </p>
-                <p
+                <p 
                   className="text-xs mt-1"
                   style={{ color: colors.textPrimary }}
                 >
-                  Track your courses
+                  Track your progress
                 </p>
               </div>
             </div>

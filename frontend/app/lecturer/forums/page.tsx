@@ -11,6 +11,7 @@ import {
    Pin, Clock3, Plus,  Settings, TrendingUp, Eye,
   CheckCircle, X
 } from 'lucide-react';
+import FloatingThemeButton from '@/components/FloatingThemeButton';
 
 const LecturerForums = () => {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
@@ -733,6 +734,7 @@ const LecturerForums = () => {
       </motion.div>
       
       <CreateForumModal />
+      <FloatingThemeButton/>
     </div>
   );
 };

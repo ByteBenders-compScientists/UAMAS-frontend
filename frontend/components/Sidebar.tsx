@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { useLayout } from './LayoutController';
 import { useTheme, useThemeColors } from '@/context/ThemeContext';
 import { easeInOut } from 'framer-motion';
+import ThemeCustomizer from './ThemeCustomizer';
 import {
   LayoutDashboard,
   BookOpen,
@@ -78,10 +79,31 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     { name: 'Forums', icon: <MessageSquare size={20} />, path: '/student/forums', badge: 'New' },
   ];
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        // Redirect to login page after successful logout
+        window.location.href = '/auth';
+      } else {
+        console.error('Logout failed');
+        // Still redirect even if logout fails
+        window.location.href = '/auth';
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Redirect to login on error
+      window.location.href = '/auth';
+    }
+  };
+
   const bottomNavItems: NavItemType[] = [
     { name: 'Profile', icon: <User size={20} />, path: '/student/profile' },
     { name: 'Settings', icon: <Settings size={20} />, path: '/student/settings' },
-    { name: 'Logout', icon: <LogOut size={20} />, path: '/logout' },
   ];
 
   const sidebarVariants = {
@@ -265,8 +287,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
               >
                  <p style={{ color: colors.textPrimary }}>
                  {profile ? (profile.name[0] + (profile.surname ? profile.surname[0] : '')) : 'JO'}
-
-                                          </p>
+                 </p>
               </div>
               <div className="ml-3">
                 <p 
@@ -290,6 +311,18 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
         <div className="flex flex-col flex-1 overflow-y-auto py-4">
           <nav className="flex-1 px-3 space-y-1">
             {navItems.map((item) => renderNavItem(item))}
+            
+            {/* Theme Customizer - Add after main nav items */}
+            <div 
+              className="pt-2 mt-2"
+              style={{ borderTop: `1px solid ${colors.border}` }}
+            >
+              <ThemeCustomizer 
+                isCollapsed={sidebarCollapsed} 
+                isMobileView={isMobileView}
+                isTabletView={isTabletView}
+              />
+            </div>
           </nav>
           
           {/* Bottom Navigation Section */}
@@ -298,6 +331,35 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
             style={{ borderTop: `1px solid ${colors.border}` }}
           >
             {bottomNavItems.map((item) => renderNavItem(item))}
+            
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className={`
+                flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200 w-full
+                ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
+              `}
+              style={{
+                backgroundColor: 'transparent',
+                color: colors.textSecondary,
+                border: `1px solid transparent`,
+                fontWeight: 400,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = colors.sidebarHover;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <div style={{ color: colors.textTertiary }}>
+                <LogOut size={20} />
+              </div>
+              
+              {(!sidebarCollapsed || isMobileView || isTabletView) && (
+                <span className="ml-3">Logout</span>
+              )}
+            </button>
           </div>
           
           {/* Bottom SVG Illustration */}

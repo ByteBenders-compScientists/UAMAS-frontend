@@ -11,6 +11,7 @@ import {
   Target
 } from 'lucide-react';
 import { Course } from '../../../types/assessment';
+import { useThemeColors } from '@/context/ThemeContext';
 
 interface SideAccessPanelProps {
   selectedCourse: string;
@@ -35,6 +36,7 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
   isMinimized,
   onToggleMinimize
 }) => {
+  const colors = useThemeColors();
   const [expandedCourse, setExpandedCourse] = useState<string>("");
 
   const weeks = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `Week ${i + 1}` }));
@@ -47,28 +49,47 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
       initial={{ width: 320 }}
       animate={{ width: isMinimized ? 60 : 320 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="bg-white border-r border-gray-100 shadow-lg flex flex-col relative z-20 h-full hidden md:flex"
+      className="border-r shadow-lg flex flex-col relative z-20 h-full hidden md:flex"
+      style={{
+        backgroundColor: colors.cardBackground,
+        borderColor: colors.border
+      }}
     >
       {/* Header */}
-      <div className="p-4 lg:p-6 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-white">
+      <div 
+        className="p-4 lg:p-6 border-b"
+        style={{
+          borderColor: colors.border,
+          background: `linear-gradient(to right, ${colors.primary}10, ${colors.background})`
+        }}
+      >
         <div className="flex items-center justify-between">
           {!isMinimized && (
             <div>
-              <h3 className="font-bold text-gray-900 flex items-center text-base">
-                <Filter className="w-5 h-5 mr-3 text-emerald-600" />
+              <h3 
+                className="font-bold flex items-center text-base"
+                style={{ color: colors.textPrimary }}
+              >
+                <Filter className="w-5 h-5 mr-3" style={{ color: colors.primary }} />
                 Course Selection
               </h3>
-              <p className="text-sm text-gray-500 mt-1">Choose your context</p>
+              <p 
+                className="text-sm mt-1"
+                style={{ color: colors.textSecondary }}
+              >
+                Choose your context
+              </p>
             </div>
           )}
           <button
             onClick={onToggleMinimize}
-            className="p-2 hover:bg-emerald-100 rounded-xl transition-colors group"
+            className="p-2 hover:bg-primary/10 rounded-xl transition-colors group"
+            style={{ color: colors.primary }}
           >
             {isMinimized ? (
-              <ChevronRight className="w-5 h-5 text-emerald-600 group-hover:text-emerald-700" />
+              <ChevronRight className="w-5 h-5 group-hover:text-primary-hover" />
             ) : (
-              <ChevronLeft className="w-5 h-5 text-emerald-600 group-hover:text-emerald-700" />
+              <ChevronLeft className="w-5 h-5 group-hover:text-primary-hover" />
             )}
           </button>
         </div>
@@ -78,8 +99,11 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
         <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
           {/* Course Selection */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-4 uppercase tracking-wider flex items-center">
-              <GraduationCap className="w-4 h-4 mr-2 text-emerald-600" />
+            <label 
+              className="block text-xs font-bold mb-4 uppercase tracking-wider flex items-center"
+              style={{ color: colors.textSecondary }}
+            >
+              <GraduationCap className="w-4 h-4 mr-2" style={{ color: colors.primary }} />
               Courses
             </label>
             <div className="space-y-3">
@@ -97,20 +121,37 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
                     }}
                     className={`w-full p-4 rounded-xl border transition-all flex items-center justify-between group hover:shadow-md ${
                       selectedCourse === course.id
-                        ? 'border-emerald-300 bg-emerald-50 shadow-md'
-                        : 'border-gray-200 hover:border-emerald-200 hover:bg-emerald-50'
+                        ? 'border-primary bg-primary/10 shadow-md'
+                        : 'border-gray-200 hover:border-primary/50 hover:bg-primary/5'
                     }`}
+                    style={{
+                      borderColor: selectedCourse === course.id ? colors.primary : colors.border,
+                      backgroundColor: selectedCourse === course.id ? colors.primary + '10' : colors.cardBackground
+                    }}
                   >
                     <div className="flex items-center">
-                      <span className={`w-3 h-3 rounded-full mr-3 ${course.color} shadow-sm`}></span>
+                      <span 
+                        className={`w-3 h-3 rounded-full mr-3 shadow-sm`}
+                        style={{ backgroundColor: course.color || colors.primary }}
+                      ></span>
                       <div className="text-left">
-                        <div className="font-semibold text-sm text-gray-900">{course.name}</div>
-                        <div className="text-xs text-gray-500 font-medium">{course.code}</div>
+                        <div 
+                          className="font-semibold text-sm"
+                          style={{ color: colors.textPrimary }}
+                        >
+                          {course.name}
+                        </div>
+                        <div 
+                          className="text-xs font-medium"
+                          style={{ color: colors.textTertiary }}
+                        >
+                          {course.code}
+                        </div>
                       </div>
                     </div>
-                    <ChevronDown className={`w-4 h-4 transition-transform text-gray-400 ${
+                    <ChevronDown className={`w-4 h-4 transition-transform ${
                       expandedCourse === course.id ? 'rotate-180' : ''
-                    }`} />
+                    }`} style={{ color: colors.textTertiary }} />
                   </button>
 
                   {/* Units */}
@@ -129,15 +170,30 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
                             onClick={() => onUnitSelect(unit.id)}
                             className={`w-full p-3 rounded-lg text-left transition-all hover:shadow-sm ${
                               selectedUnit === unit.id
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                ? 'bg-primary/10 text-primary border border-primary/20'
                                 : 'hover:bg-gray-50 border border-transparent'
                             }`}
+                            style={{
+                              backgroundColor: selectedUnit === unit.id ? colors.primary + '10' : 'transparent',
+                              color: selectedUnit === unit.id ? colors.primary : colors.textPrimary,
+                              borderColor: selectedUnit === unit.id ? colors.primary + '30' : 'transparent'
+                            }}
                           >
                             <div className="flex items-center">
-                              <BookOpen className="w-4 h-4 mr-3 text-gray-400" />
+                              <BookOpen className="w-4 h-4 mr-3" style={{ color: colors.textTertiary }} />
                               <div>
-                                <div className="font-medium text-sm">{unit.unit_name}</div>
-                                <div className="text-xs text-gray-500">{unit.unit_code}</div>
+                                <div 
+                                  className="font-medium text-sm"
+                                  style={{ color: selectedUnit === unit.id ? colors.primary : colors.textPrimary }}
+                                >
+                                  {unit.unit_name}
+                                </div>
+                                <div 
+                                  className="text-xs"
+                                  style={{ color: colors.textTertiary }}
+                                >
+                                  {unit.unit_code}
+                                </div>
                               </div>
                             </div>
                           </button>
@@ -157,14 +213,22 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center">
-                <Calendar className="w-4 h-4 mr-2 text-emerald-600" />
+              <label 
+                className="block text-xs font-bold uppercase tracking-wider flex items-center"
+                style={{ color: colors.textSecondary }}
+              >
+                <Calendar className="w-4 h-4 mr-2" style={{ color: colors.primary }} />
                 Week
               </label>
               <select
                 value={selectedWeek}
                 onChange={(e) => onWeekSelect(parseInt(e.target.value))}
-                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-sm font-medium shadow-sm hover:border-emerald-300 transition-colors"
+                className="w-full p-4 border-2 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-sm font-medium shadow-sm hover:border-primary/50 transition-colors"
+                style={{
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                  color: colors.textPrimary
+                }}
               >
                 <option value={0}>Select Week</option>
                 {weeks.map((week) => (
@@ -181,7 +245,11 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative p-5 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200 shadow-sm z-10 overflow-hidden"
+              className="relative p-5 rounded-xl border shadow-sm z-10 overflow-hidden"
+              style={{
+                background: `linear-gradient(to bottom right, ${colors.primary}10, ${colors.primary}5)`,
+                borderColor: colors.primary + '30'
+              }}
             >
               {/* Background Pattern */}
               <div className="absolute inset-0 opacity-10">
@@ -196,25 +264,31 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
               </div>
 
               {/* Floating Elements */}
-              <div className="absolute top-2 right-2 w-8 h-8 bg-emerald-200 rounded-full opacity-30"></div>
-              <div className="absolute bottom-2 left-2 w-6 h-6 bg-emerald-300 rounded-full opacity-40"></div>
-              <div className="absolute top-1/2 right-4 w-4 h-4 bg-emerald-400 rounded-full opacity-50"></div>
+              <div className="absolute top-2 right-2 w-8 h-8 rounded-full opacity-30" style={{ backgroundColor: colors.primary + '30' }}></div>
+              <div className="absolute bottom-2 left-2 w-6 h-6 rounded-full opacity-40" style={{ backgroundColor: colors.primary + '40' }}></div>
+              <div className="absolute top-1/2 right-4 w-4 h-4 rounded-full opacity-50" style={{ backgroundColor: colors.primary + '50' }}></div>
 
               <div className="relative z-10">
-                <h4 className="font-bold text-emerald-900 mb-4 flex items-center text-sm">
+                <h4 
+                  className="font-bold mb-4 flex items-center text-sm"
+                  style={{ color: colors.primary }}
+                >
                   <Target className="w-4 h-4 mr-2" />
                   Current Selection
                 </h4>
                 <div className="space-y-3 text-sm">
-                  <div className="flex items-center text-emerald-800">
-                    <span className={`w-2 h-2 rounded-full mr-3 ${selectedCourseData?.color}`}></span>
+                  <div className="flex items-center" style={{ color: colors.primary }}>
+                    <span 
+                      className={`w-2 h-2 rounded-full mr-3`}
+                      style={{ backgroundColor: selectedCourseData?.color || colors.primary }}
+                    ></span>
                     <span className="font-semibold">{selectedCourseData?.name}</span>
                   </div>
-                  <div className="flex items-center text-emerald-800">
+                  <div className="flex items-center" style={{ color: colors.primary }}>
                     <BookOpen className="w-4 h-4 mr-3" />
                     <span className="font-medium">{selectedUnitData?.unit_name}</span>
                   </div>
-                  <div className="flex items-center text-emerald-800">
+                  <div className="flex items-center" style={{ color: colors.primary }}>
                     <Calendar className="w-4 h-4 mr-3" />
                     <span className="font-medium">Week {selectedWeek}</span>
                   </div>
@@ -229,26 +303,45 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
         <div className="p-4 space-y-4">
           <button
             onClick={onToggleMinimize}
-            className="w-full p-4 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-colors shadow-sm"
+            className="w-full p-4 rounded-xl hover:bg-primary/10 transition-colors shadow-sm"
+            style={{
+              backgroundColor: colors.primary + '10',
+              color: colors.primary
+            }}
           >
             <Filter className="w-5 h-5 mx-auto" />
           </button>
           
           {selectedCourse && (
-            <div className={`w-10 h-10 ${selectedCourseData?.color} rounded-xl flex items-center justify-center shadow-sm mx-auto`}>
+            <div 
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm mx-auto`}
+              style={{ backgroundColor: selectedCourseData?.color || colors.primary }}
+            >
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
           )}
           
           {selectedUnit && (
-            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center shadow-sm mx-auto">
-              <BookOpen className="w-5 h-5 text-emerald-700" />
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm mx-auto"
+              style={{
+                backgroundColor: colors.primary + '10',
+                color: colors.primary
+              }}
+            >
+              <BookOpen className="w-5 h-5" />
             </div>
           )}
           
           {selectedWeek > 0 && (
-            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center shadow-sm mx-auto border border-emerald-200">
-              <span className="text-xs font-bold text-emerald-700">W{selectedWeek}</span>
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm mx-auto border"
+              style={{
+                backgroundColor: colors.primary + '5',
+                borderColor: colors.primary + '30'
+              }}
+            >
+              <span className="text-xs font-bold" style={{ color: colors.primary }}>W{selectedWeek}</span>
             </div>
           )}
         </div>
@@ -256,8 +349,13 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
 
       {/* Footer Decorative Element */}
       {!isMinimized && (
-        <div className="relative overflow-hidden bg-gradient-to-t from-emerald-100 to-transparent p-4">
-          <svg className="w-full h-20 text-emerald-200 opacity-60" viewBox="0 0 400 100" preserveAspectRatio="none">
+        <div className="relative overflow-hidden p-4" style={{ background: `linear-gradient(to top, ${colors.primary}10, transparent)` }}>
+          <svg 
+            className="w-full h-20 opacity-60" 
+            viewBox="0 0 400 100" 
+            preserveAspectRatio="none"
+            style={{ color: colors.primary + '30' }}
+          >
             {/* Flowing circles background */}
             <circle cx="80" cy="30" r="35" fill="currentColor" opacity="0.4"/>
             <circle cx="200" cy="60" r="45" fill="currentColor" opacity="0.5"/>
@@ -265,7 +363,7 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
             <circle cx="350" cy="70" r="30" fill="currentColor" opacity="0.6"/>
             
             {/* Document/Assessment sheet */}
-            <rect x="150" y="25" width="100" height="50" rx="4" fill="white" opacity="0.9"/>
+            <rect x="150" y="25" width="100" height="50" rx="4" fill={colors.background} opacity="0.9"/>
             
             {/* Assessment lines */}
             <line x1="160" y1="35" x2="220" y2="35" stroke="currentColor" strokeWidth="2"/>
@@ -275,7 +373,7 @@ const SideAccessPanel: React.FC<SideAccessPanelProps> = ({
             
             {/* Grade/checkmark */}
             <circle cx="235" cy="40" r="8" fill="currentColor" opacity="0.8"/>
-            <path d="M230 40 L233 43 L240 36" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round"/>
+            <path d="M230 40 L233 43 L240 36" stroke={colors.background} strokeWidth="2" fill="none" strokeLinecap="round"/>
           </svg>
         </div>
       )}
