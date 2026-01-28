@@ -2,8 +2,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLayout } from '@/components/LayoutController';
+import { useTheme, useThemeColors } from '@/context/ThemeContext';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { 
@@ -18,10 +19,13 @@ import {
   Briefcase,
   BookOpen,
   Award,
-  Heart
+  Heart,
+  X,
+  CheckCircle
 } from 'lucide-react';
+import FloatingThemeButton from '@/components/FloatingThemeButton';
 
-// Mock data
+// Profile type
 type Profile = {
   id: number;
   name: string;
@@ -41,7 +45,7 @@ type Profile = {
     linkedin: string;
     twitter: string;
   };
-  avatar: string | null; // Allow both string and null
+  avatar: string | null;
 };
 
 const mockProfile: Profile = {
@@ -63,18 +67,22 @@ const mockProfile: Profile = {
     linkedin: 'linkedin.com/in/johndoe',
     twitter: 'twitter.com/johndoe'
   },
-  avatar: null // Will be replaced with an actual image URL when uploaded
+  avatar: null
 };
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
 export default function ProfilePage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
+  const { config } = useTheme();
+  const colors = useThemeColors();
+  
   const [profile, setProfile] = useState(mockProfile);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [editedProfile, setEditedProfile] = useState(mockProfile);
   const [newHobby, setNewHobby] = useState('');
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -101,11 +109,12 @@ export default function ProfilePage() {
 
   const handleProfileUpdate = () => {
     setIsLoading(true);
-    // Simulate API call
     setTimeout(() => {
       setProfile(editedProfile);
       setIsEditing(false);
       setIsLoading(false);
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
     }, 1000);
   };
 
@@ -142,8 +151,27 @@ export default function ProfilePage() {
     });
   };
 
+  // Dynamic gradient based on theme
+  const getGradient = () => {
+    const isDark = config.mode === 'dark';
+    const primary = colors.primary;
+    const secondary = colors.secondary;
+    
+    if (isDark) {
+      return `linear-gradient(135deg, ${primary}15 0%, ${secondary}25 50%, ${primary}15 100%)`;
+    }
+    return `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`;
+  };
+
+  const getCardGradient = () => {
+    const isDark = config.mode === 'dark';
+    return isDark 
+      ? `linear-gradient(135deg, ${colors.cardBackground} 0%, ${colors.backgroundTertiary} 100%)`
+      : colors.cardBackground;
+  };
+
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen" style={{ backgroundColor: colors.background }}>
       <Sidebar />
       
       <motion.div 
@@ -158,216 +186,458 @@ export default function ProfilePage() {
       >
         <Header title="My Profile" />
         
-        <main className="p-4 md:p-6">
-          <div className="max-w-4xl mx-auto">
-            {/* Profile Header */}
+        {/* Success Message */}
+        <AnimatePresence>
+          {showSuccessMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+              className="fixed top-20 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-lg"
+              style={{
+                background: `linear-gradient(135deg, ${colors.success}15, ${colors.success}25)`,
+                border: `2px solid ${colors.success}`,
+                backdropFilter: 'blur(12px)'
+              }}
+            >
+              <CheckCircle size={24} style={{ color: colors.success }} />
+              <span style={{ color: colors.textPrimary, fontWeight: 600 }}>
+                Profile updated successfully!
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <main className="p-4 md:p-6 pb-12">
+          <div className="max-w-5xl mx-auto">
+            {/* Profile Header Card */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6"
+              className="rounded-3xl shadow-lg overflow-hidden mb-8 relative"
+              style={{
+                background: getCardGradient(),
+                border: `1px solid ${colors.border}`
+              }}
             >
-              <div className="relative h-40 bg-gradient-to-r from-blue-500 to-purple-600">
-                {!isEditing ? (
-                  <button 
-                    onClick={() => setIsEditing(true)}
-                    className="absolute top-4 right-4 p-2 bg-white/90 rounded-full shadow-sm hover:bg-white transition-colors"
-                  >
-                    <Edit2 size={16} className="text-gray-700" />
-                  </button>
-                ) : (
-                  <button 
-                    onClick={handleProfileUpdate}
-                    disabled={isLoading}
-                    className="absolute top-4 right-4 p-2 bg-white/90 rounded-full shadow-sm hover:bg-white transition-colors"
-                  >
-                    <Save size={16} className={`${isLoading ? 'text-gray-400' : 'text-gray-700'}`} />
-                  </button>
-                )}
+              {/* Dynamic Gradient Header */}
+              <div 
+                className="relative h-48 overflow-hidden"
+                style={{
+                  background: getGradient(),
+                  position: 'relative'
+                }}
+              >
+                {/* Background Pattern */}
+                <div 
+                  className="absolute inset-0 opacity-10"
+                  style={{
+                    backgroundImage: 'url(/assets/pattern1.png)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                />
+
+                {/* Action Button */}
+                <motion.button 
+                  onClick={() => isEditing ? handleProfileUpdate() : setIsEditing(true)}
+                  disabled={isLoading}
+                  className="absolute top-6 right-6 px-6 py-3 rounded-full shadow-md backdrop-blur-md transition-all duration-300 font-semibold"
+                  style={{
+                    background: config.mode === 'dark' 
+                      ? `${colors.cardBackground}cc` 
+                      : `${colors.background}f5`,
+                    border: `2px solid ${colors.border}`,
+                    color: colors.primary,
+                  }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {isEditing ? (
+                    <span className="flex items-center gap-2">
+                      {isLoading ? (
+                        <>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+                          />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save size={18} />
+                          Save Profile
+                        </>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Edit2 size={18} />
+                      Edit Profile
+                    </span>
+                  )}
+                </motion.button>
               </div>
               
-              <div className="relative px-6 pb-6">
-                <div className="absolute -top-16 left-6 rounded-full border-4 border-white overflow-hidden">
-                  {isEditing ? (
-                    <div className="relative">
-                      <div 
-                        className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer"
-                        onClick={triggerFileInput}
-                      >
-                        {previewImage ? (
-                          <img 
-                            src={previewImage} 
-                            alt="Profile preview" 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          profile.avatar ? (
+              <div className="relative px-8 pb-8">
+                {/* Avatar Section */}
+                <motion.div 
+                  className="absolute -top-20 left-8"
+                  whileHover={isEditing ? { scale: 1.05 } : {}}
+                >
+                  <div 
+                    className="relative rounded-full overflow-hidden shadow-lg"
+                    style={{
+                      border: `5px solid ${colors.cardBackground}`,
+                    }}
+                  >
+                    {isEditing ? (
+                      <div className="relative group">
+                        <div 
+                          className="w-40 h-40 flex items-center justify-center cursor-pointer transition-all duration-300"
+                          onClick={triggerFileInput}
+                          style={{
+                            background: `linear-gradient(135deg, ${colors.primary}20, ${colors.secondary}20)`,
+                          }}
+                        >
+                          {previewImage ? (
+                            <img 
+                              src={previewImage} 
+                              alt="Profile preview" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : profile.avatar ? (
                             <img 
                               src={profile.avatar} 
                               alt="Profile" 
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <User size={48} className="text-gray-400" />
-                          )
-                        )}
-                        <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                          <Camera size={32} className="text-white" />
+                            <User size={64} style={{ color: colors.primary }} />
+                          )}
                         </div>
-                      </div>
-                      <input 
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center">
-                      {profile.avatar ? (
-                        <img 
-                          src={profile.avatar} 
-                          alt="Profile" 
-                          className="w-full h-full object-cover"
+                        <div 
+                          className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer"
+                          style={{
+                            background: `${colors.primary}cc`,
+                          }}
+                          onClick={triggerFileInput}
+                        >
+                          <Camera size={40} style={{ color: colors.background }} />
+                        </div>
+                        <input 
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageUpload}
                         />
-                      ) : (
-                        <User size={48} className="text-gray-400" />
-                      )}
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    ) : (
+                      <div 
+                        className="w-40 h-40 flex items-center justify-center"
+                        style={{
+                          background: `linear-gradient(135deg, ${colors.primary}20, ${colors.secondary}20)`,
+                        }}
+                      >
+                        {profile.avatar ? (
+                          <img 
+                            src={profile.avatar} 
+                            alt="Profile" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User size={64} style={{ color: colors.primary }} />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
 
-                <div className="pt-20">
+                {/* Profile Info */}
+                <div className="pt-24 pl-0">
                   {isEditing ? (
                     <input
                       type="text"
                       value={editedProfile.name}
                       onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})}
-                      className="text-2xl font-bold text-gray-900 mb-1 w-full border-b border-gray-300 focus:outline-none focus:border-blue-500 pb-1"
+                      className="text-3xl font-bold mb-2 w-full px-4 py-2 rounded-xl transition-all duration-300"
+                      style={{
+                        color: colors.textPrimary,
+                        background: colors.backgroundSecondary,
+                        border: `2px solid ${colors.border}`,
+                      }}
                     />
                   ) : (
-                    <h1 className="text-2xl font-bold text-gray-900 mb-1">{profile.name}</h1>
+                    <motion.h1 
+                      className="text-4xl font-bold mb-2"
+                      style={{ color: colors.textPrimary }}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {profile.name}
+                    </motion.h1>
                   )}
                   
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 mb-4">
-                    <div className="flex items-center">
-                      <Briefcase size={16} className="mr-2" />
-                      <span>{profile.faculty}</span>
+                  <motion.div 
+                    className="flex flex-wrap items-center gap-6 mb-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <div 
+                      className="flex items-center gap-2 px-4 py-2 rounded-full"
+                      style={{
+                        background: `${colors.primary}15`,
+                        border: `1px solid ${colors.primary}30`,
+                      }}
+                    >
+                      <Briefcase size={18} style={{ color: colors.primary }} />
+                      <span style={{ color: colors.textPrimary, fontWeight: 600 }}>
+                        {profile.faculty}
+                      </span>
                     </div>
-                    <div className="flex items-center">
-                      <BookOpen size={16} className="mr-2" />
-                      <span>Year {profile.year}, Semester {profile.semester}</span>
+                    <div 
+                      className="flex items-center gap-2 px-4 py-2 rounded-full"
+                      style={{
+                        background: `${colors.secondary}15`,
+                        border: `1px solid ${colors.secondary}30`,
+                      }}
+                    >
+                      <BookOpen size={18} style={{ color: colors.secondary }} />
+                      <span style={{ color: colors.textPrimary, fontWeight: 600 }}>
+                        Year {profile.year}, Sem {profile.semester}
+                      </span>
                     </div>
-                    <div className="flex items-center">
-                      <Award size={16} className="mr-2" />
-                      <span>Student ID: {profile.studentId}</span>
+                    <div 
+                      className="flex items-center gap-2 px-4 py-2 rounded-full"
+                      style={{
+                        background: `${colors.accent}15`,
+                        border: `1px solid ${colors.accent}30`,
+                      }}
+                    >
+                      <Award size={18} style={{ color: colors.accent }} />
+                      <span style={{ color: colors.textPrimary, fontWeight: 600 }}>
+                        {profile.studentId}
+                      </span>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {isEditing ? (
                     <textarea
                       value={editedProfile.bio}
                       onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      className="w-full p-4 rounded-xl resize-none transition-all duration-300"
+                      style={{
+                        color: colors.textPrimary,
+                        background: colors.backgroundSecondary,
+                        border: `2px solid ${colors.border}`,
+                      }}
                       rows={3}
                     />
                   ) : (
-                    <p className="text-gray-700 mb-4">{profile.bio}</p>
+                    <motion.p 
+                      className="text-lg leading-relaxed"
+                      style={{ color: colors.textSecondary }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      {profile.bio}
+                    </motion.p>
                   )}
                 </div>
               </div>
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Personal Information */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                className="lg:col-span-2 rounded-3xl shadow-lg p-8"
+                style={{
+                  background: getCardGradient(),
+                  border: `1px solid ${colors.border}`,
+                }}
               >
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
+                <h2 
+                  className="text-2xl font-bold mb-6 flex items-center gap-3"
+                  style={{ color: colors.textPrimary }}
+                >
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{
+                      background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                    }}
+                  >
+                    <User size={20} style={{ color: colors.background }} />
+                  </div>
+                  Personal Information
+                </h2>
                 
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <div className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <motion.div whileHover={{ x: 4 }}>
+                      <label 
+                        className="block text-sm font-semibold mb-2"
+                        style={{ color: colors.textSecondary }}
+                      >
+                        Email Address
+                      </label>
                       {isEditing ? (
                         <input
                           type="email"
                           value={editedProfile.email}
                           onChange={(e) => setEditedProfile({...editedProfile, email: e.target.value})}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full p-4 rounded-xl transition-all duration-300"
+                          style={{
+                            color: colors.textPrimary,
+                            background: colors.backgroundSecondary,
+                            border: `2px solid ${colors.border}`,
+                          }}
                         />
                       ) : (
-                        <div className="flex items-center">
-                          <Mail size={16} className="text-gray-400 mr-2" />
-                          <span className="text-gray-800">{profile.email}</span>
+                        <div 
+                          className="flex items-center gap-3 p-4 rounded-xl"
+                          style={{
+                            background: colors.backgroundSecondary,
+                            border: `1px solid ${colors.borderLight}`,
+                          }}
+                        >
+                          <Mail size={20} style={{ color: colors.primary }} />
+                          <span style={{ color: colors.textPrimary }}>{profile.email}</span>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                     
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <motion.div whileHover={{ x: 4 }}>
+                      <label 
+                        className="block text-sm font-semibold mb-2"
+                        style={{ color: colors.textSecondary }}
+                      >
+                        Phone Number
+                      </label>
                       {isEditing ? (
                         <input
                           type="tel"
                           value={editedProfile.phone}
                           onChange={(e) => setEditedProfile({...editedProfile, phone: e.target.value})}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full p-4 rounded-xl transition-all duration-300"
+                          style={{
+                            color: colors.textPrimary,
+                            background: colors.backgroundSecondary,
+                            border: `2px solid ${colors.border}`,
+                          }}
                         />
                       ) : (
-                        <div className="flex items-center">
-                          <Phone size={16} className="text-gray-400 mr-2" />
-                          <span className="text-gray-800">{profile.phone}</span>
+                        <div 
+                          className="flex items-center gap-3 p-4 rounded-xl"
+                          style={{
+                            background: colors.backgroundSecondary,
+                            border: `1px solid ${colors.borderLight}`,
+                          }}
+                        >
+                          <Phone size={20} style={{ color: colors.primary }} />
+                          <span style={{ color: colors.textPrimary }}>{profile.phone}</span>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <motion.div whileHover={{ x: 4 }}>
+                    <label 
+                      className="block text-sm font-semibold mb-2"
+                      style={{ color: colors.textSecondary }}
+                    >
+                      Address
+                    </label>
                     {isEditing ? (
                       <input
                         type="text"
                         value={editedProfile.address}
                         onChange={(e) => setEditedProfile({...editedProfile, address: e.target.value})}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-4 rounded-xl transition-all duration-300"
+                        style={{
+                          color: colors.textPrimary,
+                          background: colors.backgroundSecondary,
+                          border: `2px solid ${colors.border}`,
+                        }}
                       />
                     ) : (
-                      <div className="flex items-center">
-                        <MapPin size={16} className="text-gray-400 mr-2" />
-                        <span className="text-gray-800">{profile.address}</span>
+                      <div 
+                        className="flex items-center gap-3 p-4 rounded-xl"
+                        style={{
+                          background: colors.backgroundSecondary,
+                          border: `1px solid ${colors.borderLight}`,
+                        }}
+                      >
+                        <MapPin size={20} style={{ color: colors.primary }} />
+                        <span style={{ color: colors.textPrimary }}>{profile.address}</span>
                       </div>
                     )}
-                  </div>
+                  </motion.div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <motion.div whileHover={{ x: 4 }}>
+                      <label 
+                        className="block text-sm font-semibold mb-2"
+                        style={{ color: colors.textSecondary }}
+                      >
+                        Date of Birth
+                      </label>
                       {isEditing ? (
                         <input
                           type="date"
                           value={editedProfile.dateOfBirth}
                           onChange={(e) => setEditedProfile({...editedProfile, dateOfBirth: e.target.value})}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full p-4 rounded-xl transition-all duration-300"
+                          style={{
+                            color: colors.textPrimary,
+                            background: colors.backgroundSecondary,
+                            border: `2px solid ${colors.border}`,
+                          }}
                         />
                       ) : (
-                        <div className="flex items-center">
-                          <Calendar size={16} className="text-gray-400 mr-2" />
-                          <span className="text-gray-800">{new Date(profile.dateOfBirth).toLocaleDateString()}</span>
+                        <div 
+                          className="flex items-center gap-3 p-4 rounded-xl"
+                          style={{
+                            background: colors.backgroundSecondary,
+                            border: `1px solid ${colors.borderLight}`,
+                          }}
+                        >
+                          <Calendar size={20} style={{ color: colors.primary }} />
+                          <span style={{ color: colors.textPrimary }}>
+                            {new Date(profile.dateOfBirth).toLocaleDateString()}
+                          </span>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                     
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Admission Date</label>
-                      <div className="flex items-center">
-                        <Calendar size={16} className="text-gray-400 mr-2" />
-                        <span className="text-gray-800">{new Date(profile.admissionDate).toLocaleDateString()}</span>
+                    <motion.div whileHover={{ x: 4 }}>
+                      <label 
+                        className="block text-sm font-semibold mb-2"
+                        style={{ color: colors.textSecondary }}
+                      >
+                        Admission Date
+                      </label>
+                      <div 
+                        className="flex items-center gap-3 p-4 rounded-xl"
+                        style={{
+                          background: colors.backgroundSecondary,
+                          border: `1px solid ${colors.borderLight}`,
+                        }}
+                      >
+                        <Calendar size={20} style={{ color: colors.primary }} />
+                        <span style={{ color: colors.textPrimary }}>
+                          {new Date(profile.admissionDate).toLocaleDateString()}
+                        </span>
                       </div>
-                    </div>
+                    </motion.div>
                   </div>
                 </div>
               </motion.div>
@@ -377,67 +647,100 @@ export default function ProfilePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                className="rounded-3xl shadow-lg p-8"
+                style={{
+                  background: getCardGradient(),
+                  border: `1px solid ${colors.border}`,
+                }}
               >
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Hobbies & Interests</h2>
+                <h2 
+                  className="text-2xl font-bold mb-6 flex items-center gap-3"
+                  style={{ color: colors.textPrimary }}
+                >
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{
+                      background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                    }}
+                  >
+                    <Heart size={20} style={{ color: colors.background }} />
+                  </div>
+                  Interests
+                </h2>
                 
                 <div className="space-y-4">
-                  {isEditing ? (
-                    <>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="text"
-                          value={newHobby}
-                          onChange={(e) => setNewHobby(e.target.value)}
-                          placeholder="Add a new hobby"
-                          className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          onKeyDown={(e) => e.key === 'Enter' && addHobby()}
-                        />
-                        <button
-                          onClick={addHobby}
-                          className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Add
-                        </button>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2">
-                        {editedProfile.hobbies.map((hobby) => (
-                          <div
-                            key={hobby}
-                            className="flex items-center bg-blue-50 text-blue-700 rounded-full px-3 py-1"
-                          >
-                            <Heart size={14} className="mr-1" />
-                            <span className="text-sm">{hobby}</span>
-                            <button
-                              onClick={() => removeHobby(hobby)}
-                              className="ml-2 text-blue-400 hover:text-blue-700"
-                            >
-                              &times;
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {profile.hobbies.map((hobby) => (
-                        <div
-                          key={hobby}
-                          className="flex items-center bg-blue-50 text-blue-700 rounded-full px-3 py-1"
-                        >
-                          <Heart size={14} className="mr-1" />
-                          <span className="text-sm">{hobby}</span>
-                        </div>
-                      ))}
+                  {isEditing && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newHobby}
+                        onChange={(e) => setNewHobby(e.target.value)}
+                        placeholder="Add new interest..."
+                        className="flex-1 p-3 rounded-xl transition-all duration-300"
+                        style={{
+                          color: colors.textPrimary,
+                          background: colors.backgroundSecondary,
+                          border: `2px solid ${colors.border}`,
+                        }}
+                        onKeyDown={(e) => e.key === 'Enter' && addHobby()}
+                      />
+                      <motion.button
+                        onClick={addHobby}
+                        className="px-5 py-3 rounded-xl font-semibold shadow-md"
+                        style={{
+                          background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                          color: colors.background,
+                        }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Add
+                      </motion.button>
                     </div>
                   )}
+                  
+                  <div className="flex flex-wrap gap-3">
+                    <AnimatePresence>
+                      {(isEditing ? editedProfile.hobbies : profile.hobbies).map((hobby, index) => (
+                        <motion.div
+                          key={hobby}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="flex items-center gap-2 px-4 py-2 rounded-full shadow-sm"
+                          style={{
+                            background: `linear-gradient(135deg, ${colors.primary}20, ${colors.secondary}20)`,
+                            border: `2px solid ${colors.primary}30`,
+                          }}
+                          whileHover={{ scale: 1.05, y: -2 }}
+                        >
+                          <span 
+                            className="font-medium"
+                            style={{ color: colors.textPrimary }}
+                          >
+                            {hobby}
+                          </span>
+                          {isEditing && (
+                            <button
+                              onClick={() => removeHobby(hobby)}
+                              className="ml-1 transition-colors"
+                              style={{ color: colors.error }}
+                            >
+                              <X size={16} />
+                            </button>
+                          )}
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </motion.div>
             </div>
           </div>
         </main>
       </motion.div>
+      <FloatingThemeButton/>
     </div>
   );
 }

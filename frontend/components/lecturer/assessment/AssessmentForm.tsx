@@ -11,6 +11,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Assessment, Course } from "../../../types/assessment";
+import { useThemeColors } from '@/context/ThemeContext';
 
 type QuestionType =
   | "open-ended"
@@ -48,6 +49,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
   loading,
   isEditing = false,
 }) => {
+  const colors = useThemeColors();
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
     description: initialData?.description || "",
@@ -156,44 +158,60 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
+      className="rounded-2xl shadow-xl border overflow-hidden"
+      style={{
+        backgroundColor: colors.cardBackground,
+        borderColor: colors.border,
+      }}
     >
-      <div className="bg-gradient-to-r from-emerald-50 via-emerald-100 to-emerald-50 p-6 border-b border-emerald-200">
-        <h3 className="text-2xl font-bold text-gray-900 flex items-center">
+      <div 
+        className="p-6 border-b"
+        style={{
+          background: `linear-gradient(to right, ${colors.primaryLight}15, ${colors.primaryLight}30, ${colors.primaryLight}15)`,
+          borderColor: colors.border,
+        }}
+      >
+        <h3 className="text-2xl font-bold flex items-center" style={{ color: colors.textPrimary }}>
           {isEditing ? (
             <>
-              <Edit3 className="w-6 h-6 mr-3 text-emerald-600" />
+              <Edit3 className="w-6 h-6 mr-3" style={{ color: colors.primary }} />
               Edit Assessment
             </>
           ) : (
             <>
-              <Sparkles className="w-6 h-6 mr-3 text-emerald-600" />
+              <Sparkles className="w-6 h-6 mr-3" style={{ color: colors.primary }} />
               Create New Assessment
             </>
           )}
         </h3>
-        <p className="text-gray-600 mt-2">
+        <p className="mt-2" style={{ color: colors.textSecondary }}>
           {isEditing
             ? "Modify assessment details"
             : "Generate with AI or create manually"}
         </p>
 
         {/* Current Context */}
-        <div className="mt-6 p-4 bg-white rounded-xl border border-emerald-200 shadow-sm">
+        <div 
+          className="mt-6 p-4 rounded-xl border shadow-sm"
+          style={{
+            backgroundColor: colors.cardBackground,
+            borderColor: colors.border,
+          }}
+        >
           <div className="flex flex-wrap items-center gap-4 text-sm">
-            <span className="text-gray-600 font-medium">Context:</span>
-            <span className="flex items-center text-emerald-700 font-semibold">
+            <span className="font-medium" style={{ color: colors.textSecondary }}>Context:</span>
+            <span className="flex items-center font-semibold" style={{ color: colors.primary }}>
               <span
                 className={`w-3 h-3 rounded-full mr-2 ${selectedCourseData?.color}`}
               ></span>
               {selectedCourseData?.name}
             </span>
-            <span className="text-gray-400">•</span>
-            <span className="text-emerald-700 font-semibold">
+            <span style={{ color: colors.border }}>•</span>
+            <span className="font-semibold" style={{ color: colors.primary }}>
               {selectedUnitData?.unit_name}
             </span>
-            <span className="text-gray-400">•</span>
-            <span className="text-emerald-700 font-semibold">
+            <span style={{ color: colors.border }}>•</span>
+            <span className="font-semibold" style={{ color: colors.primary }}>
               Week {selectedWeek}
             </span>
           </div>
@@ -204,8 +222,8 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
         {/* Basic Info */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
-              Assessment Title <span className="text-red-500">*</span>
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
+              Assessment Title <span style={{ color: colors.error }}>*</span>
             </label>
             <input
               type="text"
@@ -213,13 +231,18 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
               placeholder="Enter assessment title"
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
-              Assessment Type <span className="text-red-500">*</span>
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
+              Assessment Type <span style={{ color: colors.error }}>*</span>
             </label>
             <select
               value={formData.type}
@@ -229,7 +252,12 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
                   type: e.target.value as "CAT" | "Assignment" | "Case Study",
                 })
               }
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
             >
               <option value="CAT">CAT</option>
               <option value="Assignment">Assignment</option>
@@ -239,8 +267,8 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-3">
-            Description <span className="text-red-500">*</span>
+          <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
+            Description <span style={{ color: colors.error }}>*</span>
           </label>
           <textarea
             value={formData.description}
@@ -248,7 +276,12 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               setFormData({ ...formData, description: e.target.value })
             }
             rows={4}
-            className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+            style={{
+              backgroundColor: colors.inputBackground,
+              borderColor: colors.inputBorder,
+              color: colors.textPrimary,
+            }}
             placeholder="Describe the assessment purpose and content"
           />
         </div>
@@ -256,9 +289,9 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
         {/* Question Configuration */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium mb-1" style={{ color: colors.textPrimary }}>
               Question Types
-              <span className="text-red-500 ml-1">*</span>
+              <span style={{ color: colors.error }} className="ml-1">*</span>
             </label>
 
             {/* Selected Tags */}
@@ -271,13 +304,18 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
                   return (
                     <span
                       key={type}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                      style={{
+                        backgroundColor: `${colors.primary}20`,
+                        color: colors.primary,
+                      }}
                     >
                       {option?.label || type}
                       <button
                         type="button"
                         onClick={(e) => removeQuestionType(type, e)}
-                        className="ml-1.5 text-blue-600 hover:text-blue-800 focus:outline-none"
+                        className="ml-1.5 focus:outline-none"
+                        style={{ color: colors.primary }}
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -292,36 +330,57 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               <button
                 type="button"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-full p-2.5 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 flex justify-between items-center"
+                className="w-full p-2.5 text-left border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:border-transparent flex justify-between items-center"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
               >
-                <span className="text-gray-700">
+                <span>
                   {formData.questions_type.length > 0
                     ? `Selected: ${formData.questions_type.length}`
                     : "Select question types..."}
                 </span>
                 <ChevronDown
-                  className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? "transform rotate-180" : ""}`}
+                  className={`w-4 h-4 transition-transform ${isDropdownOpen ? "transform rotate-180" : ""}`}
+                  style={{ color: colors.textSecondary }}
                 />
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                <div className="absolute z-10 w-full mt-1 border rounded-md shadow-lg"
+                  style={{
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                  }}
+                >
                   <div className="py-1">
                     {questionTypeOptions.map((option) => (
                       <div
                         key={option.value}
-                        className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 flex items-center ${
+                        className={`px-4 py-2 text-sm cursor-pointer flex items-center ${
                           formData.questions_type.includes(option.value)
-                            ? "bg-blue-50"
+                            ? "bg-blue-50 dark:bg-gray-800"
                             : ""
                         }`}
+                        style={{
+                          backgroundColor: formData.questions_type.includes(option.value) 
+                            ? `${colors.primary}10` 
+                            : 'transparent',
+                          color: colors.textPrimary,
+                        }}
                         onClick={() => {
                           toggleQuestionType(option.value);
                         }}
                       >
                         <input
                           type="checkbox"
-                          className="h-4 w-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                          className="h-4 w-4 rounded border-gray-300"
+                          style={{
+                            color: colors.primary,
+                            borderColor: colors.border,
+                          }}
                           checked={formData.questions_type.includes(
                             option.value,
                           )}
@@ -335,7 +394,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               )}
             </div>
 
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs" style={{ color: colors.textTertiary }}>
               Click to select multiple question types
             </p>
           </div>
@@ -343,8 +402,8 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
-              Topic <span className="text-red-500">*</span>
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
+              Topic <span style={{ color: colors.error }}>*</span>
             </label>
             <input
               type="text"
@@ -352,13 +411,18 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, topic: e.target.value })
               }
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
               placeholder="Main topic or subject area"
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
-              Difficulty Level <span className="text-red-500">*</span>
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
+              Difficulty Level <span style={{ color: colors.error }}>*</span>
             </label>
             <select
               value={formData.difficulty}
@@ -371,7 +435,12 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
                     | "Advance",
                 })
               }
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
             >
               <option value="Easy">Easy</option>
               <option value="Intermediate">Intermediate</option>
@@ -382,8 +451,8 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
-              Number of Questions <span className="text-red-500">*</span>
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
+              Number of Questions <span style={{ color: colors.error }}>*</span>
             </label>
             <input
               type="number"
@@ -394,13 +463,18 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
                   number_of_questions: parseInt(e.target.value),
                 })
               }
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
               min="1"
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
-              Total Marks <span className="text-red-500">*</span>
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
+              Total Marks <span style={{ color: colors.error }}>*</span>
             </label>
             <input
               type="number"
@@ -411,13 +485,18 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
                   total_marks: parseInt(e.target.value),
                 })
               }
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
               min="1"
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
-              Bloom&apos;s Level <span className="text-red-500">*</span>
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
+              Bloom&apos;s Level <span style={{ color: colors.error }}>*</span>
             </label>
             <select
               value={formData.blooms_level}
@@ -433,7 +512,12 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
                     | "Create",
                 })
               }
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
             >
               <option value="Remember">Remember</option>
               <option value="Understand">Understand</option>
@@ -448,7 +532,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
         {/* Optional Fields */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
               Deadline (Optional)
             </label>
             <input
@@ -457,11 +541,16 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, deadline_date: e.target.value })
               }
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
               Schedule Date (Optional)
             </label>
             <input
@@ -470,13 +559,18 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, schedule_date: e.target.value })
               }
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
             />
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
               Duration (minutes)
             </label>
             <input
@@ -485,7 +579,12 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, duration: parseInt(e.target.value) })
               }
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
               placeholder="e.g., 60"
               min="1"
             />
@@ -493,17 +592,22 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">
+            <label className="block text-sm font-bold mb-3" style={{ color: colors.textPrimary }}>
               Optional Document (PDF only)
             </label>
             <input
               type="file"
               accept=".pdf"
               onChange={(e) => setDocFile(e.target.files?.[0] || null)}
-              className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full p-2 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+              style={{
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.inputBorder,
+                color: colors.textPrimary,
+              }}
             />
             {docFile && (
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs mt-1" style={{ color: colors.textTertiary }}>
                 Selected: {docFile.name}
               </div>
             )}
@@ -511,10 +615,16 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
         </div>
       </div>
 
-      <div className="bg-gray-50 px-6 py-6 flex flex-col sm:flex-row justify-between gap-4">
+      <div 
+        className="px-6 py-6 flex flex-col sm:flex-row justify-between gap-4"
+        style={{
+          backgroundColor: colors.backgroundSecondary,
+        }}
+      >
         <button
           onClick={onCancel}
-          className="px-6 py-3 text-gray-600 hover:text-gray-800 font-semibold transition-colors rounded-xl hover:bg-gray-100"
+          className="px-6 py-3 font-semibold transition-colors rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800"
+          style={{ color: colors.textSecondary }}
           disabled={loading}
         >
           Cancel
@@ -524,7 +634,8 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
             <button
               onClick={() => handleSubmit(true)}
               disabled={loading}
-              className="flex items-center justify-center px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-semibold shadow-lg"
+              className="flex items-center justify-center px-6 py-3 text-white rounded-xl hover:opacity-90 transition-colors font-semibold shadow-lg"
+              style={{ backgroundColor: colors.primary }}
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -537,7 +648,12 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
           <button
             onClick={() => handleSubmit(false)}
             disabled={loading}
-            className="flex items-center justify-center px-6 py-3 bg-white border border-emerald-200 text-emerald-700 rounded-xl hover:bg-emerald-50 transition-colors font-semibold shadow-sm"
+            className="flex items-center justify-center px-6 py-3 border rounded-xl hover:opacity-90 transition-colors font-semibold shadow-sm"
+            style={{
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.border,
+              color: colors.primary,
+            }}
           >
             {loading ? (
               <Loader2 className="w-5 h-5 mr-2 animate-spin" />

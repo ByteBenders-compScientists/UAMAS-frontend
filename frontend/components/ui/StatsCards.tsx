@@ -2,48 +2,47 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { BookMarked, ClipboardList, FileCheck, CheckCircle } from 'lucide-react';
 import { Assessment } from '../../types/assessment';
+import { useThemeColors } from '@/context/ThemeContext';
 
 interface StatsCardsProps {
   assessments: Assessment[];
 }
 
 const StatsCards: React.FC<StatsCardsProps> = ({ assessments }) => {
+  const colors = useThemeColors();
+
   const stats = [
     {
       icon: BookMarked,
       label: "Total Assessments",
       value: assessments.length,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      border: "border-blue-200",
-      gradient: "from-blue-50 to-blue-100"
+      color: colors.info,
+      bg: colors.info + '10',
+      border: colors.info + '30'
     },
     {
       icon: ClipboardList,
       label: "CATs",
       value: assessments.filter(a => a.type === "CAT").length,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      border: "border-emerald-200",
-      gradient: "from-emerald-50 to-emerald-100"
+      color: colors.primary,
+      bg: colors.primary + '10',
+      border: colors.primary + '30'
     },
     {
       icon: FileCheck,
       label: "Assignments",
       value: assessments.filter(a => a.type === "Assignment").length,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-      border: "border-purple-200",
-      gradient: "from-purple-50 to-purple-100"
+      color: colors.secondary,
+      bg: colors.secondary + '10',
+      border: colors.secondary + '30'
     },
     {
       icon: CheckCircle,
       label: "Verified",
       value: assessments.filter(a => a.verified).length,
-      color: "text-green-600",
-      bg: "bg-green-50",
-      border: "border-green-200",
-      gradient: "from-green-50 to-green-100"
+      color: colors.success,
+      bg: colors.success + '10',
+      border: colors.success + '30'
     }
   ];
 
@@ -55,15 +54,35 @@ const StatsCards: React.FC<StatsCardsProps> = ({ assessments }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
-          className={`bg-gradient-to-br ${stat.gradient} rounded-xl shadow border ${stat.border} p-4 hover:shadow-md transition-all`}
+          className="rounded-xl shadow border p-4 hover:shadow-md transition-all"
+          style={{
+            backgroundColor: colors.cardBackground,
+            borderColor: stat.border
+          }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
-              <div className="text-sm font-semibold text-gray-600">{stat.label}</div>
+              <div 
+                className="text-2xl font-bold mb-1"
+                style={{ color: colors.textPrimary }}
+              >
+                {stat.value}
+              </div>
+              <div 
+                className="text-sm font-semibold"
+                style={{ color: colors.textSecondary }}
+              >
+                {stat.label}
+              </div>
             </div>
-            <div className={`p-3 rounded-xl ${stat.bg} shadow-sm`}>
-              <stat.icon className={`w-6 h-6 ${stat.color}`} />
+            <div 
+              className="p-3 rounded-xl shadow-sm"
+              style={{ backgroundColor: stat.bg }}
+            >
+              <stat.icon 
+                className="w-6 h-6" 
+                style={{ color: stat.color }}
+              />
             </div>
           </div>
         </motion.div>

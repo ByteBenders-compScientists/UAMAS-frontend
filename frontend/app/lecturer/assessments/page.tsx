@@ -48,9 +48,14 @@ import {
   groupUnitsByCourse 
 } from "../../../utils/dataTransformers";
 
+// Theme imports
+import { useThemeColors } from "@/context/ThemeContext";
+import FloatingThemeButton from "@/components/FloatingThemeButton";
+
 const AssessmentsDashboard: React.FC = () => {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const pathname = usePathname();
+  const colors = useThemeColors(); // Get theme colors from context
 
   // Shared course / unit / week context for all course tools
   const [selectedCourse, setSelectedCourse] = useState("");
@@ -373,7 +378,7 @@ const AssessmentsDashboard: React.FC = () => {
   // Show loading state while fetching initial data
   if (coursesLoading || unitsLoading || assessmentsLoading) {
     return (
-      <div className="flex h-screen bg-gray-50 overflow-hidden">
+      <div className="flex h-screen overflow-hidden" style={{ backgroundColor: colors.background }}>
         <Sidebar />
         <div 
           className="flex flex-1 transition-all duration-300 items-center justify-center"
@@ -390,7 +395,7 @@ const AssessmentsDashboard: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: colors.background }}>
       <Sidebar />
       
       {/* AI Loading Modal */}
@@ -436,10 +441,15 @@ const AssessmentsDashboard: React.FC = () => {
             {/* Mobile: course filters + action chips */}
             <div className="flex flex-col gap-3 mb-4 md:hidden">
               <div className="flex justify-between items-center">
-                <h1 className="text-xl font-bold text-gray-900">Courses</h1>
+                <h1 className="text-xl font-bold" style={{ color: colors.textPrimary }}>Courses</h1>
                 <button
                   onClick={() => setMobileNavOpen(true)}
-                  className="p-2 bg-white border border-gray-200 rounded-lg shadow-sm text-emerald-600"
+                  className="p-2 rounded-lg shadow-sm"
+                  style={{ 
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                    color: colors.primary 
+                  }}
                 >
                   <Filter className="w-5 h-5" />
                 </button>
@@ -448,27 +458,47 @@ const AssessmentsDashboard: React.FC = () => {
                 <button
                   onClick={handleGoToLibrary}
                   disabled={!canCreateAssessment}
-                  className="px-3 py-2 text-xs font-semibold rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-3 py-2 text-xs font-semibold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ 
+                    backgroundColor: colors.primaryLight,
+                    borderColor: colors.primaryLight,
+                    color: colors.primaryDark 
+                  }}
                 >
                   Open Library for this week
                 </button>
                 <button
                   onClick={handleGoToSubmissions}
                   disabled={!selectedCourse || !selectedUnit}
-                  className="px-3 py-2 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-3 py-2 text-xs font-semibold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ 
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                    color: colors.textPrimary 
+                  }}
                 >
                   View Submissions for this unit
                 </button>
                 <button
                   onClick={handleGoToStudents}
                   disabled={!selectedCourse}
-                  className="px-3 py-2 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-3 py-2 text-xs font-semibold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ 
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                    color: colors.textPrimary 
+                  }}
                 >
                   Students in this course
                 </button>
                 <button
                   onClick={handleGoToCourseManagement}
-                  className="px-3 py-2 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 bg-white"
+                  className="px-3 py-2 text-xs font-semibold rounded-lg"
+                  style={{ 
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                    color: colors.textPrimary 
+                  }}
                 >
                   Manage Courses & Units
                 </button>
@@ -487,10 +517,10 @@ const AssessmentsDashboard: React.FC = () => {
               {/* Desktop: page heading + primary actions selector */}
               <div className="mb-4 lg:mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                  <h1 className="text-2xl lg:text-3xl font-bold mb-2" style={{ color: colors.textPrimary }}>
                     Courses workspace
                   </h1>
-                  <p className="text-base lg:text-lg text-gray-600">
+                  <p className="text-base lg:text-lg" style={{ color: colors.textSecondary }}>
                     Select a course, unit, and week, then choose what you want to work on.
                   </p>
                 </div>
@@ -498,28 +528,48 @@ const AssessmentsDashboard: React.FC = () => {
                   <button
                     onClick={handleGoToLibrary}
                     disabled={!canCreateAssessment}
-                    className="px-4 py-2 text-sm font-semibold rounded-xl border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-4 py-2 text-sm font-semibold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ 
+                      backgroundColor: colors.primaryLight,
+                      borderColor: colors.primaryLight,
+                      color: colors.primaryDark 
+                    }}
                   >
                     Open Library for this course / unit / week
                   </button>
                   <button
                     onClick={handleGoToSubmissions}
                     disabled={!selectedCourse || !selectedUnit}
-                    className="px-4 py-2 text-sm font-semibold rounded-xl border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-4 py-2 text-sm font-semibold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ 
+                      backgroundColor: colors.cardBackground,
+                      borderColor: colors.border,
+                      color: colors.textPrimary 
+                    }}
                   >
                     View Submissions for this unit
                   </button>
                   <button
                     onClick={handleGoToStudents}
                     disabled={!selectedCourse}
-                    className="px-4 py-2 text-sm font-semibold rounded-xl border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2 text-sm font-semibold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                    style={{ 
+                      backgroundColor: colors.cardBackground,
+                      borderColor: colors.border,
+                      color: colors.textPrimary 
+                    }}
                   >
                     <Users className="w-4 h-4" />
                     Students in this course
                   </button>
                   <button
                     onClick={handleGoToCourseManagement}
-                    className="px-4 py-2 text-sm font-semibold rounded-xl border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 text-sm font-semibold rounded-xl transition-colors flex items-center gap-2"
+                    style={{ 
+                      backgroundColor: colors.cardBackground,
+                      borderColor: colors.border,
+                      color: colors.textPrimary 
+                    }}
                   >
                     <Layers3 className="w-4 h-4" />
                     Manage Courses & Units
@@ -528,15 +578,16 @@ const AssessmentsDashboard: React.FC = () => {
               </div>
 
               {/* Action switcher for what should be loaded under this course context */}
-              <div className="mb-6 border-b border-gray-200">
+              <div className="mb-6" style={{ borderBottom: `1px solid ${colors.border}` }}>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setActiveAction("assessments")}
-                    className={`px-4 py-2 text-sm rounded-t-lg border-b-2 transition-colors ${
-                      activeAction === "assessments"
-                        ? "border-emerald-500 text-emerald-700 font-semibold"
-                        : "border-transparent text-gray-600 hover:text-emerald-700 hover:border-emerald-200"
-                    }`}
+                    className="px-4 py-2 text-sm rounded-t-lg border-b-2 transition-colors"
+                    style={{ 
+                      borderBottomColor: activeAction === "assessments" ? colors.primary : 'transparent',
+                      color: activeAction === "assessments" ? colors.primary : colors.textSecondary,
+                      fontWeight: activeAction === "assessments" ? 600 : 400
+                    }}
                   >
                     Assessments
                   </button>
@@ -544,10 +595,13 @@ const AssessmentsDashboard: React.FC = () => {
                     onClick={handleGoToLibrary}
                     disabled={!canCreateAssessment}
                     className={`px-4 py-2 text-sm rounded-t-lg border-b-2 transition-colors ${
-                      activeAction === "library"
-                        ? "border-emerald-500 text-emerald-700 font-semibold"
-                        : "border-transparent text-gray-600 hover:text-emerald-700 hover:border-emerald-200"
-                    } ${!canCreateAssessment ? "opacity-40 cursor-not-allowed" : ""}`}
+                      !canCreateAssessment ? "opacity-40 cursor-not-allowed" : ""
+                    }`}
+                    style={{ 
+                      borderBottomColor: activeAction === "library" ? colors.primary : 'transparent',
+                      color: activeAction === "library" ? colors.primary : colors.textSecondary,
+                      fontWeight: activeAction === "library" ? 600 : 400
+                    }}
                   >
                     Library
                   </button>
@@ -555,10 +609,13 @@ const AssessmentsDashboard: React.FC = () => {
                     onClick={handleGoToSubmissions}
                     disabled={!selectedCourse || !selectedUnit}
                     className={`px-4 py-2 text-sm rounded-t-lg border-b-2 transition-colors ${
-                      activeAction === "submissions"
-                        ? "border-emerald-500 text-emerald-700 font-semibold"
-                        : "border-transparent text-gray-600 hover:text-emerald-700 hover:border-emerald-200"
-                    } ${!selectedCourse || !selectedUnit ? "opacity-40 cursor-not-allowed" : ""}`}
+                      !selectedCourse || !selectedUnit ? "opacity-40 cursor-not-allowed" : ""
+                    }`}
+                    style={{ 
+                      borderBottomColor: activeAction === "submissions" ? colors.primary : 'transparent',
+                      color: activeAction === "submissions" ? colors.primary : colors.textSecondary,
+                      fontWeight: activeAction === "submissions" ? 600 : 400
+                    }}
                   >
                     Submissions
                   </button>
@@ -566,10 +623,13 @@ const AssessmentsDashboard: React.FC = () => {
                     onClick={handleGoToStudents}
                     disabled={!selectedCourse}
                     className={`px-4 py-2 text-sm rounded-t-lg border-b-2 transition-colors ${
-                      activeAction === "students"
-                        ? "border-emerald-500 text-emerald-700 font-semibold"
-                        : "border-transparent text-gray-600 hover:text-emerald-700 hover:border-emerald-200"
-                    } ${!selectedCourse ? "opacity-40 cursor-not-allowed" : ""}`}
+                      !selectedCourse ? "opacity-40 cursor-not-allowed" : ""
+                    }`}
+                    style={{ 
+                      borderBottomColor: activeAction === "students" ? colors.primary : 'transparent',
+                      color: activeAction === "students" ? colors.primary : colors.textSecondary,
+                      fontWeight: activeAction === "students" ? 600 : 400
+                    }}
                   >
                     Students
                   </button>
@@ -583,16 +643,47 @@ const AssessmentsDashboard: React.FC = () => {
                   return (
                     <div className="text-center py-12 lg:py-16">
                       <div className="max-w-md mx-auto">
-                        <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                          <Settings className="w-10 h-10 lg:w-12 lg:h-12 text-emerald-600" />
+                        <div 
+                          className="w-20 h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
+                          style={{ 
+                            background: `linear-gradient(135deg, ${colors.primaryLight}, ${colors.backgroundSecondary})` 
+                          }}
+                        >
+                          <Settings 
+                            className="w-10 h-10 lg:w-12 lg:h-12" 
+                            style={{ color: colors.primary }}
+                          />
                         </div>
-                        <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-3">{info.title}</h3>
-                        <p className="text-base lg:text-lg text-gray-600 mb-6">{info.desc}</p>
-                        <div className="space-y-3 text-sm text-gray-500">
+                        <h3 
+                          className="text-xl lg:text-2xl font-bold mb-3"
+                          style={{ color: colors.textPrimary }}
+                        >{info.title}</h3>
+                        <p 
+                          className="text-base lg:text-lg mb-6"
+                          style={{ color: colors.textSecondary }}
+                        >{info.desc}</p>
+                        <div className="space-y-3 text-sm" style={{ color: colors.textTertiary }}>
                           {info.steps.map((s, i) => (
-                            <div key={i} className="flex items-center justify-center p-3 bg-white rounded-xl shadow-sm border border-gray-200">
-                              <span className="mr-3 w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold">{i + 1}</span>
-                              <s.icon className="w-4 h-4 mr-2 text-emerald-600" />
+                            <div 
+                              key={i} 
+                              className="flex items-center justify-center p-3 rounded-xl shadow-sm"
+                              style={{ 
+                                backgroundColor: colors.cardBackground, 
+                                borderColor: colors.border,
+                                border: `1px solid ${colors.border}` 
+                              }}
+                            >
+                              <span 
+                                className="mr-3 w-6 h-6 rounded-full flex items-center justify-center font-bold"
+                                style={{ 
+                                  backgroundColor: colors.primaryLight, 
+                                  color: colors.primary 
+                                }}
+                              >{i + 1}</span>
+                              <s.icon 
+                                className="w-4 h-4 mr-2" 
+                                style={{ color: colors.primary }}
+                              />
                               <span className="font-semibold">{s.label}</span>
                             </div>
                           ))}
@@ -624,16 +715,26 @@ const AssessmentsDashboard: React.FC = () => {
 
                           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                             <div>
-                              <h2 className="text-xl lg:text-2xl font-bold text-gray-900">
+                              <h2 
+                                className="text-xl lg:text-2xl font-bold"
+                                style={{ color: colors.textPrimary }}
+                              >
                                 Assessments for Week {selectedWeek}
                               </h2>
-                              <p className="text-base text-gray-600 mt-1">
+                              <p 
+                                className="text-base mt-1"
+                                style={{ color: colors.textSecondary }}
+                              >
                                 {filteredAssessments.length} assessment{filteredAssessments.length !== 1 ? 's' : ''} found
                               </p>
                             </div>
                             <button
                               onClick={() => setShowCreateForm(true)}
-                              className="flex items-center px-5 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-bold shadow-lg"
+                              className="flex items-center px-5 py-3 rounded-xl font-bold shadow-lg transition-colors"
+                              style={{ 
+                                backgroundColor: colors.primary,
+                                color: '#ffffff'
+                              }}
                             >
                               <Plus className="w-5 h-5 mr-2" />
                               Create Assessment
@@ -641,15 +742,35 @@ const AssessmentsDashboard: React.FC = () => {
                           </div>
 
                           {filteredAssessments.length === 0 ? (
-                            <div className="text-center py-12 lg:py-16 bg-white rounded-xl border border-gray-200 shadow">
-                              <BookMarked className="w-16 h-16 lg:w-20 lg:h-20 text-gray-300 mx-auto mb-5" />
-                              <h3 className="text-xl font-bold text-gray-600 mb-3">No assessments yet</h3>
-                              <p className="text-base text-gray-500 mb-6">
+                            <div 
+                              className="text-center py-12 lg:py-16 rounded-xl shadow"
+                              style={{ 
+                                backgroundColor: colors.cardBackground,
+                                borderColor: colors.border,
+                                border: `1px solid ${colors.border}` 
+                              }}
+                            >
+                              <BookMarked 
+                                className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-5" 
+                                style={{ color: colors.borderLight }}
+                              />
+                              <h3 
+                                className="text-xl font-bold mb-3"
+                                style={{ color: colors.textSecondary }}
+                              >No assessments yet</h3>
+                              <p 
+                                className="text-base mb-6"
+                                style={{ color: colors.textTertiary }}
+                              >
                                 Create your first assessment for this week to get started
                               </p>
                               <button
                                 onClick={() => setShowCreateForm(true)}
-                                className="flex items-center px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-bold mx-auto shadow"
+                                className="flex items-center px-6 py-3 rounded-xl font-bold mx-auto shadow transition-colors"
+                                style={{ 
+                                  backgroundColor: colors.primary,
+                                  color: '#ffffff'
+                                }}
                               >
                                 <Plus className="w-5 h-5 mr-2" />
                                 Create First Assessment
@@ -758,6 +879,7 @@ const AssessmentsDashboard: React.FC = () => {
           />
         )}
       </Modal>
+      <FloatingThemeButton/>
     </div>
   );
 };

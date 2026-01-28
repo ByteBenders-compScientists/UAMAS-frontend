@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLayout } from '@/components/LayoutController';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme, useThemeColors } from '@/context/ThemeContext';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { 
@@ -23,6 +23,7 @@ import {
   X
 } from 'lucide-react';
 import Link from 'next/link';
+import FloatingThemeButton from '@/components/FloatingThemeButton';
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1"
 
@@ -36,15 +37,22 @@ type QuickLinkProps = {
 };
 
 const QuickLink = ({ icon, title, description, color, href, onClick }: QuickLinkProps) => {
-  const { config } = useTheme();
-  const isDark = config.mode === 'dark';
+  const colors = useThemeColors();
 
   const content = (
     <div 
-      className="rounded-xl p-6 border shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group"
+      className="rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group"
       style={{
-        backgroundColor: isDark ? '#0f172a' : '#ffffff',
-        borderColor: isDark ? '#1e293b' : '#f3f4f6',
+        backgroundColor: colors.cardBackground,
+        border: `1px solid ${colors.border}`,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = colors.borderLight;
+        e.currentTarget.style.backgroundColor = colors.cardHover;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = colors.border;
+        e.currentTarget.style.backgroundColor = colors.cardBackground;
       }}
     >
       <div className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
@@ -52,19 +60,19 @@ const QuickLink = ({ icon, title, description, color, href, onClick }: QuickLink
       </div>
       <h3 
         className="font-semibold mb-1"
-        style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+        style={{ color: colors.textPrimary }}
       >
         {title}
       </h3>
       <p 
         className="text-sm"
-        style={{ color: isDark ? '#94a3b8' : '#6b7280' }}
+        style={{ color: colors.textSecondary }}
       >
         {description}
       </p>
       <div 
         className="flex items-center mt-3 text-sm font-medium group-hover:translate-x-1 transition-transform duration-300"
-        style={{ color: 'var(--color-primary)' }}
+        style={{ color: colors.primary }}
       >
         <span>Explore</span>
         <ArrowRight size={14} className="ml-1" />
@@ -87,6 +95,7 @@ export default function Dashboard() {
   } = useLayout();
 
   const { config } = useTheme();
+  const colors = useThemeColors();
   const isDark = config.mode === 'dark';
 
   const [hasContent, setHasContent] = useState(false);
@@ -212,7 +221,7 @@ export default function Dashboard() {
   return (
     <div 
       className="flex h-screen"
-      style={{ backgroundColor: isDark ? '#020617' : '#f9fafb' }}
+      style={{ backgroundColor: colors.background }}
     >
       <Sidebar />
       
@@ -234,20 +243,20 @@ export default function Dashboard() {
               <div className="animate-pulse space-y-8">
                 <div 
                   className="h-32 rounded-xl"
-                  style={{ backgroundColor: isDark ? '#1e293b' : '#e5e7eb' }}
+                  style={{ backgroundColor: colors.cardBackground }}
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[...Array(4)].map((_, i) => (
                     <div 
                       key={i} 
                       className="h-48 rounded-xl"
-                      style={{ backgroundColor: isDark ? '#1e293b' : '#e5e7eb' }}
+                      style={{ backgroundColor: colors.cardBackground }}
                     />
                   ))}
                 </div>
                 <div 
                   className="h-64 rounded-xl"
-                  style={{ backgroundColor: isDark ? '#1e293b' : '#e5e7eb' }}
+                  style={{ backgroundColor: colors.cardBackground }}
                 />
               </div>
             </div>
@@ -260,9 +269,7 @@ export default function Dashboard() {
                 transition={{ duration: 0.5 }}
                 className="mb-8 rounded-xl p-6 md:p-8 shadow-md text-white relative overflow-hidden"
                 style={{
-                  background: isDark 
-                    ? 'linear-gradient(to bottom right, #334155, #1e293b)'
-                    : 'linear-gradient(to bottom right, #94a3b8, #cbd5e1)',
+                  background: `linear-gradient(to bottom right, ${colors.primary}, ${colors.primaryHover})`,
                 }}
               >
                 <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
@@ -317,7 +324,7 @@ export default function Dashboard() {
               >
                 <h3 
                   className="text-lg font-semibold mb-4"
-                  style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                  style={{ color: colors.textPrimary }}
                 >
                   Quick Access
                 </h3>
@@ -340,15 +347,15 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className="mb-8 rounded-xl p-6 shadow-sm border"
+                className="mb-8 rounded-xl p-6 shadow-sm"
                 style={{
-                  backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                  borderColor: isDark ? '#1e293b' : '#f3f4f6',
+                  backgroundColor: colors.cardBackground,
+                  border: `1px solid ${colors.border}`,
                 }}
               >
                 <h3 
                   className="text-lg font-semibold mb-6"
-                  style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                  style={{ color: colors.textPrimary }}
                 >
                   Recent Activity
                 </h3>
@@ -357,35 +364,37 @@ export default function Dashboard() {
                   <div 
                     className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
                     style={{
-                      backgroundColor: isDark ? '#1e293b' : '#f3f4f6',
-                      color: isDark ? '#64748b' : '#9ca3af',
+                      backgroundColor: colors.backgroundSecondary,
+                      color: colors.textTertiary,
                     }}
                   >
                     <FileText size={32} />
                   </div>
                   <h4 
                     className="text-lg font-medium mb-2"
-                    style={{ color: isDark ? '#cbd5e1' : '#374151' }}
+                    style={{ color: colors.textPrimary }}
                   >
                     No Recent Activity
                   </h4>
                   <p 
                     className="text-center max-w-md mb-6"
-                    style={{ color: isDark ? '#94a3b8' : '#6b7280' }}
+                    style={{ color: colors.textSecondary }}
                   >
                     Your recent activities, assignments, and notifications will appear here once your courses begin.
                   </p>
                   <button 
                     className="px-4 py-2 rounded-lg transition-colors font-medium text-sm"
                     style={{
-                      backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'var(--color-primary-light)',
-                      color: 'var(--color-primary)',
+                      backgroundColor: colors.primaryLight,
+                      color: colors.textPrimary,
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = isDark ? 'rgba(16, 185, 129, 0.15)' : '#d1fae5';
+                      e.currentTarget.style.backgroundColor = colors.primary;
+                      e.currentTarget.style.color = '#ffffff';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = isDark ? 'rgba(16, 185, 129, 0.1)' : 'var(--color-primary-light)';
+                      e.currentTarget.style.backgroundColor = colors.primaryLight;
+                      e.currentTarget.style.color = colors.primary;
                     }}
                   >
                     Explore Your Courses
@@ -398,15 +407,15 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
-                className="rounded-xl p-6 shadow-sm border"
+                className="rounded-xl p-6 shadow-sm"
                 style={{
-                  backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                  borderColor: isDark ? '#1e293b' : '#f3f4f6',
+                  backgroundColor: colors.cardBackground,
+                  border: `1px solid ${colors.border}`,
                 }}
               >
                 <h3 
                   className="text-lg font-semibold mb-6"
-                  style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                  style={{ color: colors.textPrimary }}
                 >
                   Upcoming Events
                 </h3>
@@ -415,21 +424,21 @@ export default function Dashboard() {
                   <div 
                     className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
                     style={{
-                      backgroundColor: isDark ? '#1e293b' : '#f3f4f6',
-                      color: isDark ? '#64748b' : '#9ca3af',
+                      backgroundColor: colors.backgroundSecondary,
+                      color: colors.textTertiary,
                     }}
                   >
                     <Calendar size={32} />
                   </div>
                   <h4 
                     className="text-lg font-medium mb-2"
-                    style={{ color: isDark ? '#cbd5e1' : '#374151' }}
+                    style={{ color: colors.textPrimary }}
                   >
                     No Upcoming Events
                   </h4>
                   <p 
                     className="text-center max-w-md"
-                    style={{ color: isDark ? '#94a3b8' : '#6b7280' }}
+                    style={{ color: colors.textSecondary }}
                   >
                     Your schedule is clear. Events, deadlines, and important dates will be displayed here.
                   </p>
@@ -440,30 +449,30 @@ export default function Dashboard() {
             <div className="max-w-8xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div 
-                  className="md:col-span-2 rounded-xl p-6 shadow-sm border"
+                  className="md:col-span-2 rounded-xl p-6 shadow-sm"
                   style={{
-                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                    borderColor: isDark ? '#1e293b' : '#e5e7eb',
+                    backgroundColor: colors.cardBackground,
+                    border: `1px solid ${colors.border}`,
                   }}
                 >
                   <h3 
                     className="text-lg font-semibold mb-4"
-                    style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                    style={{ color: colors.textPrimary }}
                   >
                     Recent Materials
                   </h3>
                 </div>
                 
                 <div 
-                  className="rounded-xl p-6 shadow-sm border"
+                  className="rounded-xl p-6 shadow-sm"
                   style={{
-                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                    borderColor: isDark ? '#1e293b' : '#e5e7eb',
+                    backgroundColor: colors.cardBackground,
+                    border: `1px solid ${colors.border}`,
                   }}
                 >
                   <h3 
                     className="text-lg font-semibold mb-4"
-                    style={{ color: isDark ? '#f8fafc' : '#1f2937' }}
+                    style={{ color: colors.textPrimary }}
                   >
                     Upcoming
                   </h3>
@@ -493,7 +502,7 @@ export default function Dashboard() {
               transition={{ duration: 0.3 }}
               className="relative w-full max-w-md rounded-2xl shadow-xl p-6 md:p-8"
               style={{
-                backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                backgroundColor: colors.cardBackground,
               }}
             >
               <button
@@ -504,12 +513,12 @@ export default function Dashboard() {
                   setJoinSuccess("");
                 }}
                 className="absolute top-4 right-4 transition-colors"
-                style={{ color: isDark ? '#64748b' : '#9ca3af' }}
+                style={{ color: colors.textTertiary }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.color = isDark ? '#94a3b8' : '#6b7280';
+                  e.currentTarget.style.color = colors.textSecondary;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.color = isDark ? '#64748b' : '#9ca3af';
+                  e.currentTarget.style.color = colors.textTertiary;
                 }}
               >
                 <X size={20} />
@@ -525,7 +534,7 @@ export default function Dashboard() {
                   </p>
                   <h2 
                     className="text-xl font-semibold"
-                    style={{ color: isDark ? '#f8fafc' : '#111827' }}
+                    style={{ color: colors.textPrimary }}
                   >
                     Enter join code
                   </h2>
@@ -534,7 +543,7 @@ export default function Dashboard() {
 
               <p 
                 className="text-sm mb-6"
-                style={{ color: isDark ? '#94a3b8' : '#4b5563' }}
+                style={{ color: colors.textSecondary }}
               >
                 Ask your lecturer for the unit join code and paste it below. Once you join, the
                 unit will appear in your courses and assessments.
@@ -544,7 +553,7 @@ export default function Dashboard() {
                 <div>
                   <label 
                     className="block text-sm font-medium mb-2"
-                    style={{ color: isDark ? '#cbd5e1' : '#374151' }}
+                    style={{ color: colors.textPrimary }}
                   >
                     Unit join code
                   </label>
@@ -556,38 +565,52 @@ export default function Dashboard() {
                       placeholder="e.g. ABCD1234"
                       className="w-full px-4 py-3 pr-10 rounded-lg text-sm transition-all"
                       style={{
-                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                        border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`,
-                        color: isDark ? '#f8fafc' : '#1f2937',
+                        backgroundColor: colors.inputBackground,
+                        border: `1px solid ${colors.inputBorder}`,
+                        color: colors.textPrimary,
                       }}
                       maxLength={16}
                       disabled={isJoining}
                       onFocus={(e) => {
-                        e.currentTarget.style.borderColor = 'var(--color-primary)';
+                        e.currentTarget.style.borderColor = colors.inputFocus;
                         e.currentTarget.style.outline = '2px solid';
-                        e.currentTarget.style.outlineColor = 'rgba(16, 185, 129, 0.2)';
+                        e.currentTarget.style.outlineColor = `${colors.primary}20`;
                       }}
                       onBlur={(e) => {
-                        e.currentTarget.style.borderColor = isDark ? '#334155' : '#d1d5db';
+                        e.currentTarget.style.borderColor = colors.inputBorder;
                         e.currentTarget.style.outline = 'none';
                       }}
                     />
                     <KeyRound 
                       className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2"
-                      style={{ color: isDark ? '#64748b' : '#9ca3af' }}
+                      style={{ color: colors.textTertiary }}
                     />
                   </div>
                 </div>
 
                 {joinError && (
-                  <div className="flex items-start space-x-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  <div 
+                    className="flex items-start space-x-2 rounded-lg px-4 py-3 text-sm"
+                    style={{
+                      backgroundColor: `${colors.error}10`,
+                      border: `1px solid ${colors.error}40`,
+                      color: colors.error,
+                    }}
+                  >
                     <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
                     <p>{joinError}</p>
                   </div>
                 )}
 
                 {joinSuccess && (
-                  <div className="flex items-start space-x-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  <div 
+                    className="flex items-start space-x-2 rounded-lg px-4 py-3 text-sm"
+                    style={{
+                      backgroundColor: `${colors.success}10`,
+                      border: `1px solid ${colors.success}40`,
+                      color: colors.success,
+                    }}
+                  >
                     <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" />
                     <p>{joinSuccess}</p>
                   </div>
@@ -604,15 +627,15 @@ export default function Dashboard() {
                     }}
                     className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     style={{
-                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                      border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`,
-                      color: isDark ? '#cbd5e1' : '#374151',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      color: colors.textPrimary,
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = isDark ? '#334155' : '#f9fafb';
+                      e.currentTarget.style.backgroundColor = colors.backgroundTertiary;
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#ffffff';
+                      e.currentTarget.style.backgroundColor = colors.cardHover;
                     }}
                   >
                     Cancel
@@ -620,7 +643,18 @@ export default function Dashboard() {
                   <button
                     type="submit"
                     disabled={isJoining || !joinCode.trim()}
-                    className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex-1 px-4 py-2 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    style={{
+                      backgroundColor: colors.primary,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isJoining && joinCode.trim()) {
+                        e.currentTarget.style.backgroundColor = colors.primaryHover;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.primary;
+                    }}
                   >
                     {isJoining ? (
                       <span className="flex items-center justify-center">
@@ -637,6 +671,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <FloatingThemeButton/>
     </div>
   );
 }

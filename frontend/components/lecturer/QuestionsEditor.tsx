@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Save } from 'lucide-react';
 import { Question, QuestionType } from '../../types/assessment';
+import { useThemeColors } from '@/context/ThemeContext';
 
 interface QuestionEditorProps {
   question: Question;
@@ -15,6 +16,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
   onDelete, 
   index 
 }) => {
+  const colors = useThemeColors();
   const [editedQuestion, setEditedQuestion] = useState(question);
 
   useEffect(() => {
@@ -75,12 +77,17 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
 
   const renderRubric = () => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">Rubric (Optional)</label>
+      <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Rubric (Optional)</label>
       <textarea
         value={editedQuestion.rubric || ''}
         onChange={(e) => setEditedQuestion({ ...editedQuestion, rubric: e.target.value })}
         rows={2}
-        className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+        className="w-full p-3 border rounded-lg focus:ring-2 focus:border-transparent"
+        style={{
+          backgroundColor: colors.inputBackground,
+          borderColor: colors.inputBorder,
+          color: colors.textPrimary,
+        }}
         placeholder="Marking guide / explanation"
       />
     </div>
@@ -88,12 +95,17 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
 
   const renderOpenEnded = () => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">Model Answer (Optional)</label>
+      <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Model Answer (Optional)</label>
       <textarea
         value={typeof editedQuestion.correct_answer === 'string' ? editedQuestion.correct_answer : ''}
         onChange={(e) => setEditedQuestion({ ...editedQuestion, correct_answer: e.target.value })}
         rows={3}
-        className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+        className="w-full p-3 border rounded-lg focus:ring-2 focus:border-transparent"
+        style={{
+          backgroundColor: colors.inputBackground,
+          borderColor: colors.inputBorder,
+          color: colors.textPrimary,
+        }}
         placeholder="Expected answer"
       />
     </div>
@@ -102,7 +114,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
   const renderMultipleSingle = () => (
     <div className="space-y-3">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Choices</label>
+        <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Choices</label>
         <div className="space-y-2">
           {choices.map((option, optionIndex) => {
             const selected = typeof editedQuestion.correct_answer === 'string'
@@ -115,19 +127,25 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                   name={`correct-${question.id}`}
                   checked={selected === option}
                   onChange={() => setEditedQuestion({ ...editedQuestion, correct_answer: option })}
-                  className="text-emerald-600 focus:ring-emerald-500"
+                  style={{ color: colors.primary }}
                 />
                 <input
                   type="text"
                   value={option}
                   onChange={(e) => setChoiceAt(optionIndex, e.target.value)}
-                  className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="flex-1 p-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                  style={{
+                    backgroundColor: colors.inputBackground,
+                    borderColor: colors.inputBorder,
+                    color: colors.textPrimary,
+                  }}
                   placeholder={`Option ${optionIndex + 1}`}
                 />
                 <button
                   type="button"
                   onClick={() => removeChoice(optionIndex)}
-                  className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                  className="px-2 py-1 text-xs rounded hover:opacity-90 transition-colors"
+                  style={{ color: colors.error }}
                 >
                   Remove
                 </button>
@@ -138,7 +156,8 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         <button
           type="button"
           onClick={addChoice}
-          className="mt-2 text-sm text-emerald-700 hover:text-emerald-800"
+          className="mt-2 text-sm hover:opacity-90 transition-colors"
+          style={{ color: colors.primary }}
         >
           Add choice
         </button>
@@ -149,7 +168,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
   const renderMultipleMultiple = () => (
     <div className="space-y-3">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Choices (select all correct)</label>
+        <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Choices (select all correct)</label>
         <div className="space-y-2">
           {choices.map((option, optionIndex) => {
             const selectedAnswers = Array.isArray(editedQuestion.correct_answer)
@@ -167,19 +186,25 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                       : [...selectedAnswers, option];
                     setEditedQuestion({ ...editedQuestion, correct_answer: next });
                   }}
-                  className="text-emerald-600 focus:ring-emerald-500"
+                  style={{ color: colors.primary }}
                 />
                 <input
                   type="text"
                   value={option}
                   onChange={(e) => setChoiceAt(optionIndex, e.target.value)}
-                  className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="flex-1 p-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                  style={{
+                    backgroundColor: colors.inputBackground,
+                    borderColor: colors.inputBorder,
+                    color: colors.textPrimary,
+                  }}
                   placeholder={`Option ${optionIndex + 1}`}
                 />
                 <button
                   type="button"
                   onClick={() => removeChoice(optionIndex)}
-                  className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                  className="px-2 py-1 text-xs rounded hover:opacity-90 transition-colors"
+                  style={{ color: colors.error }}
                 >
                   Remove
                 </button>
@@ -190,7 +215,8 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         <button
           type="button"
           onClick={addChoice}
-          className="mt-2 text-sm text-emerald-700 hover:text-emerald-800"
+          className="mt-2 text-sm hover:opacity-90 transition-colors"
+          style={{ color: colors.primary }}
         >
           Add choice
         </button>
@@ -200,7 +226,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
 
   const renderBool = () => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
+      <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Correct Answer</label>
       <div className="flex items-center space-x-6">
         {['True', 'False'].map(v => (
           <label key={v} className="flex items-center space-x-2">
@@ -209,9 +235,9 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
               name={`bool-${question.id}`}
               checked={String(editedQuestion.correct_answer || '').toLowerCase() === v.toLowerCase()}
               onChange={() => setEditedQuestion({ ...editedQuestion, correct_answer: v })}
-              className="text-emerald-600 focus:ring-emerald-500"
+              style={{ color: colors.primary }}
             />
-            <span className="text-sm text-gray-700">{v}</span>
+            <span className="text-sm" style={{ color: colors.textPrimary }}>{v}</span>
           </label>
         ))}
       </div>
@@ -239,7 +265,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
 
     return (
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Matching Pairs</label>
+        <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Matching Pairs</label>
         <div className="space-y-2">
           {pairs.map((pair, i) => (
             <div key={i} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-center">
@@ -247,21 +273,32 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                 type="text"
                 value={pair[0]}
                 onChange={(e) => setPairAt(i, e.target.value, pair[1])}
-                className="md:col-span-2 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="md:col-span-2 p-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
                 placeholder="Left item"
               />
-              <div className="hidden md:block text-center text-gray-400">→</div>
+              <div className="hidden md:block text-center" style={{ color: colors.textTertiary }}>→</div>
               <input
                 type="text"
                 value={pair[1]}
                 onChange={(e) => setPairAt(i, pair[0], e.target.value)}
-                className="md:col-span-2 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="md:col-span-2 p-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
                 placeholder="Right item"
               />
               <button
                 type="button"
                 onClick={() => removePair(i)}
-                className="text-xs text-red-600 hover:bg-red-50 rounded px-2 py-1"
+                className="text-xs rounded px-2 py-1 hover:opacity-90 transition-colors"
+                style={{ color: colors.error }}
               >
                 Remove
               </button>
@@ -271,7 +308,8 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         <button
           type="button"
           onClick={addPair}
-          className="mt-2 text-sm text-emerald-700 hover:text-emerald-800"
+          className="mt-2 text-sm hover:opacity-90 transition-colors"
+          style={{ color: colors.primary }}
         >
           Add pair
         </button>
@@ -300,22 +338,28 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
 
     return (
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Correct Order</label>
+        <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Correct Order</label>
         <div className="space-y-2">
           {items.map((it, i) => (
             <div key={i} className="flex items-center space-x-3">
-              <span className="text-xs font-semibold text-gray-500 w-10">#{i + 1}</span>
+              <span className="text-xs font-semibold w-10" style={{ color: colors.textTertiary }}>#{i + 1}</span>
               <input
                 type="text"
                 value={it}
                 onChange={(e) => setItemAt(i, e.target.value)}
-                className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="flex-1 p-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
                 placeholder="Item"
               />
               <button
                 type="button"
                 onClick={() => removeItem(i)}
-                className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                className="px-2 py-1 text-xs rounded hover:opacity-90 transition-colors"
+                style={{ color: colors.error }}
               >
                 Remove
               </button>
@@ -325,7 +369,8 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         <button
           type="button"
           onClick={addItem}
-          className="mt-2 text-sm text-emerald-700 hover:text-emerald-800"
+          className="mt-2 text-sm hover:opacity-90 transition-colors"
+          style={{ color: colors.primary }}
         >
           Add item
         </button>
@@ -389,16 +434,17 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
 
     return (
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Drag & Drop</label>
+        <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Drag & Drop</label>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-semibold text-gray-700">Drag items</div>
+              <div className="text-sm font-semibold" style={{ color: colors.textPrimary }}>Drag items</div>
               <button
                 type="button"
                 onClick={() => setDragItems([...dragItems, ''])}
-                className="text-sm text-emerald-700 hover:text-emerald-800"
+                className="text-sm hover:opacity-90 transition-colors"
+                style={{ color: colors.primary }}
               >
                 Add item
               </button>
@@ -414,31 +460,38 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                       next[i] = e.target.value;
                       setDragItems(next);
                     }}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="flex-1 p-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                    style={{
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.inputBorder,
+                      color: colors.textPrimary,
+                    }}
                     placeholder="Item"
                   />
                   <button
                     type="button"
                     onClick={() => setDragItems(dragItems.filter((_, idx) => idx !== i))}
-                    className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                    className="px-2 py-1 text-xs rounded hover:opacity-90 transition-colors"
+                    style={{ color: colors.error }}
                   >
                     Remove
                   </button>
                 </div>
               ))}
               {dragItems.length === 0 && (
-                <div className="text-sm text-gray-600">No drag items.</div>
+                <div className="text-sm" style={{ color: colors.textSecondary }}>No drag items.</div>
               )}
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-semibold text-gray-700">Drop targets</div>
+              <div className="text-sm font-semibold" style={{ color: colors.textPrimary }}>Drop targets</div>
               <button
                 type="button"
                 onClick={() => setDropTargets([...dropTargets, ''])}
-                className="text-sm text-emerald-700 hover:text-emerald-800"
+                className="text-sm hover:opacity-90 transition-colors"
+                style={{ color: colors.primary }}
               >
                 Add target
               </button>
@@ -454,26 +507,32 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                       next[i] = e.target.value;
                       setDropTargets(next);
                     }}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="flex-1 p-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                    style={{
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.inputBorder,
+                      color: colors.textPrimary,
+                    }}
                     placeholder="Target"
                   />
                   <button
                     type="button"
                     onClick={() => setDropTargets(dropTargets.filter((_, idx) => idx !== i))}
-                    className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                    className="px-2 py-1 text-xs rounded hover:opacity-90 transition-colors"
+                    style={{ color: colors.error }}
                   >
                     Remove
                   </button>
                 </div>
               ))}
               {dropTargets.length === 0 && (
-                <div className="text-sm text-gray-600">No drop targets.</div>
+                <div className="text-sm" style={{ color: colors.textSecondary }}>No drop targets.</div>
               )}
             </div>
           </div>
         </div>
 
-        <div className="text-sm font-semibold text-gray-700 mb-2">Correct placements</div>
+        <div className="text-sm font-semibold mb-2" style={{ color: colors.textPrimary }}>Correct placements</div>
         <div className="space-y-2">
           {placements.map((it, i) => (
             <div key={i} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-center">
@@ -481,21 +540,32 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                 type="text"
                 value={it.item}
                 onChange={(e) => setAt(i, { ...it, item: e.target.value })}
-                className="md:col-span-2 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="md:col-span-2 p-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
                 placeholder="Item"
               />
-              <div className="hidden md:block text-center text-gray-400">→</div>
+              <div className="hidden md:block text-center" style={{ color: colors.textTertiary }}>→</div>
               <input
                 type="text"
                 value={it.target}
                 onChange={(e) => setAt(i, { ...it, target: e.target.value })}
-                className="md:col-span-2 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="md:col-span-2 p-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                style={{
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.inputBorder,
+                  color: colors.textPrimary,
+                }}
                 placeholder="Target"
               />
               <button
                 type="button"
                 onClick={() => remove(i)}
-                className="text-xs text-red-600 hover:bg-red-50 rounded px-2 py-1"
+                className="text-xs rounded px-2 py-1 hover:opacity-90 transition-colors"
+                style={{ color: colors.error }}
               >
                 Remove
               </button>
@@ -505,7 +575,8 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         <button
           type="button"
           onClick={add}
-          className="mt-2 text-sm text-emerald-700 hover:text-emerald-800"
+          className="mt-2 text-sm hover:opacity-90 transition-colors"
+          style={{ color: colors.primary }}
         >
           Add item
         </button>
@@ -514,16 +585,29 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+    <div 
+      className="border rounded-xl p-6 shadow-sm"
+      style={{
+        backgroundColor: colors.cardBackground,
+        borderColor: colors.border,
+      }}
+    >
       <div className="flex justify-between items-start mb-4">
-        <h4 className="font-semibold text-gray-900 text-lg">Question {index + 1}</h4>
+        <h4 className="font-semibold text-lg" style={{ color: colors.textPrimary }}>Question {index + 1}</h4>
         <div className="flex items-center space-x-2">
-          <span className="bg-emerald-50 text-emerald-700 text-xs font-medium px-3 py-1 rounded-full">
+          <span 
+            className="text-xs font-medium px-3 py-1 rounded-full"
+            style={{
+              backgroundColor: `${colors.primary}20`,
+              color: colors.primary,
+            }}
+          >
             {editedQuestion.marks} marks
           </span>
           <button
             onClick={onDelete}
-            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-2 rounded-lg hover:opacity-90 transition-colors"
+            style={{ color: colors.error }}
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -533,24 +617,34 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
       <div className="space-y-4">
         {/* Question Text */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Question</label>
+          <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Question</label>
           <textarea
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
             rows={3}
-            className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:border-transparent"
+            style={{
+              backgroundColor: colors.inputBackground,
+              borderColor: colors.inputBorder,
+              color: colors.textPrimary,
+            }}
             placeholder="Enter question text"
           />
         </div>
 
         {/* Marks */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Marks</label>
+          <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>Marks</label>
           <input
             type="number"
             value={editedQuestion.marks}
             onChange={(e) => setEditedQuestion({...editedQuestion, marks: parseInt(e.target.value)})}
-            className="w-24 p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            className="w-24 p-3 border rounded-lg focus:ring-2 focus:border-transparent"
+            style={{
+              backgroundColor: colors.inputBackground,
+              borderColor: colors.inputBorder,
+              color: colors.textPrimary,
+            }}
             min="1"
           />
         </div>
@@ -569,7 +663,8 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         <div className="flex justify-end">
           <button
             onClick={handleSave}
-            className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+            className="flex items-center px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors font-medium"
+            style={{ backgroundColor: colors.primary }}
           >
             <Save className="w-4 h-4 mr-2" />
             Save Changes
