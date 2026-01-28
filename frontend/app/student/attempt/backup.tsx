@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -14,15 +13,8 @@ import {
   XCircle,
   Edit3,
   Camera,
-  CheckCircle,
-  RefreshCw,
-  Mic,
-  MicOff,
-  Volume2,
 } from "lucide-react";
 import type { QuestionType } from "@/types/assessment";
-import { extractTextFromImage, validateImageForOCR } from "@/services/groqOCRService";
-import { extractTextFromAudio, validateAudioForTranscription } from "@/services/Groqvoice";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1";
 
@@ -52,22 +44,6 @@ interface ImageUploadState {
   isUploading: boolean;
   error: string | null;
   imageId?: string;
-  // OCR related
-  isExtractingText: boolean;
-  extractedText: string;
-  ocrError: string | null;
-  ocrCompleted: boolean;
-}
-
-interface VoiceRecordingState {
-  isRecording: boolean;
-  audioFile: File | null;
-  audioUrl: string | null;
-  isTranscribing: boolean;
-  transcribedText: string;
-  transcriptionError: string | null;
-  transcriptionCompleted: boolean;
-  recordingDuration: number;
 }
 
 export default function AttemptPage() {
@@ -88,23 +64,15 @@ export default function AttemptPage() {
   const [dragDropAnswers, setDragDropAnswers] = useState<Record<string, string>[]>([]);
 
   const [openEndedAnswers, setOpenEndedAnswers] = useState<string[]>([]);
-  const [openEndedInputModes, setOpenEndedInputModes] = useState<("text" | "image" | "voice" | null)[]>([]);
+  const [openEndedInputModes, setOpenEndedInputModes] = useState<("text" | "image" | null)[]>([]);
   
   // State for image upload handling
   const [imageUploadStates, setImageUploadStates] = useState<ImageUploadState[]>([]);
-  
-  // State for voice recording handling
-  const [voiceRecordingStates, setVoiceRecordingStates] = useState<VoiceRecordingState[]>([]);
   
   // Camera access state
   const [showCamera, setShowCamera] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  // Voice recording refs
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isNextLoading, setIsNextLoading] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
@@ -136,7 +104,7 @@ export default function AttemptPage() {
         setOpenEndedAnswers(Array(qs.length).fill(""));
         setOpenEndedInputModes(Array(qs.length).fill(null));
 
-        // Initialize image upload states with OCR fields
+        // Initialize image upload states
         setImageUploadStates(
           Array(qs.length).fill(null).map(() => ({
             file: null,
@@ -144,24 +112,6 @@ export default function AttemptPage() {
             isUploading: false,
             error: null,
             imageId: undefined,
-            isExtractingText: false,
-            extractedText: "",
-            ocrError: null,
-            ocrCompleted: false,
-          }))
-        );
-
-        // Initialize voice recording states
-        setVoiceRecordingStates(
-          Array(qs.length).fill(null).map(() => ({
-            isRecording: false,
-            audioFile: null,
-            audioUrl: null,
-            isTranscribing: false,
-            transcribedText: "",
-            transcriptionError: null,
-            transcriptionCompleted: false,
-            recordingDuration: 0,
           }))
         );
 
@@ -214,7 +164,6 @@ export default function AttemptPage() {
         timerRef.current = null;
       }
       stopCamera();
-      stopVoiceRecording(currentQuestion);
     };
   }, [assessmentId, router]);
 
@@ -268,259 +217,10 @@ export default function AttemptPage() {
     }
   };
 
-  // Voice recording functions
-  const startVoiceRecording = async (questionIndex: number) => {
-    try {
-      // Request audio with specific constraints for external devices
-      const constraints = {
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 48000,
-        }
-      };
-
-      console.log('Requesting microphone access...');
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log('Microphone access granted, stream:', stream);
-      console.log('Audio tracks:', stream.getAudioTracks());
-
-      // Check if we got audio tracks
-      if (stream.getAudioTracks().length === 0) {
-        throw new Error('No audio tracks available');
-      }
-
-      // Try to determine supported MIME types
-      let mimeType = 'audio/webm';
-      const supportedTypes = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/ogg;codecs=opus',
-        'audio/mp4',
-        'audio/mpeg',
-      ];
-
-      for (const type of supportedTypes) {
-        if (MediaRecorder.isTypeSupported(type)) {
-          mimeType = type;
-          console.log('Using MIME type:', mimeType);
-          break;
-        }
-      }
-
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      console.log('MediaRecorder created with state:', mediaRecorder.state);
-
-      mediaRecorder.ondataavailable = (event) => {
-        console.log('Data available:', event.data.size, 'bytes');
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onerror = (event) => {
-        console.error('MediaRecorder error:', event);
-        alert('Recording error occurred. Please try again.');
-      };
-
-      mediaRecorder.onstop = async () => {
-        console.log('Recording stopped, chunks:', audioChunksRef.current.length);
-        
-        if (audioChunksRef.current.length === 0) {
-          alert('No audio data was recorded. Please check your microphone and try again.');
-          stream.getTracks().forEach(track => track.stop());
-          
-          setVoiceRecordingStates(prevStates => {
-            const updatedStates = [...prevStates];
-            updatedStates[questionIndex] = {
-              ...updatedStates[questionIndex],
-              isRecording: false,
-            };
-            return updatedStates;
-          });
-          return;
-        }
-
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        console.log('Audio blob created:', audioBlob.size, 'bytes');
-        
-        const audioFile = new File([audioBlob], `recording_${Date.now()}.webm`, {
-          type: mimeType,
-        });
-        const audioUrl = URL.createObjectURL(audioBlob);
-
-        // Stop recording timer
-        if (recordingTimerRef.current) {
-          clearInterval(recordingTimerRef.current);
-          recordingTimerRef.current = null;
-        }
-
-        // Update state with recorded audio
-        setVoiceRecordingStates(prevStates => {
-          const updatedStates = [...prevStates];
-          updatedStates[questionIndex] = {
-            ...updatedStates[questionIndex],
-            isRecording: false,
-            audioFile,
-            audioUrl,
-            isTranscribing: true,
-          };
-          return updatedStates;
-        });
-
-        // Stop all tracks to release microphone
-        stream.getTracks().forEach(track => track.stop());
-
-        // Start transcription
-        await handleVoiceTranscription(questionIndex, audioFile);
-      };
-
-      // Start recording with timeslice for regular data events
-      mediaRecorder.start(1000); // Collect data every second
-      console.log('Recording started');
-
-      // Update state to show recording
-      setVoiceRecordingStates(prevStates => {
-        const updatedStates = [...prevStates];
-        updatedStates[questionIndex] = {
-          ...updatedStates[questionIndex],
-          isRecording: true,
-          recordingDuration: 0,
-        };
-        return updatedStates;
-      });
-
-      // Start recording duration timer
-      recordingTimerRef.current = setInterval(() => {
-        setVoiceRecordingStates(prevStates => {
-          const updatedStates = [...prevStates];
-          updatedStates[questionIndex] = {
-            ...updatedStates[questionIndex],
-            recordingDuration: updatedStates[questionIndex].recordingDuration + 1,
-          };
-          return updatedStates;
-        });
-      }, 1000);
-
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-      
-      let errorMessage = 'Unable to access microphone. ';
-      if (error instanceof Error) {
-        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-          errorMessage += 'Please grant microphone permissions in your browser settings and try again.';
-        } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-          errorMessage += 'No microphone found. Please connect a microphone or headset and try again.';
-        } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-          errorMessage += 'Microphone is already in use by another application. Please close other apps and try again.';
-        } else {
-          errorMessage += error.message;
-        }
-      }
-      
-      alert(errorMessage);
-    }
-  };
-
-  const stopVoiceRecording = (questionIndex: number) => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-  };
-
-  const handleVoiceTranscription = async (questionIndex: number, audioFile: File) => {
-    const validation = validateAudioForTranscription(audioFile);
-    if (!validation.valid) {
-      setVoiceRecordingStates(prevStates => {
-        const updatedStates = [...prevStates];
-        updatedStates[questionIndex] = {
-          ...updatedStates[questionIndex],
-          isTranscribing: false,
-          transcriptionError: validation.error || "Invalid audio file",
-        };
-        return updatedStates;
-      });
-      return;
-    }
-
-    const transcriptionResult = await extractTextFromAudio(audioFile);
-
-    setVoiceRecordingStates(prevStates => {
-      const updatedStates = [...prevStates];
-      updatedStates[questionIndex] = {
-        ...updatedStates[questionIndex],
-        isTranscribing: false,
-        transcribedText: transcriptionResult.extractedText,
-        transcriptionError: transcriptionResult.error || null,
-        transcriptionCompleted: transcriptionResult.success,
-      };
-      return updatedStates;
-    });
-
-    // Set the transcribed text as the answer
-    if (transcriptionResult.success) {
-      const newAnswers = [...openEndedAnswers];
-      newAnswers[questionIndex] = transcriptionResult.extractedText;
-      setOpenEndedAnswers(newAnswers);
-    }
-  };
-
-  const handleRetryTranscription = async (questionIndex: number) => {
-    const currentState = voiceRecordingStates[questionIndex];
-    if (!currentState.audioFile) return;
-
-    setVoiceRecordingStates(prevStates => {
-      const updatedStates = [...prevStates];
-      updatedStates[questionIndex] = {
-        ...updatedStates[questionIndex],
-        isTranscribing: true,
-        transcriptionError: null,
-      };
-      return updatedStates;
-    });
-
-    await handleVoiceTranscription(questionIndex, currentState.audioFile);
-  };
-
-  const handleRemoveVoiceRecording = (questionIndex: number) => {
-    const state = voiceRecordingStates[questionIndex];
-    if (state.audioUrl) {
-      URL.revokeObjectURL(state.audioUrl);
-    }
-
-    const newStates = [...voiceRecordingStates];
-    newStates[questionIndex] = {
-      isRecording: false,
-      audioFile: null,
-      audioUrl: null,
-      isTranscribing: false,
-      transcribedText: "",
-      transcriptionError: null,
-      transcriptionCompleted: false,
-      recordingDuration: 0,
-    };
-    setVoiceRecordingStates(newStates);
-
-    // Clear the answer
-    const newAnswers = [...openEndedAnswers];
-    newAnswers[questionIndex] = "";
-    setOpenEndedAnswers(newAnswers);
-  };
-
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const formatRecordingDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const handleSingleAnswerSelect = (questionIndex: number, optionIndex: number) => {
@@ -544,9 +244,14 @@ export default function AttemptPage() {
 
   const handleImageUpload = async (questionIndex: number, file: File) => {
     // Validate file
-    const validation = validateImageForOCR(file);
-    if (!validation.valid) {
-      alert(validation.error);
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload a valid image file (JPEG, PNG, etc.)');
+      return;
+    }
+
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image file is too large. Please upload an image smaller than 10MB');
       return;
     }
 
@@ -561,16 +266,13 @@ export default function AttemptPage() {
       previewUrl,
       isUploading: true,
       error: null,
-      isExtractingText: false,
-      extractedText: "",
-      ocrError: null,
-      ocrCompleted: false,
     };
     setImageUploadStates(newStates);
 
     try {
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // In a real implementation, you would upload the image to your server here
+      // For now, we'll simulate upload and generate a unique ID
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate upload delay
       
       const imageId = `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
@@ -580,79 +282,24 @@ export default function AttemptPage() {
           ...updatedStates[questionIndex],
           isUploading: false,
           imageId,
-          isExtractingText: true, // Start OCR extraction
         };
         return updatedStates;
       });
 
-      // Start OCR text extraction
-      const ocrResult = await extractTextFromImage(file);
-
-      setImageUploadStates(prevStates => {
-        const updatedStates = [...prevStates];
-        updatedStates[questionIndex] = {
-          ...updatedStates[questionIndex],
-          isExtractingText: false,
-          extractedText: ocrResult.extractedText,
-          ocrError: ocrResult.error || null,
-          ocrCompleted: ocrResult.success,
-        };
-        return updatedStates;
-      });
-
-      // Set the extracted text as the answer
-      if (ocrResult.success) {
-        const newAnswers = [...openEndedAnswers];
-        newAnswers[questionIndex] = ocrResult.extractedText;
-        setOpenEndedAnswers(newAnswers);
-      }
-
+      // Set open-ended answer to indicate image upload
+      const newAnswers = [...openEndedAnswers];
+      newAnswers[questionIndex] = `[Image uploaded: ${file.name}]`;
+      setOpenEndedAnswers(newAnswers);
     } catch (error) {
       setImageUploadStates(prevStates => {
         const errorStates = [...prevStates];
         errorStates[questionIndex] = {
           ...errorStates[questionIndex],
           isUploading: false,
-          isExtractingText: false,
           error: error instanceof Error ? error.message : "Failed to upload image",
         };
         return errorStates;
       });
-    }
-  };
-
-  const handleRetryOCR = async (questionIndex: number) => {
-    const currentState = imageUploadStates[questionIndex];
-    if (!currentState.file) return;
-
-    setImageUploadStates(prevStates => {
-      const updatedStates = [...prevStates];
-      updatedStates[questionIndex] = {
-        ...updatedStates[questionIndex],
-        isExtractingText: true,
-        ocrError: null,
-      };
-      return updatedStates;
-    });
-
-    const ocrResult = await extractTextFromImage(currentState.file);
-
-    setImageUploadStates(prevStates => {
-      const updatedStates = [...prevStates];
-      updatedStates[questionIndex] = {
-        ...updatedStates[questionIndex],
-        isExtractingText: false,
-        extractedText: ocrResult.extractedText,
-        ocrError: ocrResult.error || null,
-        ocrCompleted: ocrResult.success,
-      };
-      return updatedStates;
-    });
-
-    if (ocrResult.success) {
-      const newAnswers = [...openEndedAnswers];
-      newAnswers[questionIndex] = ocrResult.extractedText;
-      setOpenEndedAnswers(newAnswers);
     }
   };
 
@@ -669,10 +316,6 @@ export default function AttemptPage() {
       isUploading: false,
       error: null,
       imageId: undefined,
-      isExtractingText: false,
-      extractedText: "",
-      ocrError: null,
-      ocrCompleted: false,
     };
     setImageUploadStates(newStates);
 
@@ -692,13 +335,9 @@ export default function AttemptPage() {
         if (inputMode === "text") {
           return !!openEndedAnswers[currentQuestion]?.trim();
         } else if (inputMode === "image") {
-          // Question is answered if text has been extracted from the image
           const uploadState = imageUploadStates[currentQuestion];
-          return uploadState.ocrCompleted && !!openEndedAnswers[currentQuestion]?.trim();
-        } else if (inputMode === "voice") {
-          // Question is answered if voice has been transcribed
-          const voiceState = voiceRecordingStates[currentQuestion];
-          return voiceState.transcriptionCompleted && !!openEndedAnswers[currentQuestion]?.trim();
+          // Question is answered if an image has been uploaded
+          return !!uploadState.file;
         }
         return false;
       }
@@ -724,7 +363,7 @@ export default function AttemptPage() {
 
   const renderQuestion = (question: AttemptQuestion, index: number) => {
     if (question.type === "open-ended") {
-      const handleInputModeChange = (mode: "text" | "image" | "voice") => {
+      const handleInputModeChange = (mode: "text" | "image") => {
         const newModes = [...openEndedInputModes];
         newModes[index] = mode;
         setOpenEndedInputModes(newModes);
@@ -757,15 +396,7 @@ export default function AttemptPage() {
                   className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-purple-500 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium"
                 >
                   <ImageIcon className="w-5 h-5" />
-                  Upload an Image (AI Text Extraction)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleInputModeChange("voice")}
-                  className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-green-500 text-green-700 rounded-lg hover:bg-green-50 transition-colors font-medium"
-                >
-                  <Mic className="w-5 h-5" />
-                  Answer with Voice (AI Transcription)
+                  Upload an Image
                 </button>
               </div>
             </div>
@@ -796,217 +427,6 @@ export default function AttemptPage() {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Type your answer here..."
               />
-            </div>
-          )}
-
-          {inputMode === "voice" && (
-            <div className="space-y-4">
-              {!voiceRecordingStates[index].audioFile ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Record Voice Answer
-                  </label>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Record your answer using your microphone. Our AI will automatically transcribe what you say for you to review and edit.
-                  </p>
-                  
-                  {!voiceRecordingStates[index].isRecording ? (
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-green-400 transition-colors">
-                      <Mic className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <p className="text-sm text-gray-600 mb-4">
-                        Click below to start recording your answer
-                      </p>
-                      <button
-                        onClick={() => startVoiceRecording(index)}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                      >
-                        <Mic className="w-5 h-5" />
-                        Start Recording
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="border-2 border-red-500 rounded-xl p-8 text-center bg-red-50 animate-pulse">
-                      <div className="flex justify-center mb-4">
-                        <div className="relative">
-                          <Mic className="w-16 h-16 text-red-600" />
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full animate-ping"></div>
-                        </div>
-                      </div>
-                      <p className="text-lg font-semibold text-red-900 mb-2">
-                        Recording in progress...
-                      </p>
-                      <p className="text-2xl font-bold text-red-700 mb-4">
-                        {formatRecordingDuration(voiceRecordingStates[index].recordingDuration)}
-                      </p>
-                      <button
-                        onClick={() => stopVoiceRecording(index)}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-                      >
-                        <MicOff className="w-5 h-5" />
-                        Stop Recording
-                      </button>
-                    </div>
-                  )}
-                  
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
-                    <div className="flex items-start gap-3">
-                      <Volume2 className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-yellow-900 mb-1">
-                          Voice Recording Tips
-                        </p>
-                        <ul className="text-xs text-yellow-800 space-y-1 list-disc ml-4">
-                          <li>Speak clearly and at a moderate pace</li>
-                          <li>Find a quiet environment to minimize background noise</li>
-                          <li>Hold your device close to your mouth (but not too close)</li>
-                          <li>AI will transcribe your speech - you can review and edit it after</li>
-                          <li>Supports multiple languages automatically</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Audio Player */}
-                  <div className="border border-gray-200 rounded-xl overflow-hidden">
-                    <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Recorded Audio</span>
-                      <div className="flex items-center gap-3">
-                        {voiceRecordingStates[index].transcriptionCompleted && !voiceRecordingStates[index].isTranscribing && (
-                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            Transcribed
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveVoiceRecording(index)}
-                          className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
-                        >
-                          <XCircle className="w-4 h-4" />
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-white">
-                      {voiceRecordingStates[index].audioUrl && (
-                        <div className="flex flex-col items-center">
-                          <audio
-                            controls
-                            src={voiceRecordingStates[index].audioUrl!}
-                            className="w-full max-w-md"
-                          />
-                          <p className="text-xs text-gray-500 mt-2">
-                            Duration: {formatRecordingDuration(voiceRecordingStates[index].recordingDuration)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Transcription Status */}
-                  {voiceRecordingStates[index].isTranscribing && (
-                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                      <div className="flex items-center gap-3">
-                        <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
-                        <div>
-                          <div className="text-sm font-medium text-purple-900">
-                            Transcribing audio...
-                          </div>
-                          <div className="text-xs text-purple-700">
-                            AI is converting your speech to text. This may take a few seconds.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Transcription Success */}
-                  {voiceRecordingStates[index].transcriptionCompleted && !voiceRecordingStates[index].isTranscribing && (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                      <div className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-green-900 mb-1">
-                            Audio transcribed successfully!
-                          </div>
-                          <div className="text-xs text-green-700">
-                            Please review the transcribed text below and make any necessary corrections.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Transcription Error */}
-                  {voiceRecordingStates[index].transcriptionError && !voiceRecordingStates[index].isTranscribing && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                      <div className="flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-red-900 mb-1">
-                            Transcription failed
-                          </div>
-                          <div className="text-xs text-red-700 mb-2">
-                            {voiceRecordingStates[index].transcriptionError}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRetryTranscription(index)}
-                            className="inline-flex items-center gap-1 text-sm text-red-700 hover:text-red-800 font-medium"
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                            Retry Transcription
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Transcribed Text Field (Editable) */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      <Edit3 className="w-4 h-4 inline mr-1" />
-                      Transcribed Text (You can edit this)
-                    </label>
-                    <p className="text-xs text-gray-500 mb-2">
-                      Review the AI-transcribed text below. Make any corrections needed before submitting your answer.
-                    </p>
-                    <textarea
-                      rows={8}
-                      value={openEndedAnswers[index] || ""}
-                      onChange={(e) => {
-                        const next = [...openEndedAnswers];
-                        next[index] = e.target.value;
-                        setOpenEndedAnswers(next);
-                      }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
-                      placeholder={voiceRecordingStates[index].isTranscribing ? "Transcribing audio..." : "Transcribed text will appear here..."}
-                      disabled={voiceRecordingStates[index].isTranscribing}
-                    />
-                    <p className="text-xs text-gray-500 italic">
-                      💡 Tip: The AI does its best to transcribe accurately, but please double-check for any errors, especially with technical terms or names.
-                    </p>
-                  </div>
-
-                  {/* Record Another Audio Option */}
-                  <div className="border-t pt-4">
-                    <p className="text-sm text-gray-600 mb-3">
-                      Need to record a different answer?
-                    </p>
-                    <button
-                      onClick={() => {
-                        handleRemoveVoiceRecording(index);
-                      }}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-                    >
-                      <Mic className="w-3 h-3" />
-                      Record New Answer
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -1061,7 +481,7 @@ export default function AttemptPage() {
                     Upload Image Answer
                   </label>
                   <p className="text-sm text-gray-600 mb-4">
-                    Upload an image of your handwritten answer. Our AI will automatically extract the text for you to review and edit.
+                    Upload an image of your handwritten answer, diagram, or work. The AI will analyze the image directly.
                   </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -1112,14 +532,14 @@ export default function AttemptPage() {
                       <Edit3 className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-yellow-900 mb-1">
-                          AI Text Extraction Tips
+                          Important Note
                         </p>
                         <ul className="text-xs text-yellow-800 space-y-1 list-disc ml-4">
                           <li>Ensure your handwriting is clear and legible</li>
                           <li>Use good lighting when taking photos</li>
                           <li>Make sure the entire answer is visible in the frame</li>
-                          <li>AI will extract the text - you can review and edit it after</li>
-                          <li>Works with both handwritten and printed text</li>
+                          <li>The AI will analyze the image directly - no OCR is used</li>
+                          <li>You can upload multiple images if needed (max 10MB each)</li>
                         </ul>
                       </div>
                     </div>
@@ -1132,10 +552,9 @@ export default function AttemptPage() {
                     <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-700">Uploaded Image</span>
                       <div className="flex items-center gap-3">
-                        {imageUploadStates[index].imageId && !imageUploadStates[index].isExtractingText && (
-                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            Uploaded
+                        {imageUploadStates[index].imageId && (
+                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                            ✓ Uploaded
                           </span>
                         )}
                         <button
@@ -1154,7 +573,7 @@ export default function AttemptPage() {
                           <img
                             src={imageUploadStates[index].previewUrl!}
                             alt="Uploaded answer"
-                            className="max-w-full max-h-96 mx-auto rounded-lg shadow-sm object-contain border border-gray-200"
+                            className="max-w-full max-h-96 mx-auto rounded-lg shadow-sm object-contain"
                             onError={(e) => {
                               console.error('Image preview failed to load');
                               e.currentTarget.src = '';
@@ -1187,67 +606,8 @@ export default function AttemptPage() {
                             Uploading image...
                           </div>
                           <div className="text-xs text-blue-700">
-                            Preparing image for processing
+                            Preparing image for AI analysis
                           </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* OCR Extraction Status */}
-                  {imageUploadStates[index].isExtractingText && (
-                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                      <div className="flex items-center gap-3">
-                        <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
-                        <div>
-                          <div className="text-sm font-medium text-purple-900">
-                            Extracting text from image...
-                          </div>
-                          <div className="text-xs text-purple-700">
-                            AI is reading your handwriting. This may take a few seconds.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* OCR Success */}
-                  {imageUploadStates[index].ocrCompleted && !imageUploadStates[index].isExtractingText && (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                      <div className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-green-900 mb-1">
-                            Text extracted successfully!
-                          </div>
-                          <div className="text-xs text-green-700">
-                            Please review the extracted text below and make any necessary corrections.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* OCR Error */}
-                  {imageUploadStates[index].ocrError && !imageUploadStates[index].isExtractingText && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                      <div className="flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-red-900 mb-1">
-                            Text extraction failed
-                          </div>
-                          <div className="text-xs text-red-700 mb-2">
-                            {imageUploadStates[index].ocrError}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRetryOCR(index)}
-                            className="inline-flex items-center gap-1 text-sm text-red-700 hover:text-red-800 font-medium"
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                            Retry Extraction
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -1281,36 +641,32 @@ export default function AttemptPage() {
                     </div>
                   )}
 
-                  {/* Extracted Text Field (Editable) */}
+                  {/* Additional Notes Field */}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                       <Edit3 className="w-4 h-4 inline mr-1" />
-                      Extracted Text (You can edit this)
+                      Additional Notes (Optional)
                     </label>
                     <p className="text-xs text-gray-500 mb-2">
-                      Review the AI-extracted text below. Make any corrections needed before submitting your answer.
+                      Add any additional context or explanations that might help the AI understand your image answer better.
                     </p>
                     <textarea
-                      rows={8}
+                      rows={3}
                       value={openEndedAnswers[index] || ""}
                       onChange={(e) => {
                         const next = [...openEndedAnswers];
                         next[index] = e.target.value;
                         setOpenEndedAnswers(next);
                       }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
-                      placeholder={imageUploadStates[index].isExtractingText ? "Extracting text..." : "Extracted text will appear here..."}
-                      disabled={imageUploadStates[index].isExtractingText}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Add notes about your image answer..."
                     />
-                    <p className="text-xs text-gray-500 italic">
-                      💡 Tip: The AI does its best to extract text accurately, but please double-check for any errors, especially with mathematical formulas or special characters.
-                    </p>
                   </div>
 
                   {/* Upload Another Image Option */}
                   <div className="border-t pt-4">
                     <p className="text-sm text-gray-600 mb-3">
-                      Need to upload a different image?
+                      Need to upload another image for this answer?
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <input
@@ -1330,14 +686,14 @@ export default function AttemptPage() {
                         className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors text-sm"
                       >
                         <ImageIcon className="w-3 h-3" />
-                        Replace Image
+                        Add Another Image
                       </label>
                       <button
                         onClick={startCamera}
                         className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                       >
                         <Camera className="w-3 h-3" />
-                        Take New Photo
+                        Take Another Photo
                       </button>
                     </div>
                   </div>
@@ -1714,24 +1070,15 @@ export default function AttemptPage() {
         formData.append("text_answer", openEndedAnswers[questionIndex] || "");
       } else if (inputMode === "image") {
         const imageFile = imageUploadStates[questionIndex].file;
-        const extractedText = openEndedAnswers[questionIndex] || "";
+        const notes = openEndedAnswers[questionIndex] || "";
         
-        // Send both the image and the extracted/edited text
-        formData.append("answer_type", "image_with_text");
+        // Send the image directly to AI
+        formData.append("answer_type", "image");
         if (imageFile) {
           formData.append("image", imageFile);
         }
-        formData.append("extracted_text", extractedText);
-      } else if (inputMode === "voice") {
-        const audioFile = voiceRecordingStates[questionIndex].audioFile;
-        const transcribedText = openEndedAnswers[questionIndex] || "";
-        
-        // Send both the audio and the transcribed/edited text
-        formData.append("answer_type", "voice_with_text");
-        if (audioFile) {
-          formData.append("audio", audioFile);
-        }
-        formData.append("transcribed_text", transcribedText);
+        // Optional notes for context
+        formData.append("notes", notes);
       }
     } else {
       const rawChoices = question.choices || [];

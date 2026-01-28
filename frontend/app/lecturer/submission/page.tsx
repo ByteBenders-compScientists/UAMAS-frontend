@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 import React, { useState, useEffect, useMemo } from 'react';
@@ -78,7 +79,7 @@ interface SubmissionEntry {
   status: 'Graded' | 'Pending' | 'Late' | 'Resubmission';
 }
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1";
 
 // ===== UTILITY FUNCTIONS =====
 const formatDate = (dateString: string): string => {

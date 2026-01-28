@@ -52,7 +52,7 @@ const educationContent = [
   },
 ]
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1"
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1"
 
 export default function AuthPage() {
   const [email, setEmail] = useState("")
