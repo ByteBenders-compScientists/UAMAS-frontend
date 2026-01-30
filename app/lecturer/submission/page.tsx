@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+// lecturer/submission/page.tsx
 'use client';
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+// useSearchParams removed - using window.location.search instead
 import { useLayout } from '@/components/LayoutController';
 import Sidebar from '@/components/lecturerSidebar';
 import { 
@@ -316,10 +317,17 @@ const GradesTable: React.FC<{ grades: SubmissionEntry[], onGradeEdit: (gradeId: 
 
 // ===== MAIN COMPONENT =====
 const Page: React.FC = () => {
-  const searchParams = useSearchParams();
-  const initialCourseParam = searchParams.get('courseId');
-  const initialUnitParam = searchParams.get('unitId');
-  const initialAssessmentParam = searchParams.get('assessmentId');
+  const [initialCourseParam, setInitialCourseParam] = useState<string | null>(null);
+  const [initialUnitParam, setInitialUnitParam] = useState<string | null>(null);
+  const [initialAssessmentParam, setInitialAssessmentParam] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Get URL parameters on client side only
+    const params = new URLSearchParams(window.location.search);
+    setInitialCourseParam(params.get('courseId'));
+    setInitialUnitParam(params.get('unitId'));
+    setInitialAssessmentParam(params.get('assessmentId'));
+  }, []);
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string>('');
@@ -335,13 +343,22 @@ const Page: React.FC = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState(
-    initialCourseParam ?? ''
-  );
-  const [selectedUnitId, setSelectedUnitId] = useState(
-    initialUnitParam ?? ''
-  );
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [selectedUnitId, setSelectedUnitId] = useState('');
   const [downloadLoading, setDownloadLoading] = useState(false);
+  
+  // Set initial values from URL params when they're loaded
+  useEffect(() => {
+    if (initialCourseParam) {
+      setSelectedCourseId(initialCourseParam);
+    }
+  }, [initialCourseParam]);
+
+  useEffect(() => {
+    if (initialUnitParam) {
+      setSelectedUnitId(initialUnitParam);
+    }
+  }, [initialUnitParam]);
 
   // Fetch courses/units on mount
   useEffect(() => {

@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+// student/library/page.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -31,7 +32,11 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.1
 export default function LibraryPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
+
+useEffect(() => {
+  setSearchParams(new URLSearchParams(window.location.search));
+}, []);
   const [resources, setResources] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('All');
