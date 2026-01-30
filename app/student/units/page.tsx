@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+// student/units/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useLayout } from '@/components/LayoutController';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
@@ -48,7 +49,12 @@ const getColorClasses = (color: string) => {
 export default function MyUnitsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [standalone, setStandalone] = useState<string | null>(null);
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  setStandalone(params.get("standalone"));
+}, []);
   const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -56,11 +62,10 @@ export default function MyUnitsPage() {
   const [allAssessments, setAllAssessments] = useState<any[]>([]);
 
   useEffect(() => {
-    const standalone = searchParams.get('standalone');
     if (standalone !== '1') {
       router.replace('/student/unitworkspace');
     }
-  }, [router, searchParams]);
+  }, [router, standalone]);
 
   // Simulate loading state for skeleton UI
   useEffect(() => {

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+// lecturer/students/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { useLayout } from "@/components/LayoutController"
 import AdminSidebar from "@/components/lecturerSidebar"
@@ -46,8 +46,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169
 
 export default function StudentsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout()
-  const searchParams = useSearchParams()
-  const initialCourseIdFromQuery = searchParams.get("courseId") ?? ""
+  const [initialCourseIdFromQuery, setInitialCourseIdFromQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [students, setStudents] = useState<Student[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -56,6 +55,16 @@ export default function StudentsPage() {
   const [selectedYear, setSelectedYear] = useState("")
   const [selectedSemester, setSelectedSemester] = useState("")
   const [selectedUnitId, setSelectedUnitId] = useState("")
+
+  // Get URL parameters on client side
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const courseId = params.get("courseId")
+    if (courseId) {
+      setInitialCourseIdFromQuery(courseId)
+      setSelectedCourse(courseId)
+    }
+  }, [])
 
   // Fetch students from API
   const fetchStudents = async () => {

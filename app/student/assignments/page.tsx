@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+// student/assignments/page.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -60,7 +61,12 @@ interface Question {
 export default function AssignmentsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  setAssessmentId(params.get("assessmentId"));
+}, []);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -89,10 +95,10 @@ export default function AssignmentsPage() {
   // Workspace mode B: attempt-only route.
   // Attempt flow moved to workspace. Redirect legacy deep links back to workspace.
   useEffect(() => {
-    const assessmentId = searchParams.get("assessmentId");
+    // assessmentId is already in state
     if (!assessmentId) return;
     router.replace(`/student/unitworkspace?action=assignments&assessmentId=${encodeURIComponent(assessmentId)}`);
-  }, [router, searchParams, activeAssignment]);
+  }, [router, assessmentId, activeAssignment]);
 
   // Submit current assignment
   const handleSubmitAssignment = async () => {
