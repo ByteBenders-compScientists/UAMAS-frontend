@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+// student/cats/page.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -46,7 +47,12 @@ interface Question {
 export default function CatsPage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  setAssessmentId(params.get("assessmentId"));
+}, []);
   const [cats, setCats] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,10 +83,9 @@ export default function CatsPage() {
   // Workspace mode B: attempt-only route.
   // Attempt flow moved to workspace. Redirect legacy deep links back to workspace.
   useEffect(() => {
-    const assessmentId = searchParams.get("assessmentId");
     if (!assessmentId) return;
     router.replace(`/student/unitworkspace?action=cats&assessmentId=${encodeURIComponent(assessmentId)}`);
-  }, [router, searchParams, activeCat]);
+  }, [router, assessmentId, activeCat]);
 
   // Submit current CAT
   const handleSubmitCat = async () => {

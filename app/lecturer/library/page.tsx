@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import {
   BarChart3,
   Loader,
@@ -1164,10 +1163,19 @@ const NoteCard: React.FC<{
 
 // Main Page Component
 const LibraryPage: React.FC = () => {
-  const searchParams = useSearchParams();
-  const initialCourseParam = searchParams.get("courseId");
-  const initialUnitParam = searchParams.get("unitId");
-  const initialWeekParam = searchParams.get("week");
+  const [urlParams, setUrlParams] = useState<{ courseId?: string; unitId?: string; week?: string }>({});
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  setUrlParams({
+    courseId: params.get("courseId") || undefined,
+    unitId: params.get("unitId") || undefined,
+    week: params.get("week") || undefined,
+  });
+}, []);
+  const initialCourseParam = urlParams.courseId;
+  const initialUnitParam = urlParams.unitId;
+  const initialWeekParam = urlParams.week;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sideAccessOpen, setSideAccessOpen] = useState(true);
