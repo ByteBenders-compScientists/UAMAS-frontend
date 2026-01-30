@@ -80,7 +80,7 @@ interface SubmissionEntry {
   status: 'Graded' | 'Pending' | 'Late' | 'Resubmission';
 }
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.taya-dev.tech/api/v1";
 
 // ===== UTILITY FUNCTIONS =====
 const formatDate = (dateString: string): string => {
@@ -346,7 +346,7 @@ const Page: React.FC = () => {
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [selectedUnitId, setSelectedUnitId] = useState('');
   const [downloadLoading, setDownloadLoading] = useState(false);
-  
+
   // Set initial values from URL params when they're loaded
   useEffect(() => {
     if (initialCourseParam) {

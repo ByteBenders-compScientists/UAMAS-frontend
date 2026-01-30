@@ -8,7 +8,7 @@ import {  useThemeColors } from '@/context/ThemeContext';
 import WeekSelector from './WeekSelector';
 import { getCurrentWeek, getWeekDateRange, formatDateRange } from '@/utils/WeekSelector';
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.taya-dev.tech/api/v1";
 
 interface HeaderProps {
   title: string;
