@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, easeInOut } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
   BookOpen,
@@ -68,27 +68,28 @@ export default function IntelliMark() {
     },
   };
 
+  // Smooth zoom animation for hero section
   const heroVariants = {
-    enter: {
+    enter: { 
       opacity: 0,
-      scale: 1.1,
+      scale: 1.1 
     },
-    center: {
+    center: { 
       opacity: 1,
       scale: 1,
       transition: {
-        duration: 1.5,
-        ease: easeInOut, // Use the imported function
-      },
+        duration: 1,
+        ease: "easeOut"
+      }
     },
-    exit: {
+    exit: { 
       opacity: 0,
       scale: 0.9,
       transition: {
-        duration: 1.5,
-        ease: easeInOut,
-      },
-    },
+        duration: 0.8,
+        ease: "easeIn"
+      }
+    }
   };
 
   const paintVariants = {
