@@ -26,7 +26,7 @@ import { extractTextFromImage, validateImageForOCR } from "@/services/groqOCRSer
 import { extractTextFromAudio, validateAudioForTranscription } from "@/services/Groqvoice";
 import { useTheme } from "@/context/ThemeContext";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://68.221.169.119/api/v1";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.taya-dev.tech/api/v1";
 
 interface AttemptAssessment {
   id: string;
@@ -76,10 +76,6 @@ export default function AttemptPage() {
   const router = useRouter();
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
 
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  setAssessmentId(params.get("assessmentId"));
-}, []);
   // Get theme from context
   const { colors, config } = useTheme();
   
@@ -118,12 +114,21 @@ useEffect(() => {
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // FIXED: Combined the two useEffect hooks and check URL directly
   useEffect(() => {
-    if (!assessmentId) {
+    // Get assessmentId from URL immediately
+    const params = new URLSearchParams(window.location.search);
+    const urlAssessmentId = params.get("assessmentId");
+    
+    // If no assessmentId in URL, redirect immediately
+    if (!urlAssessmentId) {
       router.replace("/student/unitworkspace");
       return;
     }
-
+    
+    // Set the state
+    setAssessmentId(urlAssessmentId);
+    
     let isMounted = true;
     setLoading(true);
 
@@ -132,7 +137,7 @@ useEffect(() => {
       .then((data) => {
         if (!isMounted) return;
         const list = Array.isArray(data) ? data : [];
-        const found = list.find((a: any) => String(a.id) === String(assessmentId)) || null;
+        const found = list.find((a: any) => String(a.id) === String(urlAssessmentId)) || null;
         setAssessment(found);
 
         const qs = (found?.questions || []) as AttemptQuestion[];
@@ -224,7 +229,7 @@ useEffect(() => {
       stopCamera();
       stopVoiceRecording(currentQuestion);
     };
-  }, [assessmentId, router]);
+  }, [router]); // Removed assessmentId dependency since we get it from URL directly
 
   // Camera functions
   const startCamera = async () => {
@@ -617,14 +622,14 @@ useEffect(() => {
 
     } catch (error) {
       setImageUploadStates(prevStates => {
-        const errorStates = [...prevStates];
-        errorStates[questionIndex] = {
-          ...errorStates[questionIndex],
+        const updatedStates = [...prevStates];
+        updatedStates[questionIndex] = {
+          ...prevStates[questionIndex],
           isUploading: false,
           isExtractingText: false,
           error: error instanceof Error ? error.message : "Failed to upload image",
         };
-        return errorStates;
+        return updatedStates;
       });
     }
   };
