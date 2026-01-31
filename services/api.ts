@@ -181,6 +181,13 @@ export const studentApi = {
     apiRequest<{ message: string }>(`/auth/lecturer/students/${studentId}`, {
       method: 'DELETE',
     }),
+
+  // Update student hobbies (student endpoint)
+  updateStudentHobbies: (hobbies: string[]) =>
+    apiRequest<{ message: string; hobbies: string[] }>('/auth/student/hobbies', {
+      method: 'PUT',
+      body: JSON.stringify({ hobbies }),
+    }),
 };
 
 // Submission API
