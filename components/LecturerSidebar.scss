@@ -1,0 +1,335 @@
+// Theme-aware Lecturer Sidebar Styles
+// Uses CSS variables from the theme system
+
+@mixin smooth-transition($duration: 0.3s, $property: all) {
+  transition: $property $duration cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@mixin hover-scale($scale: 1.05) {
+  transition: transform 0.2s ease;
+  &:hover {
+    transform: scale($scale);
+  }
+}
+
+// Sidebar container animations
+.sidebar-container {
+  @include smooth-transition(0.3s, width);
+  background-color: var(--color-sidebar-background);
+  color: var(--color-text-primary);
+  border-right: 1px solid var(--color-border);
+  
+  &.sidebar-expanded {
+    width: 240px;
+  }
+  
+  &.sidebar-collapsed {
+    width: 80px;
+  }
+  
+  &.sidebar-mobile {
+    width: 270px;
+    @include smooth-transition(0.3s, transform);
+  }
+  
+  &.sidebar-mobile-hidden {
+    transform: translateX(-100%);
+  }
+  
+  &.sidebar-mobile-visible {
+    transform: translateX(0);
+  }
+}
+
+// Overlay animations
+.sidebar-overlay {
+  @include smooth-transition(0.3s, opacity);
+  
+  &.overlay-enter {
+    opacity: 0;
+  }
+  
+  &.overlay-enter-active {
+    opacity: 1;
+  }
+  
+  &.overlay-exit {
+    opacity: 1;
+  }
+  
+  &.overlay-exit-active {
+    opacity: 0;
+  }
+}
+
+// Navigation item animations - Theme aware
+.nav-item {
+  @include smooth-transition(0.2s);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid transparent;
+  
+  &:hover {
+    background-color: var(--color-background-secondary);
+    color: var(--color-text-primary);
+  }
+  
+  &.nav-item-active {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary-light);
+    font-weight: 500;
+    
+    // Dark mode specific
+    .dark & {
+      background-color: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+  }
+}
+
+// Logo hover animation
+.logo-container {
+  @include hover-scale(1.05);
+  
+  // Dark mode brightness adjustment
+  .dark & img {
+    filter: brightness(1.1);
+  }
+}
+
+// Button hover animations - Theme aware
+.sidebar-toggle-btn {
+  @include smooth-transition(0.2s);
+  background-color: transparent;
+  color: var(--color-text-tertiary);
+  
+  &:hover {
+    background-color: var(--color-background-secondary);
+    color: var(--color-text-secondary);
+  }
+  
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+}
+
+// Profile section animations - Theme aware
+.profile-section {
+  @include smooth-transition(0.3s, opacity);
+  background-color: var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-border);
+  
+  &.profile-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  &.profile-visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+}
+
+// Loading skeleton animations - Theme aware
+.skeleton-loader {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: var(--color-border);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Badge animations - Theme aware
+.nav-badge {
+  @include smooth-transition(0.2s, transform);
+  
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+// Bottom illustration fade-in - Theme aware
+.bottom-illustration {
+  @include smooth-transition(0.3s, opacity);
+  
+  &.illustration-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  &.illustration-visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+  
+  // Gradient background adjusts for dark mode
+  .gradient-bg {
+    background: linear-gradient(to bottom right, var(--color-primary-light), var(--color-primary-light));
+    
+    .dark & {
+      background: linear-gradient(
+        to bottom right,
+        rgba(16, 185, 129, 0.1),
+        rgba(20, 184, 166, 0.15)
+      );
+    }
+  }
+}
+
+// Responsive animations
+@media (max-width: 768px) {
+  .sidebar-container {
+    &.sidebar-mobile {
+      @include smooth-transition(0.3s, transform);
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .sidebar-container {
+    &.sidebar-tablet {
+      @include smooth-transition(0.3s, transform);
+    }
+  }
+}
+
+// Stagger animation for nav items
+.nav-items-container {
+  .nav-item {
+    &:nth-child(1) { animation-delay: 0.1s; }
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.3s; }
+    &:nth-child(4) { animation-delay: 0.4s; }
+    &:nth-child(5) { animation-delay: 0.5s; }
+    &:nth-child(6) { animation-delay: 0.6s; }
+    &:nth-child(7) { animation-delay: 0.7s; }
+  }
+}
+
+// Smooth scroll for navigation - Theme aware
+.nav-scroll-container {
+  scroll-behavior: smooth;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--color-background-secondary);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+    
+    &:hover {
+      background: var(--color-border-dark);
+    }
+  }
+}
+
+// Focus animations - Theme aware
+.focus-visible {
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+}
+
+// Text truncation with animation
+.text-truncate-animated {
+  @include smooth-transition(0.2s, max-width);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--color-text-primary);
+}
+
+// Icon rotation animation
+.icon-rotate {
+  @include smooth-transition(0.2s, transform);
+  
+  &.rotate-180 {
+    transform: rotate(180deg);
+  }
+}
+
+// Profile avatar - Theme aware
+.profile-avatar {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  
+  .dark & {
+    background-color: rgba(16, 185, 129, 0.15);
+  }
+}
+
+// Nav item icons - Theme aware
+.nav-item-icon {
+  color: var(--color-text-tertiary);
+  @include smooth-transition(0.2s, color);
+  
+  .nav-item-active & {
+    color: var(--color-primary);
+  }
+}
+
+// Border styles - Theme aware
+.themed-border {
+  border-color: var(--color-border);
+}
+
+.themed-border-bottom {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.themed-border-top {
+  border-top: 1px solid var(--color-border);
+}
+
+// Backdrop blur for mobile overlay
+.sidebar-overlay {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+// Smooth theme transitions
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: var(--transition-normal);
+  transition-timing-function: ease-in-out;
+}
+
+// Dark mode specific adjustments
+.dark {
+  .sidebar-container {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+  
+  .nav-item {
+    &:hover {
+      background-color: rgba(148, 163, 184, 0.05);
+    }
+  }
+  
+  .profile-section {
+    background-color: rgba(15, 23, 42, 1);
+  }
+  
+  .sidebar-toggle-btn {
+    &:hover {
+      background-color: rgba(30, 41, 59, 1);
+    }
+  }
+}
