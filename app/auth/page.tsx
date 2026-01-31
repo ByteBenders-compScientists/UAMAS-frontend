@@ -245,6 +245,8 @@ export default function AuthPage() {
 
       if (response.ok) {
         setSignupSuccessMessage("Account created successfully. You can now log in.")
+        // Mark as new student for hobby page redirect
+        localStorage.setItem("isNewStudent", "true")
         setEmail(signupEmail)
         setAuthMode("login")
         setSignupStep(1)
@@ -290,16 +292,26 @@ export default function AuthPage() {
 
         setTimeout(() => {
           const role = (data.role || "").toLowerCase()
-          switch (role) {
-            case "student":
-              window.location.href = "/student/dashboard"
-              break
-            case "lecturer":
-            case "teacher":
-              window.location.href = "/lecturer/dashboard"
-              break
-            default:
-              window.location.href = "/student/dashboard"
+          const isNewStudent = localStorage.getItem("isNewStudent") === "true"
+          
+          // Check if it's a student and if they're new
+          if (role === "student" && isNewStudent) {
+            // Clear the flag and redirect to hobby page
+            localStorage.removeItem("isNewStudent")
+            window.location.href = "/hobby"
+          } else {
+            // Regular flow for existing students and lecturers
+            switch (role) {
+              case "student":
+                window.location.href = "/student/dashboard"
+                break
+              case "lecturer":
+              case "teacher":
+                window.location.href = "/lecturer/dashboard"
+                break
+              default:
+                window.location.href = "/student/dashboard"
+            }
           }
         }, 2000)
       } else {

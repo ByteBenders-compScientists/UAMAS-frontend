@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
+import { studentApi } from "@/services/api"
 import {
   ArrowRight,
   Book,
@@ -73,27 +74,66 @@ function HobbySelectionPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeFilter, setActiveFilter] = useState("All")
   const [showSuccess, setShowSuccess] = useState(false)
-  const [user, setUser] = useState<{ name?: string }>({})
+  const [user, setUser] = useState<{ name?: string; role?: string }>({})
   const [customHobby, setCustomHobby] = useState("")
   const [showCustomInput, setShowCustomInput] = useState(false)
   const [customHobbies, setCustomHobbies] = useState<Hobby[]>([])
   const [isTyping, setIsTyping] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [isNavigating, setIsNavigating] = useState(false)
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
     setIsMounted(true)
-    const storedUser = localStorage.getItem("userData")
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
+    // Route protection: Check if user is authorized to access hobby page
+    checkHobbyPageAccess()
+  }, [])
+
+  const checkHobbyPageAccess = () => {
+    try {
+      const storedUser = localStorage.getItem("userData")
+      
+      if (!storedUser) {
+        // No user data, redirect to auth
+        router.push("/auth")
+        return
+      }
+
+      const userData = JSON.parse(storedUser)
+      const userRole = userData.role?.toLowerCase()
+
+      // Only allow students to access hobby page
+      if (userRole !== "student") {
+        // Lecturer or other roles should not access hobby page
+        router.push(`/${userRole}/dashboard`)
+        return
+      }
+
+      // Check if hobby page has already been completed
+      const hobbyCompleted = localStorage.getItem("hobbyCompleted") === "true"
+      if (hobbyCompleted) {
+        // Already completed, redirect to dashboard
+        router.push("/student/dashboard")
+        return
+      }
+
+      // User is authorized
+      setUser(userData)
+      setIsAuthorized(true)
+      setIsChecking(false)
+    } catch (error) {
+      console.error("Error checking hobby page access:", error)
+      router.push("/auth")
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      setIsNavigating(false)
     }
   }, [])
-  useEffect(() => {
-  return () => {
-    setIsNavigating(false);
-  };
-}, []);
 
   const predefinedHobbies: Hobby[] = [
     { name: "Reading", type: "Hobby" },
@@ -237,13 +277,25 @@ const navigateToDashboard = async () => {
   
   try {
     setIsNavigating(true);
+    
+    // Send hobbies to backend
+    try {
+      await studentApi.updateStudentHobbies(selectedHobbies);
+      console.log("Hobbies saved successfully:", selectedHobbies);
+    } catch (error) {
+      console.error("Error saving hobbies:", error);
+      // Continue navigation even if hobbies save fails
+    }
+    
+    // Mark hobby as completed so user doesn't see it again
+    localStorage.setItem("hobbyCompleted", "true");
     await new Promise(resolve => setTimeout(resolve, 200));
     
     await router.push("/student/dashboard");
     
   } catch (error) {
     console.error("Navigation error:", error);
-  
+    setIsNavigating(false);
   }
 };
 
@@ -252,6 +304,23 @@ const navigateToDashboard = async () => {
     const hobby = allHobbies.find((h) => h.name === hobbyName)
     return hobby || { name: hobbyName, type: "Hobby" as const }
   })
+
+  // Show loading state while checking authorization
+  if (isChecking || !isAuthorized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50">
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+            className="w-16 h-16 mx-auto mb-4 border-4 border-emerald-500 border-t-transparent rounded-full"
+          />
+          <h2 className="text-2xl font-bold text-emerald-700 mb-2">Loading...</h2>
+          <p className="text-emerald-600">Preparing your personalization page...</p>
+        </motion.div>
+      </div>
+    )
+  }
 
   // Show navigation loading state
   if (isNavigating) {
