@@ -554,7 +554,7 @@ const LecturerForums = () => {
               >
                 <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
                   style={{ backgroundColor: colors.primaryLight }}>
-                  <MessageSquare size={40} style={{ color: colors.primary }} />
+                  <MessageSquare size={40} style={{ color: colors.textPrimary }} />
                 </div>
                 <h2 className="text-2xl font-bold mb-3 text-center" style={{ color: colors.textPrimary }}>
                   No Forums Created Yet
@@ -573,7 +573,7 @@ const LecturerForums = () => {
                     <div className="flex items-center mb-4">
                       <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
                         style={{ backgroundColor: colors.primaryLight }}>
-                        <TrendingUp size={20} style={{ color: colors.primary }} />
+                        <TrendingUp size={20} style={{ color: colors.textPrimary }} />
                       </div>
                       <h3 className="font-bold text-lg" style={{ color: colors.textPrimary }}>Forum Tips</h3>
                     </div>
@@ -596,7 +596,7 @@ const LecturerForums = () => {
                     <div className="flex items-center mb-4">
                       <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
                         style={{ backgroundColor: colors.primaryLight }}>
-                        <BookMarked size={20} style={{ color: colors.primary }} />
+                        <BookMarked size={20} style={{ color: colors.textPrimary }} />
                       </div>
                       <h3 className="font-bold text-lg" style={{ color: colors.textPrimary }}>Get Started</h3>
                     </div>
