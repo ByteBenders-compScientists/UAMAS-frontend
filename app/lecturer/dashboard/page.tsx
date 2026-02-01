@@ -577,7 +577,6 @@ const LecturerDashboard: React.FC = () => {
         </h1>
         <p 
           className="mb-4"
-          style={{ color: `${colors.textPrimary}e6` }}
         >
           Manage your courses and engage with students efficiently
         </p>
