@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/lecturerSidebar';
 import { useLayout } from '@/components/LayoutController';
@@ -26,44 +26,57 @@ import {
   CheckCircle,
   GraduationCap,
   FileText,
-  TrendingUp
+  TrendingUp,
+  Loader2
 } from 'lucide-react';
 import Image from 'next/image';
 import FloatingThemeButton from '@/components/FloatingThemeButton';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.taya-dev.tech/api/v1";
 
-// Mock lecturer profile data
-const mockProfile = {
-  id: 1,
-  name: 'Dr. Alex Kimani',
-  email: 'alex.kimani@university.edu',
-  phone: '+254 712 345 678',
-  address: 'University Faculty Block C, Room 205',
-  dateOfBirth: '1980-03-20',
-  joinDate: '2015-08-01',
-  employeeId: 'LEC-2015-006',
-  department: 'Computer Science',
-  position: 'Senior Lecturer',
-  qualification: 'PhD in Computer Science',
-  specialization: 'Artificial Intelligence & Machine Learning',
-  bio: "I'm a passionate educator and researcher specializing in AI and machine learning. I enjoy mentoring students and contributing to cutting-edge research in computer science.",
-  researchInterests: ['Machine Learning', 'Data Science', 'Computer Vision', 'Natural Language Processing', 'Deep Learning'],
-  courses: ['CS201 - Data Structures', 'CS301 - Machine Learning', 'CS401 - Advanced AI'],
-  socialLinks: {
-    linkedin: 'linkedin.com/in/alexkimani',
-    researchgate: 'researchgate.net/profile/Alex-Kimani',
-    orcid: 'orcid.org/0000-0002-1234-5678'
-  },
-  avatar: null as string | null,
-  officeHours: 'Monday & Wednesday 2:00 PM - 4:00 PM',
-  yearsOfExperience: 10
-};
+// Lecturer profile interface based on API response
+interface LecturerProfile {
+  id?: string;
+  name: string;
+  surname: string;
+  othernames?: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  dateOfBirth?: string;
+  joinDate?: string;
+  staff_number?: string;
+  department?: string;
+  position?: string;
+  title?: string;
+  qualification?: string;
+  specialization?: string;
+  bio?: string;
+  researchInterests?: string[];
+  courses?: string[];
+  socialLinks?: {
+    linkedin?: string;
+    researchgate?: string;
+    orcid?: string;
+  };
+  avatar?: string | null;
+  officeHours?: string;
+  yearsOfExperience?: number;
+}
 
 // Top Header Component
-const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle }) => {
+const TopHeader: React.FC<{ onSidebarToggle: () => void; profile: LecturerProfile | null }> = ({ onSidebarToggle, profile }) => {
   const colors = useThemeColors();
   const { config } = useTheme();
+
+  const getInitials = (name: string, surname: string) => {
+    return `${name.charAt(0)}${surname.charAt(0)}`.toUpperCase();
+  };
+
+  const getDisplayName = (profile: LecturerProfile) => {
+    const title = profile.title || "Lec.";
+    return `${title} ${profile.name} ${profile.surname}`;
+  };
 
   return (
     <header 
@@ -107,13 +120,22 @@ const TopHeader: React.FC<{ onSidebarToggle: () => void }> = ({ onSidebarToggle 
             className="w-8 h-8 rounded-full flex items-center justify-center"
             style={{ background: `${colors.primary}30` }}
           >
-            <User className="w-4 h-4" style={{ color: colors.primary }} />
+            {profile ? (
+              <span 
+                className="text-sm font-semibold"
+                style={{ color: colors.primary }}
+              >
+                {getInitials(profile.name, profile.surname)}
+              </span>
+            ) : (
+              <User className="w-4 h-4" style={{ color: colors.primary }} />
+            )}
           </div>
           <span 
             className="text-sm font-semibold hidden md:inline"
             style={{ color: colors.textPrimary }}
           >
-            Dr. Alex Kimani
+            {profile ? getDisplayName(profile) : 'Loading...'}
           </span>
         </div>
       </div>
@@ -127,24 +149,104 @@ export default function LecturerProfilePage() {
   const { config } = useTheme();
   const colors = useThemeColors();
   
-  const [profile, setProfile] = useState(mockProfile);
+  const [profile, setProfile] = useState<LecturerProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [editedProfile, setEditedProfile] = useState(mockProfile);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editedProfile, setEditedProfile] = useState<LecturerProfile | null>(null);
   const [newResearchInterest, setNewResearchInterest] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const handleProfileUpdate = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setProfile(editedProfile);
-      setIsEditing(false);
-      setIsLoading(false);
-      setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 3000);
-    }, 1000);
+  const getInitials = (name: string, surname: string) => {
+    return `${name.charAt(0)}${surname.charAt(0)}`.toUpperCase();
+  };
+
+  const getDisplayName = (profile: LecturerProfile) => {
+    const title = profile.title || "Lec.";
+    return `${title} ${profile.name} ${profile.surname}`;
+  };
+
+  // Fetch lecturer profile from API
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Transform API data to profile format
+          const profileData: LecturerProfile = {
+            id: data.id,
+            name: data.name || data.firstname || '',
+            surname: data.surname || '',
+            othernames: data.othernames || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            address: data.address || data.office_address || '',
+            dateOfBirth: data.date_of_birth || data.dateOfBirth || '',
+            joinDate: data.join_date || data.joinDate || '',
+            staff_number: data.staff_number || '',
+            department: data.department || '',
+            position: data.position || 'Lecturer',
+            title: data.title || '',
+            qualification: data.qualification || '',
+            specialization: data.specialization || '',
+            bio: data.bio || '',
+            researchInterests: data.research_interests || data.researchInterests || [],
+            courses: data.courses || [],
+            socialLinks: data.social_links || data.socialLinks || {},
+            avatar: data.avatar || null,
+            officeHours: data.office_hours || data.officeHours || '',
+            yearsOfExperience: data.years_of_experience || data.yearsOfExperience || 0,
+          };
+
+          setProfile(profileData);
+          setEditedProfile(profileData);
+        } else {
+          console.error('Failed to fetch profile');
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleProfileUpdate = async () => {
+    if (!editedProfile) return;
+
+    setIsSaving(true);
+    
+    try {
+      // You can add API call here to update the profile
+      // const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+      //   method: 'PUT',
+      //   credentials: 'include',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(editedProfile),
+      // });
+
+      // For now, just update local state
+      setTimeout(() => {
+        setProfile(editedProfile);
+        setIsEditing(false);
+        setIsSaving(false);
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 3000);
+      }, 1000);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setIsSaving(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,7 +256,9 @@ export default function LecturerProfilePage() {
       reader.onloadend = () => {
         if (typeof reader.result === 'string') {
           setPreviewImage(reader.result);
-          setEditedProfile({...editedProfile, avatar: reader.result});
+          if (editedProfile) {
+            setEditedProfile({...editedProfile, avatar: reader.result});
+          }
         }
       };
       reader.readAsDataURL(file);
@@ -166,19 +270,23 @@ export default function LecturerProfilePage() {
   };
 
   const addResearchInterest = () => {
-    if (newResearchInterest.trim() !== '' && !editedProfile.researchInterests.includes(newResearchInterest.trim())) {
+    if (!editedProfile) return;
+    
+    if (newResearchInterest.trim() !== '' && !editedProfile.researchInterests?.includes(newResearchInterest.trim())) {
       setEditedProfile({
         ...editedProfile,
-        researchInterests: [...editedProfile.researchInterests, newResearchInterest.trim()]
+        researchInterests: [...(editedProfile.researchInterests || []), newResearchInterest.trim()]
       });
       setNewResearchInterest('');
     }
   };
 
   const removeResearchInterest = (interest: string) => {
+    if (!editedProfile) return;
+    
     setEditedProfile({
       ...editedProfile,
-      researchInterests: editedProfile.researchInterests.filter(i => i !== interest)
+      researchInterests: (editedProfile.researchInterests || []).filter(i => i !== interest)
     });
   };
 
@@ -201,6 +309,50 @@ export default function LecturerProfilePage() {
       : colors.cardBackground;
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex" style={{ background: colors.background }}>
+        <Sidebar />
+        
+        <motion.div
+          initial={{ 
+            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+          }}
+          animate={{ 
+            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+          }}
+          transition={{ duration: 0.3 }}
+          className="flex-1 flex flex-col items-center justify-center"
+        >
+          <Loader2 className="w-12 h-12 animate-spin" style={{ color: colors.primary }} />
+          <p className="mt-4 text-lg" style={{ color: colors.textSecondary }}>Loading profile...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex" style={{ background: colors.background }}>
+        <Sidebar />
+        
+        <motion.div
+          initial={{ 
+            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+          }}
+          animate={{ 
+            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+          }}
+          transition={{ duration: 0.3 }}
+          className="flex-1 flex flex-col items-center justify-center"
+        >
+          <p className="text-lg" style={{ color: colors.textSecondary }}>Failed to load profile</p>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex" style={{ background: colors.background }}>
       <Sidebar />
@@ -215,7 +367,7 @@ export default function LecturerProfilePage() {
         transition={{ duration: 0.3 }}
         className="flex-1 flex flex-col"
       >
-        <TopHeader onSidebarToggle={() => {}} />
+        <TopHeader onSidebarToggle={() => {}} profile={profile} />
         
         {/* Success Message */}
         <AnimatePresence>
@@ -241,7 +393,7 @@ export default function LecturerProfilePage() {
         
         <main className="flex-1 p-4 lg:p-6 max-w-8xl mx-auto w-full">
           <div className="max-w-5xl mx-auto">
-            {/* Profile Header Card */}
+            {/* Profile Header Card with Wavy Design */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -252,14 +404,26 @@ export default function LecturerProfilePage() {
                 border: `1px solid ${colors.border}`
               }}
             >
-              {/* Header with Diagonal Design */}
+              {/* Header with Wavy Design */}
               <div 
                 className="relative h-56 overflow-hidden"
                 style={{
                   background: getGradient(),
-                  clipPath: 'polygon(0 0, 100% 0, 100% 80%, 0 100%)'
                 }}
               >
+                {/* Wavy SVG at bottom */}
+                <svg 
+                  className="absolute bottom-0 left-0 w-full"
+                  viewBox="0 0 1440 120"
+                  preserveAspectRatio="none"
+                  style={{ height: '80px' }}
+                >
+                  <path
+                    d="M0,64 C320,100 420,20 740,64 C1060,108 1120,28 1440,64 L1440,120 L0,120 Z"
+                    style={{ fill: colors.cardBackground }}
+                  />
+                </svg>
+
                 {/* Background Pattern */}
                 <div 
                   className="absolute inset-0 opacity-10"
@@ -273,7 +437,7 @@ export default function LecturerProfilePage() {
                 {/* Action Button */}
                 <motion.button 
                   onClick={() => isEditing ? handleProfileUpdate() : setIsEditing(true)}
-                  disabled={isLoading}
+                  disabled={isSaving}
                   className="absolute top-6 right-6 px-6 py-3 rounded-full shadow-md backdrop-blur-md transition-all duration-300 font-semibold"
                   style={{
                     background: config.mode === 'dark' 
@@ -287,7 +451,7 @@ export default function LecturerProfilePage() {
                 >
                   {isEditing ? (
                     <span className="flex items-center gap-2">
-                      {isLoading ? (
+                      {isSaving ? (
                         <>
                           <motion.div
                             animate={{ rotate: 360 }}
@@ -353,7 +517,12 @@ export default function LecturerProfilePage() {
                                 priority
                               />
                             ) : (
-                              <User size={64} style={{ color: colors.primary }} />
+                              <span 
+                                className="text-4xl font-bold"
+                                style={{ color: colors.primary }}
+                              >
+                                {getInitials(profile.name, profile.surname)}
+                              </span>
                             )}
                           </div>
                           <div 
@@ -390,7 +559,12 @@ export default function LecturerProfilePage() {
                               priority
                             />
                           ) : (
-                            <User size={64} style={{ color: colors.primary }} />
+                            <span 
+                              className="text-4xl font-bold"
+                              style={{ color: colors.primary }}
+                            >
+                              {getInitials(profile.name, profile.surname)}
+                            </span>
                           )}
                         </div>
                       )}
@@ -402,8 +576,16 @@ export default function LecturerProfilePage() {
                     {isEditing ? (
                       <input
                         type="text"
-                        value={editedProfile.name}
-                        onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})}
+                        value={`${editedProfile?.title || ''} ${editedProfile?.name || ''} ${editedProfile?.surname || ''}`}
+                        onChange={(e) => {
+                          if (!editedProfile) return;
+                          const parts = e.target.value.split(' ');
+                          setEditedProfile({
+                            ...editedProfile, 
+                            name: parts.slice(1, -1).join(' ') || parts[1] || '',
+                            surname: parts[parts.length - 1] || ''
+                          });
+                        }}
                         className="text-3xl font-bold mb-2 w-full px-4 py-2 rounded-xl transition-all duration-300"
                         style={{
                           color: colors.textPrimary,
@@ -419,7 +601,7 @@ export default function LecturerProfilePage() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.2 }}
                       >
-                        {profile.name}
+                        {getDisplayName(profile)}
                       </motion.h1>
                     )}
                     
@@ -438,39 +620,47 @@ export default function LecturerProfilePage() {
                       >
                         <GraduationCap size={18} style={{ color: colors.primary }} />
                         <span style={{ color: colors.textPrimary, fontWeight: 600 }}>
-                          {profile.position}
+                          {profile.position || 'Lecturer'}
                         </span>
                       </div>
-                      <div 
-                        className="flex items-center gap-2 px-4 py-2 rounded-full"
-                        style={{
-                          background: `${colors.secondary}15`,
-                          border: `1px solid ${colors.secondary}30`,
-                        }}
-                      >
-                        <Briefcase size={18} style={{ color: colors.secondary }} />
-                        <span style={{ color: colors.textPrimary, fontWeight: 600 }}>
-                          {profile.department}
-                        </span>
-                      </div>
-                      <div 
-                        className="flex items-center gap-2 px-4 py-2 rounded-full"
-                        style={{
-                          background: `${colors.accent}15`,
-                          border: `1px solid ${colors.accent}30`,
-                        }}
-                      >
-                        <Award size={18} style={{ color: colors.accent }} />
-                        <span style={{ color: colors.textPrimary, fontWeight: 600 }}>
-                          {profile.employeeId}
-                        </span>
-                      </div>
+                      {profile.department && (
+                        <div 
+                          className="flex items-center gap-2 px-4 py-2 rounded-full"
+                          style={{
+                            background: `${colors.secondary}15`,
+                            border: `1px solid ${colors.secondary}30`,
+                          }}
+                        >
+                          <Briefcase size={18} style={{ color: colors.secondary }} />
+                          <span style={{ color: colors.textPrimary, fontWeight: 600 }}>
+                            {profile.department}
+                          </span>
+                        </div>
+                      )}
+                      {profile.staff_number && (
+                        <div 
+                          className="flex items-center gap-2 px-4 py-2 rounded-full"
+                          style={{
+                            background: `${colors.accent}15`,
+                            border: `1px solid ${colors.accent}30`,
+                          }}
+                        >
+                          <Award size={18} style={{ color: colors.accent }} />
+                          <span style={{ color: colors.textPrimary, fontWeight: 600 }}>
+                            {profile.staff_number}
+                          </span>
+                        </div>
+                      )}
                     </motion.div>
 
                     {isEditing ? (
                       <textarea
-                        value={editedProfile.bio}
-                        onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})}
+                        value={editedProfile?.bio || ''}
+                        onChange={(e) => {
+                          if (!editedProfile) return;
+                          setEditedProfile({...editedProfile, bio: e.target.value});
+                        }}
+                        placeholder="Add a bio to tell students about yourself..."
                         className="w-full p-4 rounded-xl resize-none transition-all duration-300"
                         style={{
                           color: colors.textPrimary,
@@ -487,7 +677,7 @@ export default function LecturerProfilePage() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.4 }}
                       >
-                        {profile.bio}
+                        {profile.bio || 'No bio available'}
                       </motion.p>
                     )}
                   </div>
@@ -534,8 +724,11 @@ export default function LecturerProfilePage() {
                       {isEditing ? (
                         <input
                           type="email"
-                          value={editedProfile.email}
-                          onChange={(e) => setEditedProfile({...editedProfile, email: e.target.value})}
+                          value={editedProfile?.email || ''}
+                          onChange={(e) => {
+                            if (!editedProfile) return;
+                            setEditedProfile({...editedProfile, email: e.target.value});
+                          }}
                           className="w-full p-4 rounded-xl transition-all duration-300"
                           style={{
                             color: colors.textPrimary,
@@ -567,8 +760,12 @@ export default function LecturerProfilePage() {
                       {isEditing ? (
                         <input
                           type="tel"
-                          value={editedProfile.phone}
-                          onChange={(e) => setEditedProfile({...editedProfile, phone: e.target.value})}
+                          value={editedProfile?.phone || ''}
+                          onChange={(e) => {
+                            if (!editedProfile) return;
+                            setEditedProfile({...editedProfile, phone: e.target.value});
+                          }}
+                          placeholder="Add phone number"
                           className="w-full p-4 rounded-xl transition-all duration-300"
                           style={{
                             color: colors.textPrimary,
@@ -585,7 +782,7 @@ export default function LecturerProfilePage() {
                           }}
                         >
                           <Phone size={20} style={{ color: colors.primary }} />
-                          <span style={{ color: colors.textPrimary }}>{profile.phone}</span>
+                          <span style={{ color: colors.textPrimary }}>{profile.phone || 'Not provided'}</span>
                         </div>
                       )}
                     </motion.div>
@@ -601,8 +798,12 @@ export default function LecturerProfilePage() {
                     {isEditing ? (
                       <input
                         type="text"
-                        value={editedProfile.address}
-                        onChange={(e) => setEditedProfile({...editedProfile, address: e.target.value})}
+                        value={editedProfile?.address || ''}
+                        onChange={(e) => {
+                          if (!editedProfile) return;
+                          setEditedProfile({...editedProfile, address: e.target.value});
+                        }}
+                        placeholder="Add office address"
                         className="w-full p-4 rounded-xl transition-all duration-300"
                         style={{
                           color: colors.textPrimary,
@@ -619,7 +820,7 @@ export default function LecturerProfilePage() {
                         }}
                       >
                         <MapPin size={20} style={{ color: colors.primary }} />
-                        <span style={{ color: colors.textPrimary }}>{profile.address}</span>
+                        <span style={{ color: colors.textPrimary }}>{profile.address || 'Not provided'}</span>
                       </div>
                     )}
                   </motion.div>
@@ -640,7 +841,7 @@ export default function LecturerProfilePage() {
                         }}
                       >
                         <Award size={20} style={{ color: colors.primary }} />
-                        <span style={{ color: colors.textPrimary }}>{profile.qualification}</span>
+                        <span style={{ color: colors.textPrimary }}>{profile.qualification || 'Not specified'}</span>
                       </div>
                     </motion.div>
                     
@@ -659,51 +860,55 @@ export default function LecturerProfilePage() {
                         }}
                       >
                         <TrendingUp size={20} style={{ color: colors.primary }} />
-                        <span style={{ color: colors.textPrimary }}>{profile.specialization}</span>
+                        <span style={{ color: colors.textPrimary }}>{profile.specialization || 'Not specified'}</span>
                       </div>
                     </motion.div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <motion.div whileHover={{ x: 4 }}>
-                      <label 
-                        className="block text-sm font-semibold mb-2"
-                        style={{ color: colors.textSecondary }}
-                      >
-                        Join Date
-                      </label>
-                      <div 
-                        className="flex items-center gap-3 p-4 rounded-xl"
-                        style={{
-                          background: colors.backgroundSecondary,
-                          border: `1px solid ${colors.borderLight}`,
-                        }}
-                      >
-                        <Calendar size={20} style={{ color: colors.primary }} />
-                        <span style={{ color: colors.textPrimary }}>
-                          {new Date(profile.joinDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </motion.div>
+                    {profile.joinDate && (
+                      <motion.div whileHover={{ x: 4 }}>
+                        <label 
+                          className="block text-sm font-semibold mb-2"
+                          style={{ color: colors.textSecondary }}
+                        >
+                          Join Date
+                        </label>
+                        <div 
+                          className="flex items-center gap-3 p-4 rounded-xl"
+                          style={{
+                            background: colors.backgroundSecondary,
+                            border: `1px solid ${colors.borderLight}`,
+                          }}
+                        >
+                          <Calendar size={20} style={{ color: colors.primary }} />
+                          <span style={{ color: colors.textPrimary }}>
+                            {new Date(profile.joinDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </motion.div>
+                    )}
                     
-                    <motion.div whileHover={{ x: 4 }}>
-                      <label 
-                        className="block text-sm font-semibold mb-2"
-                        style={{ color: colors.textSecondary }}
-                      >
-                        Office Hours
-                      </label>
-                      <div 
-                        className="flex items-center gap-3 p-4 rounded-xl"
-                        style={{
-                          background: colors.backgroundSecondary,
-                          border: `1px solid ${colors.borderLight}`,
-                        }}
-                      >
-                        <Clock size={20} style={{ color: colors.primary }} />
-                        <span style={{ color: colors.textPrimary }}>{profile.officeHours}</span>
-                      </div>
-                    </motion.div>
+                    {profile.officeHours && (
+                      <motion.div whileHover={{ x: 4 }}>
+                        <label 
+                          className="block text-sm font-semibold mb-2"
+                          style={{ color: colors.textSecondary }}
+                        >
+                          Office Hours
+                        </label>
+                        <div 
+                          className="flex items-center gap-3 p-4 rounded-xl"
+                          style={{
+                            background: colors.backgroundSecondary,
+                            border: `1px solid ${colors.borderLight}`,
+                          }}
+                        >
+                          <Clock size={20} style={{ color: colors.primary }} />
+                          <span style={{ color: colors.textPrimary }}>{profile.officeHours}</span>
+                        </div>
+                      </motion.div>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -767,7 +972,7 @@ export default function LecturerProfilePage() {
                   
                   <div className="flex flex-wrap gap-3">
                     <AnimatePresence>
-                      {(isEditing ? editedProfile.researchInterests : profile.researchInterests).map((interest, index) => (
+                      {(isEditing ? editedProfile?.researchInterests : profile.researchInterests)?.map((interest, index) => (
                         <motion.div
                           key={interest}
                           initial={{ opacity: 0, scale: 0.8 }}
@@ -797,7 +1002,9 @@ export default function LecturerProfilePage() {
                             </button>
                           )}
                         </motion.div>
-                      ))}
+                      )) || (
+                        <p style={{ color: colors.textSecondary }}>No research interests added yet</p>
+                      )}
                     </AnimatePresence>
                   </div>
                 </div>
@@ -805,64 +1012,66 @@ export default function LecturerProfilePage() {
             </div>
 
             {/* Current Courses */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mt-6 rounded-3xl shadow-lg p-8"
-              style={{
-                background: getCardGradient(),
-                border: `1px solid ${colors.border}`,
-              }}
-            >
-              <h2 
-                className="text-2xl font-bold mb-6 flex items-center gap-3"
-                style={{ color: colors.textPrimary }}
+            {profile.courses && profile.courses.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mt-6 rounded-3xl shadow-lg p-8"
+                style={{
+                  background: getCardGradient(),
+                  border: `1px solid ${colors.border}`,
+                }}
               >
-                <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                  }}
+                <h2 
+                  className="text-2xl font-bold mb-6 flex items-center gap-3"
+                  style={{ color: colors.textPrimary }}
                 >
-                  <FileText size={20} style={{ color: colors.background }} />
-                </div>
-                Current Courses
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {profile.courses.map((course, index) => (
-                  <motion.div 
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 + index * 0.1 }}
-                    className="p-5 rounded-2xl"
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
                     style={{
-                      background: `linear-gradient(135deg, ${colors.primary}10, ${colors.secondary}10)`,
-                      border: `1px solid ${colors.borderLight}`,
+                      background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                     }}
-                    whileHover={{ scale: 1.02, y: -2 }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{
-                          background: `linear-gradient(135deg, ${colors.primary}30, ${colors.secondary}30)`,
-                        }}
-                      >
-                        <BookOpen size={20} style={{ color: colors.primary }} />
+                    <FileText size={20} style={{ color: colors.background }} />
+                  </div>
+                  Current Courses
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {profile.courses.map((course, index) => (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 + index * 0.1 }}
+                      className="p-5 rounded-2xl"
+                      style={{
+                        background: `linear-gradient(135deg, ${colors.primary}10, ${colors.secondary}10)`,
+                        border: `1px solid ${colors.borderLight}`,
+                      }}
+                      whileHover={{ scale: 1.02, y: -2 }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{
+                            background: `linear-gradient(135deg, ${colors.primary}30, ${colors.secondary}30)`,
+                          }}
+                        >
+                          <BookOpen size={20} style={{ color: colors.primary }} />
+                        </div>
+                        <span 
+                          className="font-semibold"
+                          style={{ color: colors.textPrimary }}
+                        >
+                          {course}
+                        </span>
                       </div>
-                      <span 
-                        className="font-semibold"
-                        style={{ color: colors.textPrimary }}
-                      >
-                        {course}
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
         </main>
       </motion.div>
