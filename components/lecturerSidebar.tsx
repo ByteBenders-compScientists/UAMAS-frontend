@@ -66,7 +66,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   };
 
   const getDisplayName = (profile: LecturerProfile) => {
-    const title = profile.title;
+    const title = profile.title || "Lec.";
     return `${title} ${profile.name} ${profile.surname}`;
   };
 
@@ -372,8 +372,8 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
                   <Image
                     src="/assets/logo3.png"
                     alt="logo"
-                    width={210}
-                    height={180}
+                    width={240}
+                    height={210}
                     quality={100}
                     className={isDark ? 'brightness-110' : ''}
                   />

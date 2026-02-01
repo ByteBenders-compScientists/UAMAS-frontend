@@ -97,7 +97,7 @@ const FloatingThemeButton: React.FC = () => {
                 className="p-2 rounded-lg"
                 style={{ backgroundColor: colors.primaryLight }}
               >
-                <Palette size={18} style={{ color: colors.primary }} />
+                <Palette size={18} style={{ color: colors.textPrimary }} />
               </div>
               <div>
                 <h2
@@ -175,7 +175,7 @@ const FloatingThemeButton: React.FC = () => {
                   <Moon
                     size={20}
                     className="mx-auto mb-2"
-                    style={{ color: config.mode === 'dark' ? colors.primary : colors.textSecondary }}
+                    style={{ color: config.mode === 'dark' ? colors.textPrimary : colors.textSecondary }}
                   />
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-xs sm:text-sm font-medium">Dark</span>

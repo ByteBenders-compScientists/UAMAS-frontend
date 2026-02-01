@@ -1,23 +1,13 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Funnel_Display } from "next/font/google";
 import "./globals.css";
 import LayoutController from "@/components/LayoutController";
 import { ThemeProvider } from "@/context/ThemeContext";
 
-const outfit = Outfit({
+const funnelDisplay = Funnel_Display({
   subsets: ["latin"],
-  weight: [
-    "100",
-    "200",
-    "300",
-    "400",
-    "500",
-    "600",
-    "700",
-    "800",
-    "900",
-  ],
-  variable: "--font-outfit",
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-funnel-display",
   display: "swap",
 });
 
@@ -38,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} font-sans antialiased`}>
+      <body className={`${funnelDisplay.variable} ${funnelDisplay.className} antialiased`}>
         <ThemeProvider>
           <LayoutController>{children}</LayoutController>
         </ThemeProvider>

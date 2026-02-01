@@ -677,12 +677,12 @@ const AssessmentsDashboard: React.FC = () => {
                                 className="mr-3 w-6 h-6 rounded-full flex items-center justify-center font-bold"
                                 style={{ 
                                   backgroundColor: colors.primaryLight, 
-                                  color: colors.primary 
+                                  color: colors.textPrimary 
                                 }}
                               >{i + 1}</span>
                               <s.icon 
                                 className="w-4 h-4 mr-2" 
-                                style={{ color: colors.primary }}
+                                style={{ color: colors.textPrimary }}
                               />
                               <span className="font-semibold">{s.label}</span>
                             </div>

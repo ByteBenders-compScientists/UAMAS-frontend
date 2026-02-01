@@ -21,101 +21,137 @@ import {
   Award,
   Heart,
   X,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
 import FloatingThemeButton from '@/components/FloatingThemeButton';
 
-// Profile type
+// Profile type based on API response
 type Profile = {
-  id: number;
+  id?: string;
   name: string;
+  firstname?: string;
+  surname?: string;
+  othernames?: string;
   email: string;
-  phone: string;
-  address: string;
-  dateOfBirth: string;
-  admissionDate: string;
+  phone?: string;
+  address?: string;
+  dateOfBirth?: string;
+  admissionDate?: string;
   studentId: string;
+  reg_number?: string;
   faculty: string;
+  course_name?: string;
   year: number;
+  year_of_study?: number;
   semester: number;
-  bio: string;
-  hobbies: string[];
-  socialLinks: {
-    github: string;
-    linkedin: string;
-    twitter: string;
+  bio?: string;
+  hobbies?: string[];
+  interests?: string[];
+  socialLinks?: {
+    github?: string;
+    linkedin?: string;
+    twitter?: string;
   };
-  avatar: string | null;
+  avatar?: string | null;
 };
 
-const mockProfile: Profile = {
-  id: 1,
-  name: 'John Doe',
-  email: 'john.doe@university.edu',
-  phone: '+254 712 345 678',
-  address: 'University Residence, Block B',
-  dateOfBirth: '2000-05-15',
-  admissionDate: '2023-09-01',
-  studentId: 'STU-2023-0042',
-  faculty: 'Computer Science',
-  year: 3,
-  semester: 2,
-  bio: "I'm a passionate student interested in AI and machine learning. Looking forward to connecting with others who share similar interests.",
-  hobbies: ['Coding', 'Chess', 'Photography', 'Hiking'],
-  socialLinks: {
-    github: 'github.com/johndoe',
-    linkedin: 'linkedin.com/in/johndoe',
-    twitter: 'twitter.com/johndoe'
-  },
-  avatar: null
-};
-
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.taya-dev.tech/api/v1';
 
 export default function ProfilePage() {
   const { sidebarCollapsed, isMobileView, isTabletView } = useLayout();
   const { config } = useTheme();
   const colors = useThemeColors();
   
-  const [profile, setProfile] = useState(mockProfile);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [editedProfile, setEditedProfile] = useState(mockProfile);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editedProfile, setEditedProfile] = useState<Profile | null>(null);
   const [newHobby, setNewHobby] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+  // Fetch student profile from API
   useEffect(() => {
-    fetch(`${apiBaseUrl}/auth/me`, {
-      credentials: 'include',
-    })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data && data.name && data.surname && data.reg_number) {
-          setProfile(prev => ({
-            ...prev,
-            name: `${data.name} ${data.surname}`,
-            studentId: data.reg_number,
-            email: data.email || prev.email,
-            year: data.year_of_study || prev.year,
-            semester: data.semester || prev.semester,
-            faculty: data.course_name || prev.faculty,
-          }));
+    const fetchProfile = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`${apiBaseUrl}/auth/me`, {
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Transform API data to profile format
+          const profileData: Profile = {
+            id: data.id,
+            firstname: data.firstname || data.name || '',
+            surname: data.surname || '',
+            othernames: data.othernames || '',
+            name: `${data.firstname || data.name || ''} ${data.othernames || ''} ${data.surname || ''}`.trim(),
+            email: data.email || '',
+            phone: data.phone || '',
+            address: data.address || '',
+            dateOfBirth: data.date_of_birth || data.dateOfBirth || '',
+            admissionDate: data.admission_date || data.admissionDate || '',
+            studentId: data.reg_number || data.studentId || '',
+            reg_number: data.reg_number || '',
+            faculty: data.course_name || data.faculty || 'Not specified',
+            course_name: data.course_name || '',
+            year: data.year_of_study || data.year || 1,
+            year_of_study: data.year_of_study || data.year || 1,
+            semester: data.semester || 1,
+            bio: data.bio || '',
+            hobbies: data.hobbies || data.interests || [],
+            interests: data.interests || data.hobbies || [],
+            socialLinks: data.social_links || data.socialLinks || {},
+            avatar: data.avatar || null,
+          };
+
+          setProfile(profileData);
+          setEditedProfile(profileData);
+        } else {
+          console.error('Failed to fetch profile');
         }
-      })
-      .catch(() => {});
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
-  const handleProfileUpdate = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setProfile(editedProfile);
-      setIsEditing(false);
-      setIsLoading(false);
-      setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 3000);
-    }, 1000);
+  const handleProfileUpdate = async () => {
+    if (!editedProfile) return;
+
+    setIsSaving(true);
+    
+    try {
+      // You can add API call here to update the profile
+      // const response = await fetch(`${apiBaseUrl}/auth/profile`, {
+      //   method: 'PUT',
+      //   credentials: 'include',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(editedProfile),
+      // });
+
+      // For now, just update local state
+      setTimeout(() => {
+        setProfile(editedProfile);
+        setIsEditing(false);
+        setIsSaving(false);
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 3000);
+      }, 1000);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setIsSaving(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,8 +159,12 @@ export default function ProfilePage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreviewImage(reader.result as string);
-        setEditedProfile({...editedProfile, avatar: reader.result as string});
+        if (typeof reader.result === 'string') {
+          setPreviewImage(reader.result);
+          if (editedProfile) {
+            setEditedProfile({...editedProfile, avatar: reader.result});
+          }
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -135,20 +175,31 @@ export default function ProfilePage() {
   };
 
   const addHobby = () => {
-    if (newHobby.trim() !== '' && !editedProfile.hobbies.includes(newHobby.trim())) {
+    if (!editedProfile) return;
+    
+    if (newHobby.trim() !== '' && !editedProfile.hobbies?.includes(newHobby.trim())) {
       setEditedProfile({
         ...editedProfile,
-        hobbies: [...editedProfile.hobbies, newHobby.trim()]
+        hobbies: [...(editedProfile.hobbies || []), newHobby.trim()]
       });
       setNewHobby('');
     }
   };
 
   const removeHobby = (hobby: string) => {
+    if (!editedProfile) return;
+    
     setEditedProfile({
       ...editedProfile,
-      hobbies: editedProfile.hobbies.filter(h => h !== hobby)
+      hobbies: (editedProfile.hobbies || []).filter(h => h !== hobby)
     });
+  };
+
+  const getInitials = (name: string) => {
+    const names = name.split(' ').filter(n => n.length > 0);
+    if (names.length === 0) return 'U';
+    if (names.length === 1) return names[0].charAt(0).toUpperCase();
+    return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
   };
 
   // Dynamic gradient based on theme
@@ -158,7 +209,7 @@ export default function ProfilePage() {
     const secondary = colors.secondary;
     
     if (isDark) {
-      return `linear-gradient(135deg, ${primary}15 0%, ${secondary}25 50%, ${primary}15 100%)`;
+      return `linear-gradient(135deg, ${primary}20 0%, ${secondary}30 50%, ${primary}20 100%)`;
     }
     return `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`;
   };
@@ -169,6 +220,50 @@ export default function ProfilePage() {
       ? `linear-gradient(135deg, ${colors.cardBackground} 0%, ${colors.backgroundTertiary} 100%)`
       : colors.cardBackground;
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-screen" style={{ backgroundColor: colors.background }}>
+        <Sidebar />
+        
+        <motion.div 
+          initial={{ 
+            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+          }}
+          animate={{ 
+            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+          }}
+          transition={{ duration: 0.3 }}
+          className="flex-1 flex flex-col items-center justify-center"
+        >
+          <Loader2 className="w-12 h-12 animate-spin" style={{ color: colors.primary }} />
+          <p className="mt-4 text-lg" style={{ color: colors.textSecondary }}>Loading profile...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex h-screen" style={{ backgroundColor: colors.background }}>
+        <Sidebar />
+        
+        <motion.div 
+          initial={{ 
+            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+          }}
+          animate={{ 
+            marginLeft: (!isMobileView && !isTabletView) ? (sidebarCollapsed ? 80 : 240) : 0 
+          }}
+          transition={{ duration: 0.3 }}
+          className="flex-1 flex flex-col items-center justify-center"
+        >
+          <p className="text-lg" style={{ color: colors.textSecondary }}>Failed to load profile</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen" style={{ backgroundColor: colors.background }}>
@@ -210,7 +305,7 @@ export default function ProfilePage() {
 
         <main className="p-4 md:p-6 pb-12">
           <div className="max-w-5xl mx-auto">
-            {/* Profile Header Card */}
+            {/* Profile Header Card with Wavy Design */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -221,29 +316,57 @@ export default function ProfilePage() {
                 border: `1px solid ${colors.border}`
               }}
             >
-              {/* Dynamic Gradient Header */}
+              {/* Header with Wavy Design */}
               <div 
-                className="relative h-48 overflow-hidden"
+                className="relative h-56 overflow-hidden"
                 style={{
                   background: getGradient(),
-                  position: 'relative'
                 }}
               >
-                {/* Background Pattern */}
+                {/* Wavy SVG at bottom */}
+                <svg 
+                  className="absolute bottom-0 left-0 w-full"
+                  viewBox="0 0 1440 120"
+                  preserveAspectRatio="none"
+                  style={{ height: '80px' }}
+                >
+                  <path
+                    d="M0,64 C320,100 420,20 740,64 C1060,108 1120,28 1440,64 L1440,120 L0,120 Z"
+                    style={{ fill: colors.cardBackground }}
+                  />
+                </svg>
+
+                {/* Background Pattern - More Visible */}
                 <div 
-                  className="absolute inset-0 opacity-10"
+                  className="absolute inset-0"
                   style={{
                     backgroundImage: 'url(/assets/pattern1.png)',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
+                    opacity: config.mode === 'dark' ? 0.15 : 0.2,
+                    mixBlendMode: config.mode === 'dark' ? 'overlay' : 'multiply',
+                  }}
+                />
+
+                {/* Decorative circles */}
+                <div 
+                  className="absolute -top-20 -right-20 w-64 h-64 rounded-full"
+                  style={{
+                    background: `radial-gradient(circle, ${colors.background}15, transparent)`,
+                  }}
+                />
+                <div 
+                  className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full"
+                  style={{
+                    background: `radial-gradient(circle, ${colors.background}10, transparent)`,
                   }}
                 />
 
                 {/* Action Button */}
                 <motion.button 
                   onClick={() => isEditing ? handleProfileUpdate() : setIsEditing(true)}
-                  disabled={isLoading}
-                  className="absolute top-6 right-6 px-6 py-3 rounded-full shadow-md backdrop-blur-md transition-all duration-300 font-semibold"
+                  disabled={isSaving}
+                  className="absolute top-6 right-6 px-6 py-3 rounded-full shadow-md backdrop-blur-md transition-all duration-300 font-semibold z-10"
                   style={{
                     background: config.mode === 'dark' 
                       ? `${colors.cardBackground}cc` 
@@ -256,7 +379,7 @@ export default function ProfilePage() {
                 >
                   {isEditing ? (
                     <span className="flex items-center gap-2">
-                      {isLoading ? (
+                      {isSaving ? (
                         <>
                           <motion.div
                             animate={{ rotate: 360 }}
@@ -315,7 +438,12 @@ export default function ProfilePage() {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <User size={64} style={{ color: colors.primary }} />
+                            <span 
+                              className="text-4xl font-bold"
+                              style={{ color: colors.primary }}
+                            >
+                              {getInitials(profile.name)}
+                            </span>
                           )}
                         </div>
                         <div 
@@ -349,7 +477,12 @@ export default function ProfilePage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <User size={64} style={{ color: colors.primary }} />
+                          <span 
+                            className="text-4xl font-bold"
+                            style={{ color: colors.primary }}
+                          >
+                            {getInitials(profile.name)}
+                          </span>
                         )}
                       </div>
                     )}
@@ -361,8 +494,11 @@ export default function ProfilePage() {
                   {isEditing ? (
                     <input
                       type="text"
-                      value={editedProfile.name}
-                      onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})}
+                      value={editedProfile?.name || ''}
+                      onChange={(e) => {
+                        if (!editedProfile) return;
+                        setEditedProfile({...editedProfile, name: e.target.value});
+                      }}
                       className="text-3xl font-bold mb-2 w-full px-4 py-2 rounded-xl transition-all duration-300"
                       style={{
                         color: colors.textPrimary,
@@ -383,7 +519,7 @@ export default function ProfilePage() {
                   )}
                   
                   <motion.div 
-                    className="flex flex-wrap items-center gap-6 mb-6"
+                    className="flex flex-wrap items-center gap-4 mb-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
@@ -428,8 +564,12 @@ export default function ProfilePage() {
 
                   {isEditing ? (
                     <textarea
-                      value={editedProfile.bio}
-                      onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})}
+                      value={editedProfile?.bio || ''}
+                      onChange={(e) => {
+                        if (!editedProfile) return;
+                        setEditedProfile({...editedProfile, bio: e.target.value});
+                      }}
+                      placeholder="Tell us about yourself..."
                       className="w-full p-4 rounded-xl resize-none transition-all duration-300"
                       style={{
                         color: colors.textPrimary,
@@ -446,7 +586,7 @@ export default function ProfilePage() {
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.4 }}
                     >
-                      {profile.bio}
+                      {profile.bio || 'No bio available. Click "Edit Profile" to add one!'}
                     </motion.p>
                   )}
                 </div>
@@ -492,8 +632,11 @@ export default function ProfilePage() {
                       {isEditing ? (
                         <input
                           type="email"
-                          value={editedProfile.email}
-                          onChange={(e) => setEditedProfile({...editedProfile, email: e.target.value})}
+                          value={editedProfile?.email || ''}
+                          onChange={(e) => {
+                            if (!editedProfile) return;
+                            setEditedProfile({...editedProfile, email: e.target.value});
+                          }}
                           className="w-full p-4 rounded-xl transition-all duration-300"
                           style={{
                             color: colors.textPrimary,
@@ -525,8 +668,12 @@ export default function ProfilePage() {
                       {isEditing ? (
                         <input
                           type="tel"
-                          value={editedProfile.phone}
-                          onChange={(e) => setEditedProfile({...editedProfile, phone: e.target.value})}
+                          value={editedProfile?.phone || ''}
+                          onChange={(e) => {
+                            if (!editedProfile) return;
+                            setEditedProfile({...editedProfile, phone: e.target.value});
+                          }}
+                          placeholder="Add phone number"
                           className="w-full p-4 rounded-xl transition-all duration-300"
                           style={{
                             color: colors.textPrimary,
@@ -543,7 +690,7 @@ export default function ProfilePage() {
                           }}
                         >
                           <Phone size={20} style={{ color: colors.primary }} />
-                          <span style={{ color: colors.textPrimary }}>{profile.phone}</span>
+                          <span style={{ color: colors.textPrimary }}>{profile.phone || 'Not provided'}</span>
                         </div>
                       )}
                     </motion.div>
@@ -559,8 +706,12 @@ export default function ProfilePage() {
                     {isEditing ? (
                       <input
                         type="text"
-                        value={editedProfile.address}
-                        onChange={(e) => setEditedProfile({...editedProfile, address: e.target.value})}
+                        value={editedProfile?.address || ''}
+                        onChange={(e) => {
+                          if (!editedProfile) return;
+                          setEditedProfile({...editedProfile, address: e.target.value});
+                        }}
+                        placeholder="Add your address"
                         className="w-full p-4 rounded-xl transition-all duration-300"
                         style={{
                           color: colors.textPrimary,
@@ -577,7 +728,7 @@ export default function ProfilePage() {
                         }}
                       >
                         <MapPin size={20} style={{ color: colors.primary }} />
-                        <span style={{ color: colors.textPrimary }}>{profile.address}</span>
+                        <span style={{ color: colors.textPrimary }}>{profile.address || 'Not provided'}</span>
                       </div>
                     )}
                   </motion.div>
@@ -593,8 +744,11 @@ export default function ProfilePage() {
                       {isEditing ? (
                         <input
                           type="date"
-                          value={editedProfile.dateOfBirth}
-                          onChange={(e) => setEditedProfile({...editedProfile, dateOfBirth: e.target.value})}
+                          value={editedProfile?.dateOfBirth || ''}
+                          onChange={(e) => {
+                            if (!editedProfile) return;
+                            setEditedProfile({...editedProfile, dateOfBirth: e.target.value});
+                          }}
                           className="w-full p-4 rounded-xl transition-all duration-300"
                           style={{
                             color: colors.textPrimary,
@@ -612,32 +766,34 @@ export default function ProfilePage() {
                         >
                           <Calendar size={20} style={{ color: colors.primary }} />
                           <span style={{ color: colors.textPrimary }}>
-                            {new Date(profile.dateOfBirth).toLocaleDateString()}
+                            {profile.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString() : 'Not provided'}
                           </span>
                         </div>
                       )}
                     </motion.div>
                     
-                    <motion.div whileHover={{ x: 4 }}>
-                      <label 
-                        className="block text-sm font-semibold mb-2"
-                        style={{ color: colors.textSecondary }}
-                      >
-                        Admission Date
-                      </label>
-                      <div 
-                        className="flex items-center gap-3 p-4 rounded-xl"
-                        style={{
-                          background: colors.backgroundSecondary,
-                          border: `1px solid ${colors.borderLight}`,
-                        }}
-                      >
-                        <Calendar size={20} style={{ color: colors.primary }} />
-                        <span style={{ color: colors.textPrimary }}>
-                          {new Date(profile.admissionDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </motion.div>
+                    {profile.admissionDate && (
+                      <motion.div whileHover={{ x: 4 }}>
+                        <label 
+                          className="block text-sm font-semibold mb-2"
+                          style={{ color: colors.textSecondary }}
+                        >
+                          Admission Date
+                        </label>
+                        <div 
+                          className="flex items-center gap-3 p-4 rounded-xl"
+                          style={{
+                            background: colors.backgroundSecondary,
+                            border: `1px solid ${colors.borderLight}`,
+                          }}
+                        >
+                          <Calendar size={20} style={{ color: colors.primary }} />
+                          <span style={{ color: colors.textPrimary }}>
+                            {new Date(profile.admissionDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </motion.div>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -701,7 +857,7 @@ export default function ProfilePage() {
                   
                   <div className="flex flex-wrap gap-3">
                     <AnimatePresence>
-                      {(isEditing ? editedProfile.hobbies : profile.hobbies).map((hobby, index) => (
+                      {(isEditing ? editedProfile?.hobbies : profile.hobbies)?.map((hobby, index) => (
                         <motion.div
                           key={hobby}
                           initial={{ opacity: 0, scale: 0.8 }}
@@ -731,7 +887,9 @@ export default function ProfilePage() {
                             </button>
                           )}
                         </motion.div>
-                      ))}
+                      )) || (
+                        <p style={{ color: colors.textSecondary }}>No interests added yet. Click &quot;Edit Profile&quot; to add some!</p>
+                      )}
                     </AnimatePresence>
                   </div>
                 </div>
