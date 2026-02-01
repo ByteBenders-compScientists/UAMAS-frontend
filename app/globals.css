@@ -2,3 +2,69 @@
 @import "tailwindcss";
 
 /* Body font is applied via Space Grotesk in layout.tsx */
+/* Add these styles to your global CSS file */
+@keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  /* Optional: Add smooth scrolling for anchor links */
+  html {
+    scroll-behavior: smooth;
+  }
+  /* Add to globals.css or your CSS file */
+@keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  /* Ensure text is readable on mobile */
+  @media (max-width: 640px) {
+    h1 {
+      font-size: 2.5rem !important;
+      line-height: 1.2 !important;
+    }
+    
+    p {
+      font-size: 1.125rem !important;
+      line-height: 1.6 !important;
+    }
+    
+    /* Button sizes for mobile */
+    button, a {
+      min-height: 44px !important;
+      min-width: 44px !important;
+    }
+  }
+  
+  /* Improve readability on all screens */
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }

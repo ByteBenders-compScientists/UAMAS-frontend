@@ -236,6 +236,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           className="px-4 py-3 transition-opacity duration-300"
           style={{
             borderBottom: `1px solid ${colors.border}`,
+            borderRight: `2px solid ${colors.primary}`,
             backgroundColor: colors.backgroundSecondary,
             opacity: isProfileVisible ? 1 : 0,
           }}
@@ -272,6 +273,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           className="px-4 py-3 transition-opacity duration-300"
           style={{
             borderBottom: `1px solid ${colors.border}`,
+            borderRight: `2px solid ${colors.primary}`,
             backgroundColor: colors.backgroundSecondary,
             opacity: isProfileVisible ? 1 : 0,
           }}
@@ -372,8 +374,8 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
                   <Image
                     src="/assets/logo3.png"
                     alt="logo"
-                    width={240}
-                    height={210}
+                    width={350}
+                    height={310}
                     quality={100}
                     className={isDark ? 'brightness-110' : ''}
                   />

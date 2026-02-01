@@ -198,6 +198,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
         }
         variants={sidebarVariants}
         className={`
+         
           h-screen fixed left-0 top-0 z-40 flex flex-col shadow-xl
           ${(isMobileView || isTabletView) ? 'w-[270px]' : ''}
         `}
@@ -222,7 +223,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
                   <Image
                     src="/assets/logo3.png"
                     alt="logo"
-                    width={200}
+                    width={300}
                     height={160}
                     quality={100}
                     className={isDark ? 'brightness-110' : ''}
@@ -274,6 +275,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
             className="px-4 py-3"
             style={{
               borderBottom: `1px solid ${colors.border}`,
+              borderRight: `2px solid ${colors.primary}`,
               backgroundColor: colors.backgroundSecondary,
             }}
           >
