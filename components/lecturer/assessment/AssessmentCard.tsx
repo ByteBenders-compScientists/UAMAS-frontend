@@ -10,7 +10,8 @@ import {
   Trash, 
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Info
 } from 'lucide-react';
 import { Assessment, Course, QuestionType } from '../../../types/assessment';
 import { formatDate, getDifficultyColor, getTypeColor, getBlooms, formatDateForInput } from '../../../utils/assessmentUtils';
@@ -114,7 +115,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
               </span>
             </div>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
             {assessment.verified ? (
               <div 
                 className="flex items-center px-2 py-1 rounded-full"
@@ -127,16 +128,28 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
                 <span className="text-xs font-bold">Verified</span>
               </div>
             ) : (
-              <div 
-                className="flex items-center px-2 py-1 rounded-full"
-                style={{
-                  backgroundColor: colors.warning + '10',
-                  color: colors.warning
-                }}
-              >
-                <AlertCircle className="w-3.5 h-3.5 mr-1" />
-                <span className="text-xs font-bold">Pending</span>
-              </div>
+              <>
+                <div 
+                  className="flex items-center px-2 py-1 rounded-full"
+                  style={{
+                    backgroundColor: colors.warning + '10',
+                    color: colors.warning
+                  }}
+                >
+                  <AlertCircle className="w-3.5 h-3.5 mr-1" />
+                  <span className="text-xs font-bold">Pending</span>
+                </div>
+                <div 
+                  className="flex items-center px-2 py-1 rounded-full cursor-help"
+                  style={{
+                    backgroundColor: colors.info + '10',
+                    color: colors.info
+                  }}
+                  title="This assessment is pending verification. Click verify button to complete."
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -277,18 +290,22 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
             </span>
             <div className="flex space-x-1">
               <button
-                onClick={() => onView(assessment)}
-                className="flex items-center p-1.5 text-sm font-medium rounded-lg transition-colors"
+                onClick={() => !assessment.verified && onView(assessment)}
+                disabled={assessment.verified}
+                className="flex items-center p-1.5 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  color: colors.info,
+                  color: assessment.verified ? colors.textTertiary : colors.info,
                   backgroundColor: 'transparent'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.info + '10';
+                  if (!assessment.verified) {
+                    e.currentTarget.style.backgroundColor = colors.info + '10';
+                  }
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
+                title={assessment.verified ? 'Cannot open verified assessments' : 'View assessment details'}
               >
                 <Eye className="w-4 h-4" />
               </button>
