@@ -87,7 +87,7 @@ export function transformLegacyToApiAssessment(
   };
 
   // Helper to convert empty strings to undefined
-  const normalizeOptionalString = (value: any): string | undefined => {
+  const normalizeOptionalString = (value: string | number | null | undefined): string | undefined => {
     if (value === null || value === undefined || value === '') {
       return undefined;
     }
@@ -96,7 +96,7 @@ export function transformLegacyToApiAssessment(
 
   // Helper to convert empty strings to undefined for numbers
   // Note: 0 is a valid value (e.g., for untimed assessments)
-  const normalizeOptionalNumber = (value: any): number | undefined => {
+  const normalizeOptionalNumber = (value: string | number | null | undefined): number | undefined => {
     if (value === null || value === undefined || value === '') {
       return undefined;
     }
