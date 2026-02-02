@@ -821,7 +821,7 @@ const LecturerDashboard: React.FC = () => {
                     </code>
                     {unit.unique_join_code && (
                       <motion.button
-                        onClick={() => handleCopyCode(unit.unique_join_code!)}
+                        onClick={() => handleCopyCode(unit.unique_join_code ?? '')}
                         className="p-1 rounded transition-colors"
                         style={{
                           background: copiedCode === unit.unique_join_code ? `${colors.success}20` : 'transparent',
