@@ -306,7 +306,7 @@ const AssessmentsDashboard: React.FC = () => {
   };
 
   const handleGoToStudents = () => {
-    if (!selectedCourse) return;
+    if (!selectedCourse || !selectedUnit) return;
     setActiveAction("students");
   };
 
@@ -324,7 +324,7 @@ const AssessmentsDashboard: React.FC = () => {
       case "submissions":
         return selectedCourse && selectedUnit;
       case "students":
-        return selectedCourse;
+        return selectedCourse && selectedUnit;
       case "manage":
         return true; // manage doesn't require any selection
       default:
@@ -357,8 +357,11 @@ const AssessmentsDashboard: React.FC = () => {
       case "students":
         return {
           title: "View Students",
-          desc: "Select a course to view enrolled students.",
-          steps: [{ icon: GraduationCap, label: "Choose a course" }],
+          desc: "Select a course and a unit to view enrolled students.",
+          steps: [
+            { icon: GraduationCap, label: "Choose a course" },
+            { icon: BookOpen, label: "Select a unit" },
+          ],
         };
       default:
         return {
@@ -621,9 +624,9 @@ const AssessmentsDashboard: React.FC = () => {
                   </button>
                   <button
                     onClick={handleGoToStudents}
-                    disabled={!selectedCourse}
+                    disabled={!selectedCourse || !selectedUnit}
                     className={`px-4 py-2 text-sm rounded-t-lg border-b-2 transition-colors ${
-                      !selectedCourse ? "opacity-40 cursor-not-allowed" : ""
+                      !selectedCourse || !selectedUnit ? "opacity-40 cursor-not-allowed" : ""
                     }`}
                     style={{ 
                       borderBottomColor: activeAction === "students" ? colors.primary : 'transparent',
@@ -813,7 +816,10 @@ const AssessmentsDashboard: React.FC = () => {
                   )}
 
                   {activeAction === "students" && (
-                    <StudentsWorkspace selectedCourseId={selectedCourse} />
+                    <StudentsWorkspace 
+                      selectedCourseId={selectedCourse} 
+                      selectedUnitId={selectedUnit}
+                    />
                   )}
                   {activeAction === "manage" && (
                     <CoursesManagerInline />
