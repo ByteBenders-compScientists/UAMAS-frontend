@@ -147,7 +147,7 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `students_${contextCourse?.code || "unit"}.csv`;
+      a.download = `students_${contextCourse?.code || "course"}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -373,7 +373,7 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
                     <div className="text-xs" style={{ color: colors.textSecondary }}>
                       {s.hobbies && s.hobbies.length > 0 
                         ? s.hobbies.join(", ") 
-                        : <span style={{ color: colors.textTertiary }}>-</span>
+                        : "-"
                       }
                     </div>
                   </td>
