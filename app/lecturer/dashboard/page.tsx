@@ -56,6 +56,7 @@ interface Unit {
   level: number;
   semester: number;
   course_id: string;
+  unique_join_code?: string;
 }
 
 interface Student {
@@ -816,20 +817,22 @@ const LecturerDashboard: React.FC = () => {
                         color: colors.primary
                       }}
                     >
-                      {unit.id}
+                      {unit.unique_join_code || 'No join code'}
                     </code>
-                    <motion.button
-                      onClick={() => handleCopyCode(unit.id)}
-                      className="p-1 rounded transition-colors"
-                      style={{
-                        background: copiedCode === unit.id ? `${colors.success}20` : 'transparent',
-                        color: copiedCode === unit.id ? colors.success : colors.textSecondary
-                      }}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <Copy className="w-3 h-3" />
-                    </motion.button>
+                    {unit.unique_join_code && (
+                      <motion.button
+                        onClick={() => handleCopyCode(unit.unique_join_code!)}
+                        className="p-1 rounded transition-colors"
+                        style={{
+                          background: copiedCode === unit.unique_join_code ? `${colors.success}20` : 'transparent',
+                          color: copiedCode === unit.unique_join_code ? colors.success : colors.textSecondary
+                        }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Copy className="w-3 h-3" />
+                      </motion.button>
+                    )}
                   </div>
                 </div>
               </motion.div>
