@@ -97,6 +97,17 @@ function isAssessmentLockedBySchedule(assessment: StudentAssessment) {
   return scheduleDate > now;
 }
 
+function getAssessmentButtonText(
+  isLockedBySchedule: boolean,
+  isPastDeadline: boolean,
+  isCompleted: boolean
+): string {
+  if (isLockedBySchedule) return "Locked";
+  if (isPastDeadline) return "Closed";
+  if (isCompleted) return "View Results";
+  return "Open";
+}
+
 type UnitItem = Record<string, string | number | boolean | undefined | { id?: string; unit_name?: string; name?: string; unit_code?: string; code?: string }> & {
   unit_id?: string;
   unitId?: string;
@@ -734,7 +745,9 @@ useEffect(() => {
                             const parsedDeadline = deadlineValue ? Date.parse(deadlineValue) : NaN;
                             const isPastDeadline = !!deadlineValue && !Number.isNaN(parsedDeadline) && Date.now() > parsedDeadline;
                             const isLockedBySchedule = isAssessmentLockedBySchedule(cat);
-                            const status = cat.status || "";
+                            const status = (cat.status || "").toLowerCase();
+                            const isCompleted = status === "completed";
+                            const isDisabled = isLockedBySchedule || isPastDeadline || isCompleted;
 
                             return (
                               <div
@@ -805,30 +818,22 @@ useEffect(() => {
                                           Deadline: {new Date(parsedDeadline).toLocaleString()}
                                         </span>
                                       )}
-                                      {isLockedBySchedule && (
+                                      {isLockedBySchedule && cat.schedule_date && (
                                         <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
                                           <Clock className="mr-1 h-3.5 w-3.5" />
-                                          Scheduled
+                                          Open on: {new Date(cat.schedule_date).toLocaleString()}
                                         </span>
                                       )}
                                       {isPastDeadline && (
                                         <span className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 font-semibold text-red-700 ring-1 ring-inset ring-red-200">
                                           <AlertCircle className="mr-1 h-3.5 w-3.5" />
-                                          Closed
+                                          Closed on: {new Date(parsedDeadline).toLocaleString()}
                                         </span>
                                       )}
-                                      {!!status && (
-                                        <span 
-                                          style={{
-                                            backgroundColor: colors.primaryLight,
-                                            color: colors.primary,
-                                          }}
-                                          className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
-                                        >
-                                          <p style={{ color: colors.textPrimary }}>
-                                          {status}
-                                          </p>
-                                         
+                                      {isCompleted && (
+                                        <span className="inline-flex items-center rounded-full bg-green-50 px-3 py-1 font-semibold text-green-700 ring-1 ring-inset ring-green-200">
+                                          <CheckCircle className="mr-1 h-3.5 w-3.5" />
+                                          Completed
                                         </span>
                                       )}
                                     </div>
@@ -837,15 +842,15 @@ useEffect(() => {
                                   <div className="flex items-center gap-2">
                                     <button
                                       onClick={() => startAssessment(cat)}
-                                      disabled={isLockedBySchedule}
+                                      disabled={isDisabled}
                                       style={{
-                                        backgroundColor: isLockedBySchedule ? colors.borderDark : colors.primary,
-                                        color: isLockedBySchedule ? colors.textTertiary : '#ffffff',
+                                        backgroundColor: isDisabled ? colors.borderDark : colors.primary,
+                                        color: isDisabled ? colors.textTertiary : '#ffffff',
                                       }}
                                       className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors disabled:cursor-not-allowed"
                                     >
                                       <Play className="h-4 w-4" />
-                                      {isLockedBySchedule ? "Locked" : "Open"}
+                                      {getAssessmentButtonText(isLockedBySchedule, isPastDeadline, isCompleted)}
                                     </button>
                                   </div>
                                 </div>
@@ -889,7 +894,9 @@ useEffect(() => {
                             const parsedDeadline = deadlineValue ? Date.parse(deadlineValue) : NaN;
                             const isPastDeadline = !!deadlineValue && !Number.isNaN(parsedDeadline) && Date.now() > parsedDeadline;
                             const isLockedBySchedule = isAssessmentLockedBySchedule(a);
-                            const status = a.status || "";
+                            const status = (a.status || "").toLowerCase();
+                            const isCompleted = status === "completed";
+                            const isDisabled = isLockedBySchedule || isPastDeadline || isCompleted;
 
                             return (
                               <div
@@ -960,29 +967,22 @@ useEffect(() => {
                                           Deadline: {new Date(parsedDeadline).toLocaleString()}
                                         </span>
                                       )}
-                                      {isLockedBySchedule && (
+                                      {isLockedBySchedule && a.schedule_date && (
                                         <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
                                           <Clock className="mr-1 h-3.5 w-3.5" />
-                                          Scheduled
+                                          Open on: {new Date(a.schedule_date).toLocaleString()}
                                         </span>
                                       )}
                                       {isPastDeadline && (
                                         <span className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 font-semibold text-red-700 ring-1 ring-inset ring-red-200">
                                           <AlertCircle className="mr-1 h-3.5 w-3.5" />
-                                          Closed
+                                          Closed on: {new Date(parsedDeadline).toLocaleString()}
                                         </span>
                                       )}
-                                      {!!status && (
-                                        <span 
-                                          style={{
-                                            backgroundColor: colors.primaryLight,
-                                            color: colors.primary,
-                                          }}
-                                          className="inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset"
-                                        >
-                                          <p style={{ color: colors.textPrimary }}>
-                                          {status}
-                                          </p>
+                                      {isCompleted && (
+                                        <span className="inline-flex items-center rounded-full bg-green-50 px-3 py-1 font-semibold text-green-700 ring-1 ring-inset ring-green-200">
+                                          <CheckCircle className="mr-1 h-3.5 w-3.5" />
+                                          Completed
                                         </span>
                                       )}
                                     </div>
@@ -991,15 +991,15 @@ useEffect(() => {
                                   <div className="flex items-center gap-2">
                                     <button
                                       onClick={() => startAssessment(a)}
-                                      disabled={isLockedBySchedule}
+                                      disabled={isDisabled}
                                       style={{
-                                        backgroundColor: isLockedBySchedule ? colors.borderDark : colors.primary,
-                                        color: isLockedBySchedule ? colors.textTertiary : '#ffffff',
+                                        backgroundColor: isDisabled ? colors.borderDark : colors.primary,
+                                        color: isDisabled ? colors.textTertiary : '#ffffff',
                                       }}
                                       className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors disabled:cursor-not-allowed"
                                     >
                                       <Play className="h-4 w-4" />
-                                      {isLockedBySchedule ? "Locked" : "Open"}
+                                      {getAssessmentButtonText(isLockedBySchedule, isPastDeadline, isCompleted)}
                                     </button>
                                   </div>
                                 </div>
@@ -1290,7 +1290,7 @@ useEffect(() => {
                                                   Detailed feedback will be available after the deadline.
                                                 </div>
                                                 <div className="mt-1 text-sm text-amber-900">
-                                                  This submission has a deadline. Question-level details (correct answers, rubric, and feedback) will become visible on:
+                                                  Question-level details (correct answers, rubric, and feedback) will be available on:
                                                   <span className="font-semibold"> {new Date(parsedDeadline).toLocaleString()}</span>
                                                 </div>
                                               </div>
