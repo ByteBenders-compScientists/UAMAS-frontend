@@ -94,9 +94,10 @@ export function transformLegacyToApiAssessment(
     return String(value);
   };
 
-  // Helper to convert empty strings/zero to undefined for numbers
+  // Helper to convert empty strings to undefined for numbers
+  // Note: 0 is a valid value (e.g., for untimed assessments)
   const normalizeOptionalNumber = (value: any): number | undefined => {
-    if (value === null || value === undefined || value === '' || value === 0) {
+    if (value === null || value === undefined || value === '') {
       return undefined;
     }
     return Number(value);
