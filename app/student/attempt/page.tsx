@@ -2235,24 +2235,18 @@ export default function AttemptPage() {
         formData.append("text_answer", openEndedAnswers[questionIndex] || "");
       } else if (inputMode === "image") {
         const imageFile = imageUploadStates[questionIndex].file;
-        const extractedText = openEndedAnswers[questionIndex] || "";
         
-        // Send both the image and the extracted/edited text
-        formData.append("answer_type", "image_with_text");
+        // Send the image for marking
         if (imageFile) {
+          formData.append("answer_type", "image");
           formData.append("image", imageFile);
         }
-        formData.append("extracted_text", extractedText);
       } else if (inputMode === "voice") {
-        const audioFile = voiceRecordingStates[questionIndex].audioFile;
         const transcribedText = openEndedAnswers[questionIndex] || "";
         
-        // Send both the audio and the transcribed/edited text
-        formData.append("answer_type", "voice_with_text");
-        if (audioFile) {
-          formData.append("audio", audioFile);
-        }
-        formData.append("transcribed_text", transcribedText);
+        // Submit voice response same as text response
+        formData.append("answer_type", "text");
+        formData.append("text_answer", transcribedText);
       }
     } else {
       const rawChoices = question.choices || [];
