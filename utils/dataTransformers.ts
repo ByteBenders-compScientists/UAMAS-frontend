@@ -76,7 +76,7 @@ export function transformAssessmentToLegacy(assessment: Assessment): Assessment 
 
 // Transform Legacy Assessment to API Assessment format for creation
 export function transformLegacyToApiAssessment(
-  legacyAssessment: Partial<Assessment>
+  legacyAssessment: Partial<Assessment> & { deadline_date?: string; schedule_date?: string }
 ): Partial<import('../services/api').CreateAssessmentRequest> {
   // Map UI difficulty to API difficulty
   const difficultyMap: Record<string, "Easy" | "Intermediate" | "Advance"> = {
@@ -84,6 +84,22 @@ export function transformLegacyToApiAssessment(
     'Intermediate': 'Intermediate',
     'Advance': 'Advance',
     'Advanced': 'Advance',
+  };
+
+  // Helper to convert empty strings to undefined
+  const normalizeOptionalString = (value: any): string | undefined => {
+    if (value === null || value === undefined || value === '') {
+      return undefined;
+    }
+    return String(value);
+  };
+
+  // Helper to convert empty strings/zero to undefined for numbers
+  const normalizeOptionalNumber = (value: any): number | undefined => {
+    if (value === null || value === undefined || value === '' || value === 0) {
+      return undefined;
+    }
+    return Number(value);
   };
 
   return {
@@ -98,8 +114,9 @@ export function transformLegacyToApiAssessment(
     difficulty: legacyAssessment.difficulty ? difficultyMap[legacyAssessment.difficulty] : 'Intermediate',
     number_of_questions: legacyAssessment.number_of_questions,
     blooms_level: legacyAssessment.blooms_level,
-    deadline: legacyAssessment.deadline ?? undefined,
-    duration: legacyAssessment.duration ?? undefined,
+    deadline: normalizeOptionalString(legacyAssessment.deadline_date || legacyAssessment.deadline),
+    schedule_date: normalizeOptionalString(legacyAssessment.schedule_date),
+    duration: normalizeOptionalNumber(legacyAssessment.duration),
   };
 }
 

@@ -407,6 +407,7 @@ export interface CreateAssessmentRequest {
   number_of_questions: number;
   blooms_level: 'Remember' | 'Understand' | 'Apply' | 'Analyze' | 'Evaluate' | 'Create';
   deadline?: string;
+  schedule_date?: string;
   duration?: number;
 }
 
