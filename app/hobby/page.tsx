@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { studentApi } from "@/services/api"
 import {
   ArrowRight,
+  ArrowLeft,
   Book,
   Computer,
   CookingPot,
@@ -18,15 +19,9 @@ import {
   PaintbrushIcon as PaintBrush,
   Plane,
   Search,
-  Star,
   CheckCircle,
-  Sparkles,
-  Trophy,
-  Heart,
-  Target,
   Plus,
   X,
-  Zap,
   Camera,
   Dumbbell,
   Guitar,
@@ -35,991 +30,633 @@ import {
   Mountain,
   Film,
   Headphones,
-  Brush,
   Globe,
   Rocket,
+  Star,
+  Pen,
+  Info,
 } from "lucide-react"
-import type { JSX } from "react/jsx-runtime" // Import JSX to fix the undeclared variable error
+import type { JSX } from "react/jsx-runtime"
 
+// ── types ─────────────────────────────────────────────────────────────────────
 interface Hobby {
   name: string
   type: "Hobby" | "Interest" | "Custom"
   isCustom?: boolean
 }
 
-// Fixed particle positions to avoid hydration mismatch
-const PARTICLE_POSITIONS = [
-  { left: 10, top: 20 },
-  { left: 80, top: 15 },
-  { left: 25, top: 60 },
-  { left: 70, top: 75 },
-  { left: 45, top: 30 },
-  { left: 90, top: 50 },
+interface Toast {
+  id: number
+  message: string
+  type: "success" | "info" | "warning"
+}
+
+// ── icon map (shared) ─────────────────────────────────────────────────────────
+const ICON_MAP: Record<string, (props: { className?: string }) => JSX.Element> = {
+  Reading:            (p) => <Book {...p} />,
+  "Music Production": (p) => <Music {...p} />,
+  Technology:         (p) => <Computer {...p} />,
+  Gaming:             (p) => <Gamepad {...p} />,
+  Science:            (p) => <Lightbulb {...p} />,
+  "Digital Art":      (p) => <PaintBrush {...p} />,
+  Volunteering:       (p) => <Handshake {...p} />,
+  Travel:             (p) => <Plane {...p} />,
+  Cooking:            (p) => <CookingPot {...p} />,
+  Photography:        (p) => <Camera {...p} />,
+  Fitness:            (p) => <Dumbbell {...p} />,
+  "Guitar Playing":   (p) => <Guitar {...p} />,
+  Painting:           (p) => <Palette {...p} />,
+  "Coffee Culture":   (p) => <Coffee {...p} />,
+  Hiking:             (p) => <Mountain {...p} />,
+  "Film Making":      (p) => <Film {...p} />,
+  Podcasting:         (p) => <Headphones {...p} />,
+  "Creative Writing": (p) => <Pen {...p} />,
+  Languages:          (p) => <Globe {...p} />,
+  Entrepreneurship:   (p) => <Rocket {...p} />,
+}
+
+const getIcon = (name: string, isCustom?: boolean, size = "w-5 h-5") => {
+  if (isCustom) return <Star className={`${size} text-emerald-600`} />
+  const Icon = ICON_MAP[name]
+  return Icon ? <Icon className={`${size} text-emerald-600`} /> : <Star className={`${size} text-emerald-600`} />
+}
+
+// ── predefined data ───────────────────────────────────────────────────────────
+const PREDEFINED: Hobby[] = [
+  { name: "Reading",            type: "Hobby" },
+  { name: "Music Production",   type: "Hobby" },
+  { name: "Technology",         type: "Interest" },
+  { name: "Gaming",             type: "Hobby" },
+  { name: "Science",            type: "Interest" },
+  { name: "Digital Art",        type: "Interest" },
+  { name: "Volunteering",       type: "Interest" },
+  { name: "Travel",             type: "Interest" },
+  { name: "Cooking",            type: "Hobby" },
+  { name: "Photography",        type: "Hobby" },
+  { name: "Fitness",            type: "Hobby" },
+  { name: "Guitar Playing",     type: "Hobby" },
+  { name: "Painting",           type: "Hobby" },
+  { name: "Coffee Culture",     type: "Interest" },
+  { name: "Hiking",             type: "Hobby" },
+  { name: "Film Making",        type: "Interest" },
+  { name: "Podcasting",         type: "Interest" },
+  { name: "Creative Writing",   type: "Hobby" },
+  { name: "Languages",          type: "Interest" },
+  { name: "Entrepreneurship",   type: "Interest" },
 ]
 
-// Fixed floating element positions
-const FLOATING_POSITIONS = [
-  { left: 15, top: 25 },
-  { left: 75, top: 35 },
-  { left: 35, top: 70 },
-  { left: 85, top: 80 },
-  { left: 20, top: 85 },
-  { left: 60, top: 20 },
-  { left: 40, top: 45 },
-  { left: 80, top: 65 },
-]
+const FILTERS = ["All", "Hobbies", "Interests", "Custom"] as const
 
-function HobbySelectionPage() {
-  const [selectedHobbies, setSelectedHobbies] = useState<string[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [activeFilter, setActiveFilter] = useState("All")
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [user, setUser] = useState<{ name?: string; role?: string }>({})
-  const [customHobby, setCustomHobby] = useState("")
-  const [showCustomInput, setShowCustomInput] = useState(false)
-  const [customHobbies, setCustomHobbies] = useState<Hobby[]>([])
-  const [isTyping, setIsTyping] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
-  const [isNavigating, setIsNavigating] = useState(false)
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [isChecking, setIsChecking] = useState(true)
-  const router = useRouter()
-
-  useEffect(() => {
-    setIsMounted(true)
-    // Route protection: Check if user is authorized to access hobby page
-    checkHobbyPageAccess()
-  }, [])
-
-  const checkHobbyPageAccess = () => {
-    try {
-      const storedUser = localStorage.getItem("userData")
-      
-      if (!storedUser) {
-        // No user data, redirect to auth
-        router.push("/auth")
-        return
-      }
-
-      const userData = JSON.parse(storedUser)
-      const userRole = userData.role?.toLowerCase()
-
-      // Only allow students to access hobby page
-      if (userRole !== "student") {
-        // Lecturer or other roles should not access hobby page
-        router.push(`/${userRole}/dashboard`)
-        return
-      }
-
-      // Check if hobby page has already been completed
-      const hobbyCompleted = localStorage.getItem("hobbyCompleted") === "true"
-      if (hobbyCompleted) {
-        // Already completed, redirect to dashboard
-        router.push("/student/dashboard")
-        return
-      }
-
-      // User is authorized
-      setUser(userData)
-      setIsAuthorized(true)
-      setIsChecking(false)
-    } catch (error) {
-      console.error("Error checking hobby page access:", error)
-      router.push("/auth")
-    }
-  }
-
-  useEffect(() => {
-    return () => {
-      setIsNavigating(false)
-    }
-  }, [])
-
-  const predefinedHobbies: Hobby[] = [
-    { name: "Reading", type: "Hobby" },
-    { name: "Music Production", type: "Hobby" },
-    { name: "Technology", type: "Interest" },
-    { name: "Gaming", type: "Hobby" },
-    { name: "Science", type: "Interest" },
-    { name: "Digital Art", type: "Interest" },
-    { name: "Volunteering", type: "Interest" },
-    { name: "Travel", type: "Interest" },
-    { name: "Cooking", type: "Hobby" },
-    { name: "Photography", type: "Hobby" },
-    { name: "Fitness", type: "Hobby" },
-    { name: "Guitar Playing", type: "Hobby" },
-    { name: "Painting", type: "Hobby" },
-    { name: "Coffee Culture", type: "Interest" },
-    { name: "Hiking", type: "Hobby" },
-    { name: "Film Making", type: "Interest" },
-    { name: "Podcasting", type: "Interest" },
-    { name: "Creative Writing", type: "Hobby" },
-    { name: "Languages", type: "Interest" },
-    { name: "Entrepreneurship", type: "Interest" },
-  ]
-
-  const allHobbies = [...predefinedHobbies, ...customHobbies]
-
-  const getIconForItem = (name: string, type: string, isCustom = false) => {
-    const iconClass = "w-8 h-8 text-emerald-600"
-
-    if (isCustom) {
-      return <Sparkles className={iconClass} />
-    }
-
-    const iconMap: { [key: string]: JSX.Element } = {
-      Reading: <Book className={iconClass} />,
-      "Music Production": <Music className={iconClass} />,
-      Technology: <Computer className={iconClass} />,
-      Gaming: <Gamepad className={iconClass} />,
-      Science: <Lightbulb className={iconClass} />,
-      "Digital Art": <PaintBrush className={iconClass} />,
-      Volunteering: <Handshake className={iconClass} />,
-      Travel: <Plane className={iconClass} />,
-      Cooking: <CookingPot className={iconClass} />,
-      Photography: <Camera className={iconClass} />,
-      Fitness: <Dumbbell className={iconClass} />,
-      "Guitar Playing": <Guitar className={iconClass} />,
-      Painting: <Palette className={iconClass} />,
-      "Coffee Culture": <Coffee className={iconClass} />,
-      Hiking: <Mountain className={iconClass} />,
-      "Film Making": <Film className={iconClass} />,
-      Podcasting: <Headphones className={iconClass} />,
-      "Creative Writing": <Brush className={iconClass} />,
-      Languages: <Globe className={iconClass} />,
-      Entrepreneurship: <Rocket className={iconClass} />,
-    }
-
-    return iconMap[name] || <Star className={iconClass} />
-  }
-
-  const getSmallIconForItem = (name: string, type: string, isCustom = false) => {
-    const iconClass = "w-5 h-5 text-emerald-600"
-
-    if (isCustom) {
-      return <Sparkles className={iconClass} />
-    }
-
-    const iconMap: { [key: string]: JSX.Element } = {
-      Reading: <Book className={iconClass} />,
-      "Music Production": <Music className={iconClass} />,
-      Technology: <Computer className={iconClass} />,
-      Gaming: <Gamepad className={iconClass} />,
-      Science: <Lightbulb className={iconClass} />,
-      "Digital Art": <PaintBrush className={iconClass} />,
-      Volunteering: <Handshake className={iconClass} />,
-      Travel: <Plane className={iconClass} />,
-      Cooking: <CookingPot className={iconClass} />,
-      Photography: <Camera className={iconClass} />,
-      Fitness: <Dumbbell className={iconClass} />,
-      "Guitar Playing": <Guitar className={iconClass} />,
-      Painting: <Palette className={iconClass} />,
-      "Coffee Culture": <Coffee className={iconClass} />,
-      Hiking: <Mountain className={iconClass} />,
-      "Film Making": <Film className={iconClass} />,
-      Podcasting: <Headphones className={iconClass} />,
-      "Creative Writing": <Brush className={iconClass} />,
-      Languages: <Globe className={iconClass} />,
-      Entrepreneurship: <Rocket className={iconClass} />,
-    }
-
-    return iconMap[name] || <Star className={iconClass} />
-  }
-
-  const filteredHobbies = allHobbies.filter((hobby) => {
-    const matchesSearch = hobby.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter =
-      activeFilter === "All" ||
-      (activeFilter === "Hobbies" && hobby.type === "Hobby") ||
-      (activeFilter === "Interests" && hobby.type === "Interest") ||
-      (activeFilter === "Custom" && hobby.type === "Custom")
-    return matchesSearch && matchesFilter
-  })
-
-  const toggleHobby = (hobbyName: string) => {
-    setSelectedHobbies((prev) =>
-      prev.includes(hobbyName) ? prev.filter((h) => h !== hobbyName) : [...prev, hobbyName],
-    )
-  }
-
-  const addCustomHobby = () => {
-    if (customHobby.trim() && !allHobbies.some((h) => h.name.toLowerCase() === customHobby.toLowerCase())) {
-      const newHobby: Hobby = {
-        name: customHobby.trim(),
-        type: "Custom",
-        isCustom: true,
-      }
-      setCustomHobbies((prev) => [...prev, newHobby])
-      setSelectedHobbies((prev) => [...prev, customHobby.trim()])
-      setCustomHobby("")
-      setShowCustomInput(false)
-    }
-  }
-
-  const removeCustomHobby = (hobbyName: string) => {
-    setCustomHobbies((prev) => prev.filter((h) => h.name !== hobbyName))
-    setSelectedHobbies((prev) => prev.filter((h) => h !== hobbyName))
-  }
-
-  const handleCustomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCustomHobby(e.target.value)
-    setIsTyping(true)
-    setTimeout(() => setIsTyping(false), 1500)
-  }
-
-  const handleContinue = () => {
-    if (selectedHobbies.length >= 2) {
-      setShowSuccess(true)
-    }
-  }
-const navigateToDashboard = async () => {
-  if (isNavigating) return;
-  
-  try {
-    setIsNavigating(true);
-    
-    // Send hobbies to backend
-    try {
-      await studentApi.updateStudentHobbies(selectedHobbies);
-      console.log("Hobbies saved successfully:", selectedHobbies);
-    } catch (error) {
-      console.error("Error saving hobbies:", error);
-      // Continue navigation even if hobbies save fails
-    }
-    
-    // Mark hobby as completed so user doesn't see it again
-    localStorage.setItem("hobbyCompleted", "true");
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    await router.push("/student/dashboard");
-    
-  } catch (error) {
-    console.error("Navigation error:", error);
-    setIsNavigating(false);
-  }
-};
-
-
-  const selectedHobbiesWithType = selectedHobbies.map((hobbyName) => {
-    const hobby = allHobbies.find((h) => h.name === hobbyName)
-    return hobby || { name: hobbyName, type: "Hobby" as const }
-  })
-
-  // Show loading state while checking authorization
-  if (isChecking || !isAuthorized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50">
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-            className="w-16 h-16 mx-auto mb-4 border-4 border-emerald-500 border-t-transparent rounded-full"
-          />
-          <h2 className="text-2xl font-bold text-emerald-700 mb-2">Loading...</h2>
-          <p className="text-emerald-600">Preparing your personalization page...</p>
-        </motion.div>
-      </div>
-    )
-  }
-
-  // Show navigation loading state
-  if (isNavigating) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50">
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-            className="w-16 h-16 mx-auto mb-4 border-4 border-emerald-500 border-t-transparent rounded-full"
-          />
-          <h2 className="text-2xl font-bold text-emerald-700 mb-2">Launching Your Dashboard!</h2>
-          <p className="text-emerald-600">Preparing your personalized experience...</p>
-        </motion.div>
-      </div>
-    )
-  }
-
-  // Don't render until mounted to avoid hydration issues
-  if (!isMounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-emerald-50">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-emerald-500 rounded-full flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-white animate-spin" />
-          </div>
-          <p className="text-emerald-600 font-medium">Loading your personalization page...</p>
-        </div>
-      </div>
-    )
-  }
-
-
+// ── Toast Component ───────────────────────────────────────────────────────────
+function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast: (id: number) => void }) {
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 to-emerald-50">
-      {/* Left Section with Educational Background Image */}
-      <div className="relative w-full lg:w-1/2 h-[50vh] lg:h-auto text-white flex items-center justify-center overflow-hidden">
-        {/* Educational background image from Unsplash */}
-        <Image
-          src="/assets/authbg.jpg"
-          alt="Students studying together in modern classroom"
-          fill
-          className="object-cover"
-          priority
-        />
-
-        {/* Animated gradient overlay */}
-        <motion.div
-          animate={{
-            background: [
-              "linear-gradient(45deg, rgba(16, 185, 129, 0.8), rgba(5, 150, 105, 0.6))",
-              "linear-gradient(45deg, rgba(5, 150, 105, 0.8), rgba(16, 185, 129, 0.6))",
-              "linear-gradient(45deg, rgba(16, 185, 129, 0.8), rgba(5, 150, 105, 0.6))",
-            ],
-          }}
-          transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-          className="absolute inset-0 z-10"
-        />
-
-        {/* Fixed positioned floating particles */}
-        <div className="absolute inset-0 z-20">
-          {PARTICLE_POSITIONS.map((pos, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 bg-white/30 rounded-full"
-              style={{
-                left: `${pos.left}%`,
-                top: `${pos.top}%`,
-              }}
-              animate={{
-                y: [-20, -40, -20],
-                opacity: [0.3, 0.8, 0.3],
-                scale: [1, 1.5, 1],
-              }}
-              transition={{
-                duration: 3 + (i % 3),
-                repeat: Number.POSITIVE_INFINITY,
-                delay: i * 0.5,
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Main content */}
-        <AnimatePresence mode="wait">
-          {!showSuccess ? (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -50 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="relative z-30 text-center max-w-lg px-6"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                className="mb-6"
-              >
-                <div className="w-16 h-16 mx-auto bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
-              </motion.div>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-sm opacity-90 mb-2 font-medium"
-              >
-                Step 1 of 3 • Personalization
-              </motion.p>
-
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="text-4xl lg:text-5xl font-bold mb-4 leading-tight"
-              >
-                What makes you{" "}
-                <motion.span
-                  animate={{ color: ["#ffffff", "#fbbf24", "#ffffff"] }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                  className="inline-block"
-                >
-                  unique?
-                </motion.span>
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-                className="text-lg opacity-95 leading-relaxed"
-              >
-                Share your passions and interests to unlock a personalized learning experience tailored just for you!
-              </motion.p>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="relative z-30 text-center max-w-lg px-6"
-            >
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="mb-6"
-              >
-                <div className="w-20 h-20 mx-auto bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
-                  <CheckCircle className="w-12 h-12 text-white" />
-                </div>
-              </motion.div>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-sm opacity-90 mb-2 font-medium"
-              >
-                Step 2 of 3 • Success!
-              </motion.p>
-
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="text-4xl lg:text-5xl font-bold mb-4"
-              >
-                Perfect Choice!
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
-                className="text-lg opacity-95"
-              >
-                Your unique profile is ready! We&apos;ll create amazing learning experiences based on your interests.
-              </motion.p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Bottom floating icons */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 flex gap-4 opacity-70">
-          {[Gamepad, PaintBrush, Lightbulb, Computer, Music, Camera].map((Icon, index) => (
-            <motion.div
-              key={index}
-              animate={{
-                y: [0, -8, 0],
-                rotate: [0, 5, -5, 0],
-              }}
-              transition={{
-                repeat: Number.POSITIVE_INFINITY,
-                duration: 2 + index * 0.3,
-                delay: index * 0.2,
-              }}
-              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30"
-            >
-              <Icon className="w-5 h-5" />
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Right Section */}
-      <div className="w-full lg:w-1/2 p-6 lg:p-8 space-y-6 bg-white/50 backdrop-blur-sm">
-        <AnimatePresence mode="wait">
-          {!showSuccess ? (
-            <motion.div
-              key="selection"
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0, x: 100 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-6"
-            >
-              {/* Header */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-3">
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    className="w-12 h-12 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-xl shadow-lg"
-                  >
-                    {user.name ? user.name.charAt(0).toUpperCase() : "U"}
-                  </motion.div>
-                  <div>
-                    <h2 className="font-bold text-gray-800 text-lg">Welcome, {user.name || "Student"}!</h2>
-                    <p className="text-emerald-600 text-sm font-medium">Let&apos;s discover your passions</p>
-                  </div>
-                </div>
-
-                <motion.div
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-100 to-teal-100 px-4 py-2 rounded-full border border-emerald-200"
-                >
-                  <Zap className="w-4 h-4 text-emerald-600" />
-                  <span className="text-emerald-700 text-sm font-semibold">{selectedHobbies.length} selected</span>
-                </motion.div>
-              </motion.div>
-
-              {/* Search & Filters */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="space-y-4"
-              >
-                {/* Search Bar */}
-                <div className="relative">
-                  <div className="flex items-center bg-white border-2 border-emerald-200 rounded-2xl px-4 py-3 shadow-sm focus-within:border-emerald-400 focus-within:shadow-md transition-all">
-                    <Search className="w-5 h-5 text-emerald-500 mr-3" />
-                    <input
-                      type="text"
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      value={searchTerm}
-                      placeholder="Search your interests..."
-                      className="flex-1 outline-none text-gray-700 placeholder-gray-400"
-                    />
-                    {searchTerm && (
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => setSearchTerm("")}
-                        className="ml-2 p-1 hover:bg-gray-100 rounded-full"
-                      >
-                        <X className="w-4 h-4 text-gray-400" />
-                      </motion.button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Filter Buttons */}
-                <div className="flex gap-2 flex-wrap">
-                  {["All", "Hobbies", "Interests", "Custom"].map((filter) => (
-                    <motion.button
-                      key={filter}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
-                        activeFilter === filter
-                          ? "bg-emerald-500 text-white shadow-lg"
-                          : "bg-white border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                      }`}
-                      onClick={() => setActiveFilter(filter)}
-                    >
-                      {filter}
-                      {filter === "Custom" && customHobbies.length > 0 && (
-                        <span className="ml-1 bg-emerald-600 text-white text-xs px-1.5 py-0.5 rounded-full">
-                          {customHobbies.length}
-                        </span>
-                      )}
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Add Custom Hobby Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-dashed border-purple-200 rounded-2xl p-4"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-purple-600" />
-                    <h3 className="font-semibold text-purple-800">Add Your Own Interest</h3>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.1, rotate: 90 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setShowCustomInput(!showCustomInput)}
-                    className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </motion.button>
-                </div>
-
-                <AnimatePresence>
-                  {showCustomInput && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="space-y-3"
-                    >
-                      <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <input
-                            type="text"
-                            value={customHobby}
-                            onChange={handleCustomInputChange}
-                            placeholder="Type your unique interest..."
-                            className="w-full px-4 py-2 border-2 border-purple-200 rounded-xl focus:border-purple-400 focus:outline-none"
-                            onKeyPress={(e) => e.key === "Enter" && addCustomHobby()}
-                          />
-                          {isTyping && (
-                            <motion.div
-                              animate={{ scale: [1, 1.2, 1] }}
-                              transition={{ duration: 0.5 }}
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                            >
-                              <Sparkles className="w-4 h-4 text-purple-500" />
-                            </motion.div>
-                          )}
-                        </div>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={addCustomHobby}
-                          disabled={!customHobby.trim()}
-                          className="px-4 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                        >
-                          Add
-                        </motion.button>
-                      </div>
-                      <p className="text-sm text-purple-600">
-                        💡 Add anything that excites you - from niche hobbies to unique interests!
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-
-              {/* Hobby Grid */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
-              >
-                <AnimatePresence>
-                  {filteredHobbies.map((item, index) => {
-                    const isSelected = selectedHobbies.includes(item.name)
-                    return (
-                      <motion.div
-                        key={item.name}
-                        layout
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.05, y: -5 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => toggleHobby(item.name)}
-                        className={`relative bg-white rounded-2xl shadow-md p-4 cursor-pointer transition-all duration-300 border-2 ${
-                          isSelected
-                            ? "border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-lg"
-                            : "border-gray-100 hover:border-emerald-200 hover:shadow-lg"
-                        }`}
-                      >
-                        {/* Custom hobby remove button */}
-                        {item.isCustom && (
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              removeCustomHobby(item.name)
-                            }}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 z-10"
-                          >
-                            <X className="w-3 h-3" />
-                          </motion.button>
-                        )}
-
-                        <div className="text-center">
-                          <motion.div
-                            animate={isSelected ? { rotate: [0, 10, -10, 0] } : {}}
-                            transition={{ duration: 0.5 }}
-                            className="flex items-center justify-center mb-3"
-                          >
-                            {getIconForItem(item.name, item.type, item.isCustom)}
-                          </motion.div>
-
-                          <h3 className={`font-semibold mb-1 ${isSelected ? "text-emerald-800" : "text-gray-800"}`}>
-                            {item.name}
-                          </h3>
-
-                          <div className="flex items-center justify-center gap-1 mb-2">
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                item.type === "Custom"
-                                  ? "bg-purple-100 text-purple-700"
-                                  : item.type === "Hobby"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-orange-100 text-orange-700"
-                              }`}
-                            >
-                              {item.type}
-                            </span>
-                            {item.isCustom && <Sparkles className="w-3 h-3 text-purple-500" />}
-                          </div>
-
-                          <AnimatePresence>
-                            {isSelected && (
-                              <motion.div
-                                initial={{ scale: 0, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0, opacity: 0 }}
-                                className="flex items-center justify-center"
-                              >
-                                <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-                                  <CheckCircle className="w-4 h-4 text-white" />
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-
-                        {/* Selection glow effect */}
-                        {isSelected && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-teal-400/20 rounded-2xl pointer-events-none"
-                          />
-                        )}
-                      </motion.div>
-                    )
-                  })}
-                </AnimatePresence>
-              </motion.div>
-
-              {/* No Results Message */}
-              {filteredHobbies.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-center py-12"
-                >
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Search className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <p className="text-gray-500 mb-2">No interests found matching your search</p>
-                  <p className="text-sm text-gray-400">Try adjusting your filters or add a custom interest!</p>
-                </motion.div>
-              )}
-
-              {/* Continue Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="pt-6 border-t border-gray-200"
-              >
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`w-full px-8 py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3 text-lg font-semibold transition-all duration-300 ${
-                    selectedHobbies.length >= 2
-                      ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
-                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  }`}
-                  disabled={selectedHobbies.length < 2}
-                  onClick={handleContinue}
-                >
-                  <span>Continue to Next Step</span>
-                  <ArrowRight className="w-5 h-5" />
-                </motion.button>
-
-                <motion.div
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                  className="text-center mt-3"
-                >
-                  <p className={`text-sm ${selectedHobbies.length >= 2 ? "text-emerald-600" : "text-orange-500"}`}>
-                    {selectedHobbies.length === 0
-                      ? "Select at least 2 interests to continue"
-                      : selectedHobbies.length === 1
-                        ? "Select 1 more interest to continue"
-                        : `${selectedHobbies.length} interests selected - Ready to go! 🚀`}
-                  </p>
-                </motion.div>
-              </motion.div>
-            </motion.div>
-          ) : (
-           <motion.div
-  key="success"
-  initial={{ opacity: 0, x: 100 }}
-  animate={{ opacity: 1, x: 0 }}
-  transition={{ duration: 0.6, ease: "easeOut" }}
-  className="flex flex-col items-center justify-center h-full min-h-[600px] text-center relative"
->
-  {/* Fixed positioned floating background elements - with pointer-events-none and proper z-index */}
-  <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-    {FLOATING_POSITIONS.map((pos, i) => (
-      <motion.div
-        key={i}
-        className="absolute w-4 h-4 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-20"
-        style={{
-          left: `${pos.left}%`,
-          top: `${pos.top}%`,
-        }}
-        animate={{
-          y: [-20, -60, -20],
-          x: [-10, 10, -10],
-          scale: [1, 1.5, 1],
-          opacity: [0.2, 0.6, 0.2],
-        }}
-        transition={{
-          duration: 4 + (i % 3),
-          repeat: Number.POSITIVE_INFINITY,
-          delay: i * 0.3,
-        }}
-      />
-    ))}
-  </div>
-
-  {/* All content with proper z-index to ensure it's above floating elements */}
-  <div className="relative z-10 w-full max-w-2xl px-4">
-    {/* Success Animation */}
-    <motion.div
-      initial={{ scale: 0, rotate: -180 }}
-      animate={{ scale: 1, rotate: 0 }}
-      transition={{ duration: 1, type: "spring", stiffness: 150 }}
-      className="mb-8 relative"
-    >
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-        className="absolute -inset-6"
-      >
-        <div className="w-32 h-32 border-4 border-emerald-200 border-t-emerald-500 rounded-full"></div>
-      </motion.div>
-
-      <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-2xl">
-        <CheckCircle className="w-12 h-12 text-white" />
-      </div>
-
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: [0, 1.3, 1] }}
-        transition={{ delay: 0.5, duration: 0.8 }}
-        className="absolute -top-3 -right-3"
-      >
-        <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-white" />
-        </div>
-      </motion.div>
-    </motion.div>
-
-    {/* Success Message */}
-    <motion.div
-      initial={{ y: 30, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.3, duration: 0.8 }}
-      className="mb-8 max-w-md mx-auto"
-    >
-      <motion.h2
-        animate={{ scale: [1, 1.05, 1] }}
-        transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-        className="text-4xl font-bold text-gray-800 mb-4 flex items-center justify-center gap-3"
-      >
-        <Trophy className="w-10 h-10 text-yellow-500" />
-        Fantastic!
-      </motion.h2>
-      <p className="text-gray-600 text-lg leading-relaxed">
-        Your personalized learning profile is ready! We&apos;ll use your interests to create amazing educational
-        experiences just for you.
-      </p>
-    </motion.div>
-
-    {/* Selected Interests Display */}
-    <motion.div
-      initial={{ y: 30, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.6, duration: 0.8 }}
-      className="mb-8 w-full max-w-lg mx-auto"
-    >
-      <div className="flex items-center justify-center gap-2 mb-6">
-        <Heart className="w-6 h-6 text-red-500" />
-        <h3 className="text-xl font-bold text-gray-800">Your Unique Interests</h3>
-        <Heart className="w-6 h-6 text-red-500" />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {selectedHobbiesWithType.map((hobby, index) => (
+    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none">
+      <AnimatePresence>
+        {toasts.map((toast) => (
           <motion.div
-            key={hobby.name}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.8 + index * 0.1, duration: 0.5 }}
-            whileHover={{ scale: 1.05 }}
-            className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-4 flex items-center gap-3 shadow-sm"
+            key={toast.id}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 100, scale: 0.95 }}
+            transition={{ duration: 0.25 }}
+            className={`pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-lg shadow-lg border backdrop-blur-sm
+              ${toast.type === "success" ? "bg-emerald-50/95 border-emerald-200" : ""}
+              ${toast.type === "info" ? "bg-blue-50/95 border-blue-200" : ""}
+              ${toast.type === "warning" ? "bg-amber-50/95 border-amber-200" : ""}
+            `}
           >
-            {getSmallIconForItem(hobby.name, hobby.type, hobby.isCustom)}
-            <div className="text-left flex-1">
-              <p className="font-semibold text-emerald-800">{hobby.name}</p>
-              <div className="flex items-center gap-1">
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    hobby.type === "Custom"
-                      ? "bg-purple-100 text-purple-700"
-                      : hobby.type === "Hobby"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-orange-100 text-orange-700"
-                  }`}
-                >
-                  {hobby.type}
-                </span>
-                {hobby.isCustom && <Sparkles className="w-3 h-3 text-purple-500" />}
-              </div>
+            <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center
+              ${toast.type === "success" ? "bg-emerald-100" : ""}
+              ${toast.type === "info" ? "bg-blue-100" : ""}
+              ${toast.type === "warning" ? "bg-amber-100" : ""}
+            `}>
+              {toast.type === "success" && <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />}
+              {toast.type === "info" && <Info className="w-3.5 h-3.5 text-blue-600" />}
+              {toast.type === "warning" && <Info className="w-3.5 h-3.5 text-amber-600" />}
             </div>
+            <p className={`flex-1 text-sm font-medium
+              ${toast.type === "success" ? "text-emerald-800" : ""}
+              ${toast.type === "info" ? "text-blue-800" : ""}
+              ${toast.type === "warning" ? "text-amber-800" : ""}
+            `}>
+              {toast.message}
+            </p>
+            <button
+              onClick={() => removeToast(toast.id)}
+              className="flex-shrink-0 text-slate-400 hover:text-slate-600 transition"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </motion.div>
         ))}
-      </div>
-    </motion.div>
-
-    {/* Dashboard Button - FIXED with proper z-index and positioning */}
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5 }}
-      className="pt-6 border-t border-gray-200 w-full"
-    >
-      <motion.button                   
-        disabled={isNavigating}                   
-        whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(16, 185, 129, 0.3)" }}                   
-        whileTap={{ scale: 0.95 }}                   
-        onClick={navigateToDashboard}
-        className={`w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-2xl shadow-xl flex items-center justify-center gap-3 text-lg font-bold transition-all duration-300 relative z-20
-          ${isNavigating ? 'opacity-50 cursor-not-allowed' : 'hover:from-emerald-600 hover:to-teal-700'}`}
-      >
-        <Target className="w-6 h-6" />
-        Launch My Dashboard
-        <ArrowRight className="w-6 h-6" />
-      </motion.button>
-    
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5, duration: 0.8 }}
-        className="text-sm text-gray-500 mt-4 flex items-center justify-center gap-1"
-      >
-        <Rocket className="w-4 h-4" />
-        Ready to start your personalized learning journey!
-      </motion.p>
-    </motion.div>
-  </div>
-
-              </motion.div>
-        
-          )}
-          </AnimatePresence>
-      
-      </div>
+      </AnimatePresence>
     </div>
   )
 }
 
-export default HobbySelectionPage
+// ── Tooltip Component ─────────────────────────────────────────────────────────
+function Tooltip({ children, content }: { children: React.ReactNode; content: string }) {
+  const [show, setShow] = useState(false)
+
+  return (
+    <div 
+      className="relative inline-block" 
+      onMouseEnter={() => setShow(true)} 
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 5 }}
+            transition={{ duration: 0.15 }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-800 text-white text-xs rounded-lg whitespace-nowrap shadow-lg pointer-events-none z-50"
+          >
+            {content}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ── component ─────────────────────────────────────────────────────────────────
+export default function HobbySelectionPage() {
+  const router = useRouter()
+
+  // ── auth / gate state ───────────────────────────────────────────────────────
+  const [isChecking,    setIsChecking]    = useState(true)
+  const [isAuthorized,  setIsAuthorized]  = useState(false)
+  const [user,          setUser]          = useState<{ name?: string }>({})
+
+  // ── UI state ────────────────────────────────────────────────────────────────
+  const [isMounted,      setIsMounted]      = useState(false)
+  const [selected,       setSelected]       = useState<string[]>([])
+  const [search,         setSearch]         = useState("")
+  const [filter,         setFilter]         = useState<typeof FILTERS[number]>("All")
+  const [customHobbies,  setCustomHobbies]  = useState<Hobby[]>([])
+  const [customInput,    setCustomInput]    = useState("")
+  const [addingCustom,   setAddingCustom]   = useState(false)
+  const [showSuccess,    setShowSuccess]    = useState(false)
+  const [isNavigating,   setIsNavigating]   = useState(false)
+  const [toasts,         setToasts]         = useState<Toast[]>([])
+  const [toastId,        setToastId]        = useState(0)
+
+  // ── mount + auth check ──────────────────────────────────────────────────────
+  useEffect(() => {
+    setIsMounted(true)
+
+    try {
+      const raw = localStorage.getItem("userData")
+      if (!raw) { router.push("/auth"); return }
+
+      const userData = JSON.parse(raw)
+      const role = userData.role?.toLowerCase()
+      if (role !== "student") { router.push(`/${role}/dashboard`); return }
+      if (localStorage.getItem("hobbyCompleted") === "true") { router.push("/student/dashboard"); return }
+
+      setUser(userData)
+      setIsAuthorized(true)
+    } catch {
+      router.push("/auth")
+    } finally {
+      setIsChecking(false)
+    }
+  }, [router])
+
+  // ── derived ─────────────────────────────────────────────────────────────────
+  const allHobbies = [...PREDEFINED, ...customHobbies]
+
+  const filtered = allHobbies.filter((h) => {
+    if (!h.name.toLowerCase().includes(search.toLowerCase())) return false
+    if (filter === "All")       return true
+    if (filter === "Hobbies")   return h.type === "Hobby"
+    if (filter === "Interests") return h.type === "Interest"
+    if (filter === "Custom")    return h.type === "Custom"
+    return true
+  })
+
+  // ── toast helpers ───────────────────────────────────────────────────────────
+  const showToast = (message: string, type: Toast["type"] = "info") => {
+    const id = toastId
+    setToastId((prev) => prev + 1)
+    setToasts((prev) => [...prev, { id, message, type }])
+    setTimeout(() => removeToast(id), 4000)
+  }
+
+  const removeToast = (id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
+  }
+
+  // ── handlers ────────────────────────────────────────────────────────────────
+  const toggle = (name: string) => {
+    const wasSelected = selected.includes(name)
+    setSelected((prev) => (wasSelected ? prev.filter((n) => n !== name) : [...prev, name]))
+    
+    if (!wasSelected) {
+      const newCount = selected.length + 1
+      if (newCount === 1) {
+        showToast("Great! Pick one more to continue", "info")
+      } else if (newCount === 2) {
+        showToast("Perfect! You can continue now", "success")
+      } else {
+        showToast(`${name} added`, "success")
+      }
+    }
+  }
+
+  const addCustom = () => {
+    const trimmed = customInput.trim()
+    if (!trimmed) return
+    
+    if (allHobbies.some((h) => h.name.toLowerCase() === trimmed.toLowerCase())) {
+      showToast("This interest already exists", "warning")
+      return
+    }
+    
+    setCustomHobbies((prev) => [...prev, { name: trimmed, type: "Custom", isCustom: true }])
+    setSelected((prev) => [...prev, trimmed])
+    setCustomInput("")
+    setAddingCustom(false)
+    showToast(`${trimmed} added as custom interest`, "success")
+  }
+
+  const removeCustom = (name: string) => {
+    setCustomHobbies((prev) => prev.filter((h) => h.name !== name))
+    setSelected((prev) => prev.filter((n) => n !== name))
+    showToast(`${name} removed`, "info")
+  }
+
+  const navigateToDashboard = async () => {
+    if (isNavigating) return
+    setIsNavigating(true)
+    try {
+      await studentApi.updateStudentHobbies(selected)
+    } catch (e) {
+      console.error("Hobbies save error:", e)
+    }
+    localStorage.setItem("hobbyCompleted", "true")
+    router.push("/student/dashboard")
+  }
+
+  // ── loading / gate screens ──────────────────────────────────────────────────
+  if (!isMounted || isChecking || !isAuthorized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="w-10 h-10 mx-auto border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
+  // ── success screen ──────────────────────────────────────────────────────────
+  if (showSuccess) {
+    const selectedWithType = selected.map(
+      (name) => allHobbies.find((h) => h.name === name) ?? { name, type: "Hobby" as const }
+    )
+
+    return (
+      <>
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+        <div className="min-h-screen flex flex-col lg:flex-row">
+          {/* left – hero (shrunk on success, same image) */}
+          <div className="relative w-full lg:w-5/12 h-[35vh] lg:h-auto">
+            <Image src="/assets/authbg.jpg" alt="" fill className="object-cover" priority />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-emerald-900/50 to-black/40" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-white text-center">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="w-16 h-16 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center mb-4"
+              >
+                <CheckCircle className="w-8 h-8 text-white" />
+              </motion.div>
+              <motion.h1
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+                className="text-3xl lg:text-4xl font-bold"
+              >
+                All set
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="text-white/70 mt-2 text-base lg:text-lg max-w-sm"
+              >
+                Your profile is personalised and ready to go.
+              </motion.p>
+            </div>
+          </div>
+
+          {/* right – selected interests + CTA */}
+          <div className="w-full lg:w-7/12 flex flex-col items-center justify-center px-6 py-16 lg:py-0 bg-slate-50">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="w-full max-w-lg"
+            >
+              <h2 className="text-2xl font-bold text-slate-800 mb-1">Your interests</h2>
+              <p className="text-slate-500 mb-6">These will shape your learning experience.</p>
+
+              {/* tag cloud */}
+              <div className="flex flex-wrap gap-2 mb-10">
+                {selectedWithType.map((h, i) => (
+                  <motion.div
+                    key={h.name}
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, delay: i * 0.06 }}
+                    className="inline-flex items-center gap-2 bg-white border border-emerald-200 rounded-full px-4 py-2 shadow-sm"
+                  >
+                    {getIcon(h.name, h.isCustom, "w-4 h-4")}
+                    <span className="text-sm font-medium text-slate-700">{h.name}</span>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* CTAs */}
+              <div className="flex flex-col gap-3">
+                <motion.button
+                  disabled={isNavigating}
+                  onClick={navigateToDashboard}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.25 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold text-base px-6 py-3.5 rounded-xl shadow-md flex items-center justify-center gap-2 transition-colors"
+                >
+                  {isNavigating ? "Opening…" : "Go to Dashboard"}
+                  <ArrowRight className="w-5 h-5" />
+                </motion.button>
+
+                <motion.button
+                  onClick={() => setShowSuccess(false)}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.35 }}
+                  className="w-full bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm px-6 py-2.5 rounded-xl border border-slate-200 flex items-center justify-center gap-2 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Go back and edit
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // ── main selection screen ───────────────────────────────────────────────────
+  return (
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <div className="min-h-screen flex flex-col lg:flex-row">
+
+        {/* ── left panel – hero ─────────────────────────────────────────────── */}
+        <div className="relative w-full lg:w-5/12 h-[40vh] lg:h-auto lg:sticky lg:top-0 lg:self-start lg:h-screen">
+          <Image src="/assets/authbg.jpg" alt="" fill className="object-cover" priority />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-emerald-900/45 to-black/35" />
+
+          {/* centred copy */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-white text-center">
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-3xl lg:text-5xl font-bold leading-tight"
+            >
+              What makes you<br />
+              <span className="text-emerald-300">unique?</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mt-4 text-white/75 text-base lg:text-lg max-w-md leading-relaxed"
+            >
+              Pick the things you enjoy. We&apos;ll use them to personalise your learning experience.
+            </motion.p>
+          </div>
+        </div>
+
+        {/* ── right panel – selection ───────────────────────────────────────── */}
+        <div className="w-full lg:w-7/12 min-h-screen lg:overflow-y-auto bg-slate-50">
+          <div className="max-w-2xl mx-auto px-5 py-8 lg:py-12">
+
+            {/* welcome */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+              <p className="text-slate-500 text-sm">Welcome back,</p>
+              <h2 className="text-xl font-bold text-slate-800 mt-0.5">{user.name || "Student"}</h2>
+            </motion.div>
+
+            {/* search */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="mt-6"
+            >
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search interests…"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent transition"
+                />
+                {search && (
+                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </motion.div>
+
+            {/* filter pills */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.18 }}
+              className="flex gap-2 mt-4 flex-wrap"
+            >
+              {FILTERS.map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition
+                    ${filter === f
+                      ? "bg-emerald-600 text-white border-emerald-600"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-emerald-300"
+                    }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </motion.div>
+
+            {/* hobby list */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.25 }}
+              className="mt-5 flex flex-col gap-2"
+            >
+              <AnimatePresence>
+                {filtered.map((hobby) => {
+                  const isSelected = selected.includes(hobby.name)
+                  return (
+                    <motion.button
+                      key={hobby.name}
+                      layout
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.25 }}
+                      onClick={() => toggle(hobby.name)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left
+                        ${isSelected
+                          ? "bg-emerald-50 border-emerald-400"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                        }`}
+                    >
+                      {/* icon */}
+                      <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center
+                          ${isSelected ? "bg-emerald-100" : "bg-slate-100"}`}
+                      >
+                        {getIcon(hobby.name, hobby.isCustom)}
+                      </div>
+
+                      {/* text */}
+                      <div className="flex-1 min-w-0">
+                        <span className={`block text-sm font-semibold truncate ${isSelected ? "text-emerald-800" : "text-slate-700"}`}>
+                          {hobby.name}
+                        </span>
+                        <span className={`text-xs ${isSelected ? "text-emerald-500" : "text-slate-400"}`}>
+                          {hobby.type}
+                        </span>
+                      </div>
+
+                      {/* check or remove (custom) */}
+                      <div className="flex-shrink-0 flex items-center gap-2">
+                        {hobby.isCustom && (
+                          <Tooltip content="Remove custom interest">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); removeCustom(hobby.name) }}
+                              className="text-slate-300 hover:text-red-500 transition"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </Tooltip>
+                        )}
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+                            ${isSelected ? "bg-emerald-500 border-emerald-500" : "border-slate-300"}`}
+                        >
+                          {isSelected && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                        </div>
+                      </div>
+                    </motion.button>
+                  )
+                })}
+              </AnimatePresence>
+
+              {/* empty state */}
+              {filtered.length === 0 && (
+                <div className="text-center py-10">
+                  <p className="text-slate-400 text-sm">No results for &quot;{search}&quot;</p>
+                </div>
+              )}
+            </motion.div>
+
+            {/* add custom ──────────────────────────────────────────────────────── */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+              className="mt-4"
+            >
+              {!addingCustom ? (
+                <Tooltip content="Add something unique to you">
+                  <button
+                    onClick={() => setAddingCustom(true)}
+                    className="flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 text-sm font-medium transition"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add your own interest
+                  </button>
+                </Tooltip>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={customInput}
+                    onChange={(e) => setCustomInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") addCustom(); if (e.key === "Escape") setAddingCustom(false) }}
+                    placeholder="e.g. Skateboarding"
+                    className="flex-1 px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent transition"
+                  />
+                  <button
+                    onClick={addCustom}
+                    disabled={!customInput.trim()}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition"
+                  >
+                    Add
+                  </button>
+                  <button
+                    onClick={() => { setAddingCustom(false); setCustomInput("") }}
+                    className="text-slate-400 hover:text-slate-600 transition px-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </motion.div>
+
+            {/* continue ─────────────────────────────────────────────────────────── */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.35 }}
+              className="mt-8 pt-6 border-t border-slate-200"
+            >
+              <Tooltip content={selected.length < 2 ? "Select at least 2 interests" : "Review your selection"}>
+                <button
+                  disabled={selected.length < 2}
+                  onClick={() => setShowSuccess(true)}
+                  className={`w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-base shadow-sm transition-all
+                    ${selected.length >= 2
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                    }`}
+                >
+                  Continue
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </Tooltip>
+
+              <p className="text-center text-xs text-slate-400 mt-3">
+                {selected.length === 0
+                  ? "Select at least 2 interests to continue"
+                  : selected.length === 1
+                    ? "Pick one more interest"
+                    : `${selected.length} selected — you're good to go`}
+              </p>
+            </motion.div>
+
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
