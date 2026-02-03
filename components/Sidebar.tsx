@@ -53,6 +53,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const [mounted, setMounted] = useState(false);
   const [profile, setProfile] = useState<{ name: string; surname: string; reg_number: string } | null>(null);
 
+
   useEffect(() => {
     setMounted(true);
     
@@ -87,16 +88,13 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
       });
       
       if (response.ok) {
-        // Redirect to login page after successful logout
         window.location.href = '/auth';
       } else {
         console.error('Logout failed');
-        // Still redirect even if logout fails
         window.location.href = '/auth';
       }
     } catch (error) {
       console.error('Logout error:', error);
-      // Redirect to login on error
       window.location.href = '/auth';
     }
   };
@@ -136,42 +134,53 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
     return null;
   };
 
+  // ── Tooltip wrapper ─────────────────────────────────────────────────────
+  // Always renders on desktop. On mobile/tablet the sidebar is a full drawer
+  // so labels are visible — skip tooltips there.
+  const Tip = ({ label }: { label: string }) =>
+    (isMobileView || isTabletView) ? null : <span className="sidebar-tooltip">{label}</span>;
+
+  // ── Nav item ─────────────────────────────────────────────────────────────
   const renderNavItem = (item: NavItemType) => {
-    const isActive = pathname === item.path;
+    const isActive = pathname === item.path || pathname.startsWith(item.path + '?') || pathname.startsWith(item.path + '/');
     
     return (
       <Link
         key={item.path}
         href={item.path}
         className={`
-          flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
+          sidebar-nav-item
+          flex items-center px-3 py-2.5 my-1 text-sm transition-all duration-200 relative
           ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
         `}
         style={{
-          backgroundColor: isActive ? colors.sidebarActive : 'transparent',
           color: isActive ? colors.primary : colors.textSecondary,
-          border: `1px solid ${isActive ? colors.primary : 'transparent'}`,
-          fontWeight: isActive ? 500 : 400,
-        }}
-        onMouseEnter={(e) => {
-          if (!isActive) {
-            e.currentTarget.style.backgroundColor = colors.sidebarHover;
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isActive) {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }
+          fontWeight: isActive ? 600 : 400,
         }}
       >
-        <div style={{ color: isActive ? colors.primary : colors.textTertiary }}>
+        {/* Active left accent bar */}
+        {isActive && (
+          <span
+            className="absolute left-0 top-0 bottom-0 w-0.5"
+            style={{ backgroundColor: colors.primary }}
+          />
+        )}
+
+        {/* Icon */}
+        <div
+          style={{
+            color: isActive ? colors.primary : colors.textTertiary,
+          }}
+        >
           {item.icon}
         </div>
         
+        {/* Label */}
         {(!sidebarCollapsed || isMobileView || isTabletView) && (
           <span className="ml-3">{item.name}</span>
         )}
         
+        {/* Badge */}
         {(!sidebarCollapsed || isMobileView || isTabletView) && item.badge && (
           <div 
             className="ml-auto text-white text-xs px-2 py-0.5 rounded-full font-medium"
@@ -182,6 +191,17 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
             {item.badge}
           </div>
         )}
+
+        {/* Collapsed badge dot */}
+        {(sidebarCollapsed && !isMobileView && !isTabletView) && item.badge && (
+          <span
+            className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: typeof item.badge === 'number' ? colors.primary : colors.warning }}
+          />
+        )}
+
+        {/* Tooltip */}
+        <Tip label={item.name} />
       </Link>
     );
   };
@@ -198,14 +218,15 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
         }
         variants={sidebarVariants}
         className={`
-         
-          h-screen fixed left-0 top-0 z-40 flex flex-col shadow-xl
+          sidebar-container
+          h-screen fixed left-0 top-0 flex flex-col shadow-xl
           ${(isMobileView || isTabletView) ? 'w-[270px]' : ''}
         `}
         style={{
           backgroundColor: colors.sidebarBackground,
           color: colors.textPrimary,
           borderRight: `1px solid ${colors.border}`,
+          overflow: 'visible',
         }}
       >
         {/* Header Section */}
@@ -252,7 +273,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
           ) : (
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="rounded-full p-1.5 transition-colors"
+              className="sidebar-nav-item rounded-full p-1.5 transition-colors"
               style={{
                 color: colors.textSecondary,
                 backgroundColor: 'transparent',
@@ -265,6 +286,7 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
               }}
             >
               {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              <Tip label={sidebarCollapsed ? 'Expand' : 'Collapse'} />
             </button>
           )}
         </div>
@@ -309,12 +331,27 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
           </div>
         )}
 
+        {/* Collapsed avatar pill – visible only when sidebar is collapsed */}
+        {sidebarCollapsed && !isMobileView && !isTabletView && (
+          <div className="sidebar-nav-item flex justify-center py-3" style={{ borderBottom: `1px solid ${colors.border}` }}>
+            <div
+              className="h-10 w-10 rounded-xl flex items-center justify-center font-medium text-sm shadow-sm"
+              style={{ backgroundColor: colors.primaryLight, color: colors.primary }}
+            >
+              <p style={{ color: colors.textPrimary }}>
+                {profile ? (profile.name[0] + (profile.surname ? profile.surname[0] : '')) : 'JO'}
+              </p>
+            </div>
+            <Tip label={profile ? `${profile.name} ${profile.surname}` : 'John Opondo'} />
+          </div>
+        )}
+
         {/* Navigation Section */}
-        <div className="flex flex-col flex-1 overflow-y-auto py-4">
-          <nav className="flex-1 px-3 space-y-1">
+        <div className="flex flex-col flex-1 py-4" style={{ overflowY: 'auto', overflowX: 'visible' }}>
+          <nav className="flex-1 px-3 space-y-1" style={{ overflowX: 'visible' }}>
             {navItems.map((item) => renderNavItem(item))}
             
-            {/* Theme Customizer - Add after main nav items */}
+            {/* Theme Customizer */}
             <div 
               className="pt-2 mt-2"
               style={{ borderTop: `1px solid ${colors.border}` }}
@@ -338,7 +375,8 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
             <button
               onClick={handleLogout}
               className={`
-                flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200 w-full
+                sidebar-nav-item
+                flex items-center px-3 py-2.5 my-1 text-sm transition-all duration-200 w-full
                 ${sidebarCollapsed && !isMobileView && !isTabletView ? 'justify-center' : ''}
               `}
               style={{
@@ -361,6 +399,8 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
               {(!sidebarCollapsed || isMobileView || isTabletView) && (
                 <span className="ml-3">Logout</span>
               )}
+
+              <Tip label="Logout" />
             </button>
           </div>
           
@@ -400,6 +440,58 @@ const Sidebar = ({ showMobileOnly = false }: SidebarProps) => {
           )}
         </div>
       </motion.div>
+
+      {/* ── Tooltip & active-state styles ───────────────────────────────── */}
+      <style>{`
+        /* ── base: every tippable item ── */
+        .sidebar-nav-item {
+          position: relative;
+          overflow: visible;
+        }
+
+        /* ── tooltip pill ── */
+        .sidebar-tooltip {
+          position: absolute;
+          left: 100%;
+          top: 50%;
+          transform: translateY(-50%) scale(0.88);
+          margin-left: 10px;
+          background: #1e293b;
+          color: #fff;
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          padding: 6px 14px;
+          border-radius: 8px;
+          white-space: nowrap;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.22s ease, transform 0.22s ease;
+          z-index: 9999 !important;
+        }
+
+        /* left-pointing arrow */
+        .sidebar-tooltip::before {
+          content: '';
+          position: absolute;
+          right: 100%;
+          top: 50%;
+          transform: translateY(-50%);
+          border: 6px solid transparent;
+          border-right-color: #1e293b;
+        }
+
+        /* reveal on hover */
+        .sidebar-nav-item:hover .sidebar-tooltip {
+          opacity: 1;
+          transform: translateY(-50%) scale(1);
+        }
+
+        /* Ensure sidebar container has proper z-index */
+        .sidebar-container {
+          z-index: 50 !important;
+        }
+      `}</style>
     </>
   );
 };
