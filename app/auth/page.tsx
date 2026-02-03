@@ -18,10 +18,8 @@ import {
   HiCheckCircle,
 } from "react-icons/hi"
 import { SiGoogle, SiApple, SiFacebook } from "react-icons/si"
-import { RiRobot2Fill } from "react-icons/ri"
 import Image from "next/image"
 
-// Educational content with more sophisticated transitions
 const educationContent = [
   {
     title: "Smart Assessment Creation",
@@ -67,7 +65,6 @@ export default function AuthPage() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [isSkeletonLoading, setIsSkeletonLoading] = useState(true)
 
-  // Auth mode + signup state
   const [authMode, setAuthMode] = useState<"login" | "signup">("login")
   const [signupStep, setSignupStep] = useState<1 | 2>(1)
   const [signupRole, setSignupRole] = useState<"student" | "lecturer">("student")
@@ -83,7 +80,6 @@ export default function AuthPage() {
   const [isSignupLoading, setIsSignupLoading] = useState(false)
   const [signupSuccessMessage, setSignupSuccessMessage] = useState("")
 
-  // Reduced skeleton loading time
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsSkeletonLoading(false)
@@ -91,7 +87,6 @@ export default function AuthPage() {
     return () => clearTimeout(timer)
   }, [])
 
-  // Gentle content rotation with smooth fade
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % educationContent.length)
@@ -99,7 +94,6 @@ export default function AuthPage() {
     return () => clearInterval(interval)
   }, [])
 
-  // Email validation
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!email) {
@@ -114,7 +108,6 @@ export default function AuthPage() {
     return true
   }
 
-  // Password validation
   const validatePassword = (password: string) => {
     if (!password) {
       setPasswordError("Password is required")
@@ -245,7 +238,6 @@ export default function AuthPage() {
 
       if (response.ok) {
         setSignupSuccessMessage("Account created successfully. You can now log in.")
-        // Mark as new student for hobby page redirect
         localStorage.setItem("isNewStudent", "true")
         setEmail(signupEmail)
         setAuthMode("login")
@@ -294,13 +286,10 @@ export default function AuthPage() {
           const role = (data.role || "").toLowerCase()
           const isNewStudent = localStorage.getItem("isNewStudent") === "true"
           
-          // Check if it's a student and if they're new
           if (role === "student" && isNewStudent) {
-            // Clear the flag and redirect to hobby page
             localStorage.removeItem("isNewStudent")
             window.location.href = "/hobby"
           } else {
-            // Regular flow for existing students and lecturers
             switch (role) {
               case "student":
                 window.location.href = "/student/dashboard"
@@ -346,8 +335,7 @@ export default function AuthPage() {
 
   if (isSkeletonLoading) {
     return (
-      <div className="min-h-screen flex bg-gray-50">
-        {/* Left Side Skeleton */}
+      <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
         <div className="hidden lg:flex lg:w-3/5 relative overflow-hidden">
           <div className="absolute inset-4 rounded-3xl overflow-hidden bg-gray-200 animate-pulse">
             <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400"></div>
@@ -369,7 +357,6 @@ export default function AuthPage() {
           </div>
         </div>
 
-        {/* Right Side Skeleton */}
         <div className="w-full lg:w-2/5 bg-white flex flex-col">
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="w-full max-w-md space-y-6">
@@ -390,8 +377,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      {/* Success Animation Overlay */}
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
       <AnimatePresence>
         {showSuccess && (
           <motion.div
@@ -435,11 +421,66 @@ export default function AuthPage() {
         )}
       </AnimatePresence>
 
-      {/* Left Side - Hero Section with Rounded Design */}
+      {/* Mobile/Tablet Hero Section */}
+      <div className="lg:hidden relative h-64 sm:h-72 overflow-hidden">
+        <div className="absolute inset-0">
+          <AnimatePresence>
+            <motion.div
+              key={currentIndex}
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={currentContent.image || "/placeholder.svg"}
+                alt="Educational background"
+                fill
+                className="object-cover"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-800/50 to-slate-900/80" />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <div className="relative z-10 flex flex-col justify-between p-6 sm:p-8 text-white h-full">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex items-center space-x-3"
+          >
+            <Image src="/assets/logo3.png" alt="logo" width={140} height={126} quality={100} />
+          </motion.div>
+
+          <div className="space-y-3">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentIndex}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.8 }}
+                className="space-y-2"
+              >
+                <div className="flex items-center space-x-3">
+                  <currentContent.icon className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-400" />
+                  <div>
+                    <div className="text-emerald-300 text-xs font-semibold">{currentContent.tagline}</div>
+                    <h2 className="text-xl sm:text-2xl font-bold leading-tight">{currentContent.title}</h2>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Hero Section */}
       <div className="hidden lg:flex lg:w-3/5 relative overflow-hidden">
-        {/* Rounded container */}
         <div className="absolute inset-4 rounded-3xl overflow-hidden shadow-2xl">
-          {/* Background Image with zoom transition */}
           <div className="absolute inset-0">
             <AnimatePresence>
               <motion.div
@@ -462,9 +503,7 @@ export default function AuthPage() {
             </AnimatePresence>
           </div>
 
-          {/* Content */}
           <div className="relative z-10 flex flex-col justify-between p-12 text-white h-full">
-            {/* Logo */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -474,7 +513,6 @@ export default function AuthPage() {
               <Image src="/assets/logo3.png" alt="logo" width={200} height={180} quality={100} />
             </motion.div>
 
-            {/* Main Content */}
             <div className="space-y-8 max-w-2xl">
               <AnimatePresence>
                 <motion.div
@@ -501,7 +539,6 @@ export default function AuthPage() {
               </AnimatePresence>
             </div>
 
-            {/* Bottom */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -515,37 +552,23 @@ export default function AuthPage() {
         </div>
       </div>
 
-      {/* Right Side - Full Height Login Form */}
-      <div className="w-full lg:w-2/5 bg-white flex flex-col relative">
-        {/* Background gradient that extends from left */}
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-50/50 to-white"></div>
+      {/* Form Container - Unified for all screen sizes */}
+      <div className="w-full lg:w-2/5 bg-white flex flex-col relative rounded-t-3xl lg:rounded-none -mt-6 lg:mt-0">
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-50/50 to-white lg:block hidden"></div>
 
-        {/* Mobile Header */}
-        <div className="lg:hidden p-6 bg-gradient-to-r from-slate-800 to-slate-900 relative z-10">
-          <div className="flex items-center space-x-3 text-white">
-            <RiRobot2Fill className="w-8 h-8" />
-            <div>
-              <h1 className="text-xl font-bold">IntelliLearn</h1>
-              <p className="text-white/70 text-sm">AI-Powered Education</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Form Container - Full Height */}
-        <div className="flex-1 flex items-center justify-center p-8 relative z-10">
+        <div className="flex-1 flex items-center justify-center p-6 sm:p-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="w-full max-w-md space-y-8"
+            className="w-full max-w-md space-y-6 sm:space-y-8"
           >
-            {/* Header */}
             <div className="text-center lg:text-left">
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-3xl font-bold text-gray-900 mb-2"
+                className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2"
               >
                 {authMode === "login" ? "Welcome back" : "Create your account"}
               </motion.h2>
@@ -553,14 +576,14 @@ export default function AuthPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-gray-600"
+                className="text-gray-600 text-sm sm:text-base"
               >
                 {authMode === "login"
                   ? "Continue your AI-powered learning journey"
                   : "Sign up with your institutional email to get started"}
               </motion.p>
             </div>
-            {/* Auth mode toggle */}
+
             <div className="flex items-center justify-center lg:justify-start">
               <div className="inline-flex rounded-full bg-gray-100 p-1 text-xs font-medium">
                 <button
@@ -593,8 +616,7 @@ export default function AuthPage() {
 
             {authMode === "login" ? (
               <>
-                {/* Login Form */}
-                <form onSubmit={handleLogin} className="space-y-6">
+                <form onSubmit={handleLogin} className="space-y-5 sm:space-y-6">
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -615,7 +637,7 @@ export default function AuthPage() {
                         value={email}
                         onChange={handleEmailChange}
                         placeholder="your@email.com"
-                        className={`w-full pl-12 pr-4 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
+                        className={`w-full pl-12 pr-4 py-3 sm:py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
                           emailError
                             ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                             : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
@@ -667,7 +689,7 @@ export default function AuthPage() {
                         value={password}
                         onChange={handlePasswordChange}
                         placeholder="••••••••"
-                        className={`w-full pl-12 pr-12 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
+                        className={`w-full pl-12 pr-12 py-3 sm:py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
                           passwordError
                             ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                             : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
@@ -735,7 +757,7 @@ export default function AuthPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.7, duration: 0.5 }}
-                    className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex justify-center items-center py-3 sm:py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-base sm:text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <>
@@ -754,7 +776,7 @@ export default function AuthPage() {
                     )}
                   </motion.button>
 
-                  <div className="relative my-8">
+                  <div className="relative my-6 sm:my-8">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-gray-300" />
                     </div>
@@ -767,7 +789,7 @@ export default function AuthPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.8, duration: 0.5 }}
-                    className="grid grid-cols-3 gap-4"
+                    className="grid grid-cols-3 gap-3 sm:gap-4"
                   >
                     {[
                       {
@@ -814,7 +836,7 @@ export default function AuthPage() {
             ) : (
               <>
                 {signupStep === 1 ? (
-                  <form onSubmit={handleRequestVerificationCode} className="space-y-6">
+                  <form onSubmit={handleRequestVerificationCode} className="space-y-5 sm:space-y-6">
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -870,7 +892,7 @@ export default function AuthPage() {
                             if (e.target.value) validateEmail(e.target.value)
                           }}
                           placeholder="you@institution.ac.ke"
-                          className={`w-full outline-0 pl-12 pr-4 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
+                          className={`w-full outline-0 pl-12 pr-4 py-3 sm:py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
                             emailError
                               ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                               : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
@@ -923,7 +945,7 @@ export default function AuthPage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.7, duration: 0.5 }}
-                      className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex justify-center items-center py-3 sm:py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-base sm:text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSignupLoading ? (
                         <>
@@ -943,7 +965,7 @@ export default function AuthPage() {
                     </motion.button>
                   </form>
                 ) : (
-                  <form onSubmit={handleCompleteSignup} className="space-y-6">
+                  <form onSubmit={handleCompleteSignup} className="space-y-4 sm:space-y-5">
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -957,8 +979,8 @@ export default function AuthPage() {
                         type="text"
                         value={signupCode}
                         onChange={(e) => setSignupCode(e.target.value)}
-                        placeholder="Enter the 6-digit code sent to your email"
-                        className="w-full  outline-0 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        placeholder="Enter the 6-digit code"
+                        className="w-full outline-0 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                         required
                         disabled={isSignupLoading}
                       />
@@ -983,7 +1005,7 @@ export default function AuthPage() {
                             if (e.target.value) validatePassword(e.target.value)
                           }}
                           placeholder="Create a strong password"
-                          className={`w-full outline-0 pl-12 pr-12 py-4 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
+                          className={`w-full outline-0 pl-12 pr-12 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:bg-white transition-all duration-200 hover:border-gray-300 ${
                             passwordError
                               ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                               : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
@@ -1001,7 +1023,7 @@ export default function AuthPage() {
                       </div>
                     </motion.div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -1116,7 +1138,7 @@ export default function AuthPage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 1, duration: 0.5 }}
-                      className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex justify-center items-center py-3 sm:py-4 px-6 border border-transparent rounded-xl shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all font-semibold text-base sm:text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSignupLoading ? (
                         <>
