@@ -46,32 +46,37 @@ const FloatingThemeButton: React.FC = () => {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Side-Tab Trigger Button — attached to right edge */}
       <button
         onClick={() => setIsOpen(true)}
-        className="floating-theme-button"
+        className="side-tab-theme-button"
         style={{
           position: 'fixed',
-          right: '20px',
+          right: '0px',
           top: '50%',
           transform: 'translateY(-50%)',
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
+          width: '68px',
+          height: '64px',
+          borderRadius: '16px 0 0 16px',
           backgroundColor: colors.primary,
           color: '#ffffff',
           border: 'none',
-          boxShadow: `0 8px 24px ${colors.primary}40`,
+          borderRight: 'none',
+          boxShadow: `-6px 4px 20px ${colors.primary}60`,
           cursor: 'pointer',
           zIndex: 999,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'all 0.3s ease',
+          gap: '4px',
+          transition: 'width 0.3s ease, box-shadow 0.3s ease',
         }}
-        title="Customize Theme"
+        title=""
       >
-        <Settings size={28} className="rotating-cog" />
+        <Settings size={30} className="rotating-cog" />
+        {/* Tooltip — appears on hover via CSS */}
+        <span className="side-tab-tooltip">Theme</span>
       </button>
 
       {/* Dialog Panel - Slides from Right */}
@@ -310,56 +315,84 @@ const FloatingThemeButton: React.FC = () => {
       )}
 
       <style jsx global>{`
-        @keyframes pulse-scale {
-          0%, 100% {
-            transform: translateY(-50%) scale(1);
-            box-shadow: 0 8px 24px ${colors.primary}40;
-          }
-          50% {
-            transform: translateY(-50%) scale(1.1);
-            box-shadow: 0 12px 32px ${colors.primary}60;
-          }
-        }
-
         @keyframes rotate {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
         }
 
         @keyframes slide-in {
-          from {
-            transform: translateX(100%);
-          }
-          to {
-            transform: translateX(0);
-          }
+          from { transform: translateX(100%); }
+          to   { transform: translateX(0); }
         }
 
-        .floating-theme-button {
-          animation: pulse-scale 2s ease-in-out infinite;
+        /* Subtle side-nudge bounce to draw the eye */
+        @keyframes nudge {
+          0%, 100% { transform: translateY(-50%) translateX(0); }
+          20%      { transform: translateY(-50%) translateX(-7px); }
+          40%      { transform: translateY(-50%) translateX(0); }
         }
 
-        .floating-theme-button:hover {
-          animation: none;
-          transform: translateY(-50%) scale(1.15) !important;
-          box-shadow: 0 16px 40px ${colors.primary}70 !important;
+        .side-tab-theme-button {
+          animation: nudge 3.5s ease-in-out 1.2s infinite;
         }
 
-        .floating-theme-button:active {
-          transform: translateY(-50%) scale(1.05) !important;
-        }
-
+        /* Cog rotates continuously */
         .rotating-cog {
           animation: rotate 8s linear infinite !important;
           display: inline-block;
         }
 
-        .floating-theme-button:hover .rotating-cog {
+        /* ---------- Tooltip ---------- */
+        .side-tab-tooltip {
+          position: absolute;
+          right: calc(100% + 10px);
+          top: 50%;
+          transform: translateY(-50%) scale(0.85);
+          background: #1e293b;
+          color: #fff;
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          padding: 6px 12px;
+          border-radius: 8px;
+          white-space: nowrap;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease, transform 0.2s ease;
+          z-index: 1000;
+        }
+
+        /* arrow pointing right toward the tab */
+        .side-tab-tooltip::after {
+          content: '';
+          position: absolute;
+          left: 100%;
+          top: 50%;
+          transform: translateY(-50%);
+          border: 6px solid transparent;
+          border-left-color: #1e293b;
+        }
+
+        /* Show tooltip on hover */
+        .side-tab-theme-button:hover .side-tab-tooltip {
+          opacity: 1;
+          transform: translateY(-50%) scale(1);
+        }
+
+        /* Hover: tab widens, shadow brightens, nudge stops */
+        .side-tab-theme-button:hover {
+          width: 78px !important;
+          box-shadow: -8px 4px 28px rgba(0,0,0,0.35) !important;
+          animation: none !important;
+          transform: translateY(-50%) translateX(0) !important;
+        }
+
+        .side-tab-theme-button:hover .rotating-cog {
           animation: rotate 1.5s linear infinite !important;
+        }
+
+        .side-tab-theme-button:active {
+          width: 70px !important;
         }
 
         .animate-slide-in {
@@ -381,31 +414,29 @@ const FloatingThemeButton: React.FC = () => {
           background: ${colors.borderLight};
         }
 
-        /* Mobile responsiveness */
+        /* Mobile */
         @media (max-width: 640px) {
-          .floating-theme-button {
-            width: 50px;
-            height: 50px;
-            right: 15px;
+          .side-tab-theme-button {
+            width: 56px !important;
+            height: 56px !important;
           }
-
+          .side-tab-theme-button:hover {
+            width: 66px !important;
+          }
           .rotating-cog {
-            width: 24px;
-            height: 24px;
+            width: 26px !important;
+            height: 26px !important;
           }
         }
 
-        /* Tablet responsiveness */
+        /* Tablet */
         @media (min-width: 641px) and (max-width: 1024px) {
-          .floating-theme-button {
-            width: 55px;
-            height: 55px;
-            right: 18px;
+          .side-tab-theme-button {
+            width: 62px !important;
+            height: 60px !important;
           }
-
-          .rotating-cog {
-            width: 26px;
-            height: 26px;
+          .side-tab-theme-button:hover {
+            width: 72px !important;
           }
         }
       `}</style>
