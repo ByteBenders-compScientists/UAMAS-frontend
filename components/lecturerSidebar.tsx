@@ -110,16 +110,13 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       });
       
       if (response.ok) {
-        // Redirect to login page after successful logout
         window.location.href = '/auth';
       } else {
         console.error('Logout failed');
-        // Still redirect even if logout fails
         window.location.href = '/auth';
       }
     } catch (error) {
       console.error('Logout error:', error);
-      // Redirect to login on error
       window.location.href = '/auth';
     }
   };
@@ -177,42 +174,46 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
     return null;
   };
 
+  // ── Tooltip wrapper ─────────────────────────────────────────────────────
+  const Tip = ({ label }: { label: string }) =>
+    (isMobileView || isTabletView) ? null : <span className="sidebar-tooltip">{label}</span>;
+
   const renderNavItem = (item: NavItemType) => {
-    const isActive = pathname === item.path;
+    const isActive = pathname === item.path || pathname.startsWith(item.path + '?') || pathname.startsWith(item.path + '/');
 
     return (
       <Link
         key={item.path}
         href={item.path}
         className={`
-          flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200
+          sidebar-nav-item
+          flex items-center px-3 py-2.5 my-1 text-sm transition-all duration-200 relative
           ${sidebarCollapsed && !isMobileView && !isTabletView ? "justify-center" : ""}
         `}
         style={{
-          backgroundColor: isActive ? colors.sidebarActive : 'transparent',
           color: isActive ? colors.primary : colors.textSecondary,
-          border: `1px solid ${isActive ? colors.primary : 'transparent'}`,
-          fontWeight: isActive ? 500 : 400,
-        }}
-        onMouseEnter={(e) => {
-          if (!isActive) {
-            e.currentTarget.style.backgroundColor = colors.sidebarHover;
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isActive) {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }
+          fontWeight: isActive ? 600 : 400,
         }}
       >
+        {/* Active left accent bar */}
+        {isActive && (
+          <span
+            className="absolute left-0 top-0 bottom-0 w-0.5"
+            style={{ backgroundColor: colors.primary }}
+          />
+        )}
+
+        {/* Icon */}
         <div style={{ color: isActive ? colors.primary : colors.textTertiary }}>
           {item.icon}
         </div>
 
+        {/* Label */}
         {(!sidebarCollapsed || isMobileView || isTabletView) && (
           <span className="ml-3">{item.name}</span>
         )}
 
+        {/* Badge */}
         {(!sidebarCollapsed || isMobileView || isTabletView) && item.badge && (
           <div
             className="ml-auto text-white text-xs px-2 py-0.5 rounded-full font-medium"
@@ -223,6 +224,17 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
             {item.badge}
           </div>
         )}
+
+        {/* Collapsed badge dot */}
+        {(sidebarCollapsed && !isMobileView && !isTabletView) && item.badge && (
+          <span
+            className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: typeof item.badge === 'number' ? colors.primary : colors.warning }}
+          />
+        )}
+
+        {/* Tooltip */}
+        <Tip label={item.name} />
       </Link>
     );
   };
@@ -352,7 +364,8 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
       {renderOverlay()}
       <div
         className={`
-          h-screen fixed left-0 top-0 z-40 flex flex-col shadow-xl transition-all duration-300
+          sidebar-container
+          h-screen fixed left-0 top-0 flex flex-col shadow-xl transition-all duration-300
           ${(isMobileView || isTabletView) ? 'w-[270px]' : (sidebarCollapsed ? 'w-[80px]' : 'w-[240px]')}
           ${(isMobileView || isTabletView) && !isMobileMenuOpen ? '-translate-x-full' : 'translate-x-0'}
         `}
@@ -360,6 +373,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           backgroundColor: colors.sidebarBackground,
           color: colors.textPrimary,
           borderRight: `1px solid ${colors.border}`,
+          overflow: 'visible',
         }}
       >
         {/* Header Section */}
@@ -403,7 +417,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           ) : (
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="rounded-full p-1.5 transition-all duration-200"
+              className="sidebar-nav-item rounded-full p-1.5 transition-all duration-200"
               style={{
                 color: colors.textSecondary,
                 backgroundColor: 'transparent',
@@ -417,6 +431,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
               }}
             >
               {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              <Tip label={sidebarCollapsed ? 'Expand' : 'Collapse'} />
             </button>
           )}
         </div>
@@ -425,8 +440,8 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
         <UserProfileSection />
 
         {/* Navigation Section */}
-        <div className="flex flex-col flex-1 overflow-y-auto py-4 custom-scrollbar">
-          <nav className="flex-1 px-3 space-y-1">
+        <div className="flex flex-col flex-1 py-4" style={{ overflowY: 'auto', overflowX: 'visible' }}>
+          <nav className="flex-1 px-3 space-y-1" style={{ overflowX: 'visible' }}>
             {navItems.map((item) => renderNavItem(item))}
             
             {/* Theme Customizer - Add after main nav items */}
@@ -453,7 +468,8 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
             <button
               onClick={handleLogout}
               className={`
-                flex items-center px-3 py-2.5 my-1 rounded-xl text-sm transition-all duration-200 w-full
+                sidebar-nav-item
+                flex items-center px-3 py-2.5 my-1 text-sm transition-all duration-200 w-full
                 ${sidebarCollapsed && !isMobileView && !isTabletView ? "justify-center" : ""}
               `}
               style={{
@@ -476,6 +492,8 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
               {(!sidebarCollapsed || isMobileView || isTabletView) && (
                 <span className="ml-3">Logout</span>
               )}
+
+              <Tip label="Logout" />
             </button>
           </div>
 
@@ -515,7 +533,9 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           )}
         </div>
 
+        {/* ── Tooltip & active-state styles ───────────────────────────────── */}
         <style jsx>{`
+          /* ── Custom scrollbar ── */
           .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
           }
@@ -529,6 +549,55 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
           }
           .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: ${colors.borderLight};
+          }
+
+          /* ── base: every tippable item ── */
+          :global(.sidebar-nav-item) {
+            position: relative;
+            overflow: visible;
+          }
+
+          /* ── tooltip pill ── */
+          :global(.sidebar-tooltip) {
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%) scale(0.88);
+            margin-left: 10px;
+            background: #1e293b;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.22s ease, transform 0.22s ease;
+            z-index: 9999 !important;
+          }
+
+          /* left-pointing arrow */
+          :global(.sidebar-tooltip::before) {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 6px solid transparent;
+            border-right-color: #1e293b;
+          }
+
+          /* reveal on hover */
+          :global(.sidebar-nav-item:hover .sidebar-tooltip) {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+          }
+
+          /* Ensure sidebar container has proper z-index */
+          :global(.sidebar-container) {
+            z-index: 50 !important;
           }
         `}</style>
       </div>
