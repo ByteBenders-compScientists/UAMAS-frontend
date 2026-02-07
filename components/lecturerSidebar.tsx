@@ -105,7 +105,7 @@ const LecturerSidebar = ({ showMobileOnly = false }: SidebarProps) => {
   const handleLogout = async () => {
     try {
       const response = await fetch(`${API_BASE}/auth/logout`, {
-        method: 'POST',
+        method: 'GET',
         credentials: 'include',
       });
       
