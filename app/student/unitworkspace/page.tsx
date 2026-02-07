@@ -18,6 +18,7 @@ import {
   ChevronRight,
   ChevronDown,
   Play,
+  Pause,
   Download,
   Eye,
   CheckCircle,
@@ -747,6 +748,8 @@ useEffect(() => {
                             const isLockedBySchedule = isAssessmentLockedBySchedule(cat);
                             const status = (cat.status || "").toLowerCase();
                             const isCompleted = status === "completed";
+                            const isInProgress = status === "in-progress" || status === "in progress";
+                            const isStart = status === "start";
                             const isDisabled = isLockedBySchedule || isPastDeadline || isCompleted;
 
                             return (
@@ -830,6 +833,18 @@ useEffect(() => {
                                           Closed on: {new Date(parsedDeadline).toLocaleString()}
                                         </span>
                                       )}
+                                      {isStart && (
+                                        <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+                                          <Play className="mr-1 h-3.5 w-3.5" />
+                                          Start
+                                        </span>
+                                      )}
+                                      {isInProgress && (
+                                        <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                                          <Pause className="mr-1 h-3.5 w-3.5" />
+                                          In Progress
+                                        </span>
+                                      )}
                                       {isCompleted && (
                                         <span className="inline-flex items-center rounded-full bg-green-50 px-3 py-1 font-semibold text-green-700 ring-1 ring-inset ring-green-200">
                                           <CheckCircle className="mr-1 h-3.5 w-3.5" />
@@ -896,6 +911,8 @@ useEffect(() => {
                             const isLockedBySchedule = isAssessmentLockedBySchedule(a);
                             const status = (a.status || "").toLowerCase();
                             const isCompleted = status === "completed";
+                            const isInProgress = status === "in-progress" || status === "in progress";
+                            const isStart = status === "start";
                             const isDisabled = isLockedBySchedule || isPastDeadline || isCompleted;
 
                             return (
@@ -977,6 +994,18 @@ useEffect(() => {
                                         <span className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 font-semibold text-red-700 ring-1 ring-inset ring-red-200">
                                           <AlertCircle className="mr-1 h-3.5 w-3.5" />
                                           Closed on: {new Date(parsedDeadline).toLocaleString()}
+                                        </span>
+                                      )}
+                                      {isStart && (
+                                        <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+                                          <Play className="mr-1 h-3.5 w-3.5" />
+                                          Start
+                                        </span>
+                                      )}
+                                      {isInProgress && (
+                                        <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                                          <Pause className="mr-1 h-3.5 w-3.5" />
+                                          In Progress
                                         </span>
                                       )}
                                       {isCompleted && (
