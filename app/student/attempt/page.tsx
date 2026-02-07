@@ -695,9 +695,16 @@ export default function AttemptPage() {
     setOpenEndedAnswers(newAnswers);
   };
 
+  const isQuestionAnsweredByStatus = (question?: AttemptQuestion) =>
+    String(question?.status || "").toLowerCase() === "answered";
+
   const isCurrentQuestionAnswered = () => {
     if (questions.length === 0) return false;
     const q = questions[currentQuestion];
+
+    if (isQuestionAnsweredByStatus(q)) {
+      return true;
+    }
 
     switch (q.type) {
       case "open-ended": {
@@ -2441,7 +2448,7 @@ export default function AttemptPage() {
                 style={{ backgroundColor: colors.primary }}
               >
                 {isNextLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Next
+                {isQuestionAnsweredByStatus(questions[currentQuestion]) ? "Answered & Next" : "Next"}
                 <ChevronRight className="h-4 w-4 ml-1" />
               </button>
             ) : (
