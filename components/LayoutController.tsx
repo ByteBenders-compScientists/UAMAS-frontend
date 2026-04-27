@@ -72,6 +72,35 @@ export const LayoutController = ({ children }: LayoutControllerProps) => {
       }}
     >
       {children}
+      
+      {/* Global styles for z-index hierarchy */}
+      <style jsx global>{`
+        /* Ensure proper z-index stacking for layout elements */
+        
+        /* Sidebar and its tooltips should be above main content */
+        .sidebar-container {
+          z-index: 50 !important;
+        }
+        
+        /* Tooltips should be at the very top */
+        .sidebar-tooltip {
+          z-index: 9999 !important;
+        }
+        
+        /* Main content should be below sidebar */
+        .main-content {
+          z-index: 10 !important;
+        }
+        
+        /* Modals and overlays */
+        .modal-overlay {
+          z-index: 100 !important;
+        }
+        
+        .modal-content {
+          z-index: 101 !important;
+        }
+      `}</style>
     </LayoutContext.Provider>
   );
 };

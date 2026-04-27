@@ -32,17 +32,11 @@ import {
   ChevronLeft,
   Plus,
   Minus,
-  Mail,
-  Phone,
-  MapPin,
-  Twitter,
-  Facebook,
-  Instagram,
-  Linkedin,
-  Youtube,
+ 
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Footer from "@/components/Footer";
 
 export default function IntelliMark() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -321,7 +315,7 @@ export default function IntelliMark() {
           initial={{ y: -100 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.6 }}
-          className="fixed w-full top-0 z-50 bg-white/70 shadow-lg border-b border-gray-100"
+          className="fixed w-full top-0 z-50 bg-slate-300/95 shadow-lg border-b border-gray-100"
         >
           <div className="container mx-auto px-6">
             <div className="flex justify-between items-center h-20">
@@ -1426,147 +1420,8 @@ export default function IntelliMark() {
         </section>
 
         {/* Footer - Enhanced */}
-        <footer className="bg-gray-900 text-white py-16">
-          <div className="container mx-auto px-6">
-            {/* Top section with logo and newsletter */}
-            <div className="flex flex-col lg:flex-row justify-between items-center mb-12 pb-12 border-b border-gray-800">
-              <div className="mb-8 lg:mb-0">
-                <Image
-                  src="/assets/logo3.png"
-                  alt="IntelliMark logo"
-                  width={230}
-                  height={160}
-                  quality={100}
-                />
-              </div>
-              
-              <div className="w-full max-w-md">
-                <h4 className="text-xl font-bold mb-4">Stay Updated</h4>
-                <div className="flex">
-                  <input 
-                    type="email" 
-                    placeholder="Your email address" 
-                    className="w-full px-4 py-3 rounded-l-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                  <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 rounded-r-lg transition-colors duration-300">
-                    Subscribe
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Main footer content */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
-              <div className="lg:col-span-2">
-                <h4 className="text-lg font-bold mb-6 text-emerald-400">About IntelliMark</h4>
-                <p className="text-gray-400 mb-6 leading-relaxed">
-                  Transforming education through intelligent automation and
-                  personalized learning experiences. Making education more
-                  accessible, engaging, and effective for all.
-                </p>
-                <div className="space-y-2">
-                  <p className="text-gray-400 flex items-center">
-                    <Mail className="w-4 h-4 mr-2 text-emerald-400" />
-                    <span className="text-emerald-400">info@intellimark.com</span>
-                  </p>
-                  <p className="text-gray-400 flex items-center">
-                    <Phone className="w-4 h-4 mr-2 text-emerald-400" />
-                    <span className="text-emerald-400">+254 712 345 678</span>
-                  </p>
-                  <p className="text-gray-400 flex items-center">
-                    <MapPin className="w-4 h-4 mr-2 text-emerald-400" />
-                    <span>Nairobi, Kenya</span>
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-lg font-bold mb-6 text-emerald-400">Features</h4>
-                <ul className="space-y-3 text-gray-400">
-                  {[
-                    "Automated Assessment",
-                    "Performance Analytics",
-                    "Student Engagement",
-                    "AI-Powered Insights",
-                    "Curriculum Alignment",
-                    "Personalized Learning",
-                  ].map((item, i) => (
-                    <li key={i} className="hover:text-emerald-400 transition-colors cursor-pointer flex items-center">
-                      <ChevronRight className="w-4 h-4 mr-2" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-lg font-bold mb-6 text-emerald-400">For Educators</h4>
-                <ul className="space-y-3 text-gray-400">
-                  {[
-                    "Lecturer Dashboard",
-                    "Content Creation",
-                    "Progress Tracking",
-                    "Grade Management",
-                    "Department Analytics",
-                    "Academic Planning",
-                  ].map((item, i) => (
-                    <li key={i} className="hover:text-emerald-400 transition-colors cursor-pointer flex items-center">
-                      <ChevronRight className="w-4 h-4 mr-2" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-lg font-bold mb-6 text-emerald-400">Company</h4>
-                <ul className="space-y-3 text-gray-400">
-                  {[
-                    "About Us",
-                    "Careers",
-                    "Blog",
-                    "Help Center",
-                    "Contact Us",
-                    "Privacy Policy",
-                    "Terms of Service",
-                  ].map((item, i) => (
-                    <li key={i} className="hover:text-emerald-400 transition-colors cursor-pointer flex items-center">
-                      <ChevronRight className="w-4 h-4 mr-2" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            
-            {/* Social media */}
-            <div className="flex justify-center space-x-6 mb-8">
-              {[Twitter, Facebook, Instagram, Linkedin, Youtube, Github].map((Icon, i) => (
-                <a 
-                  key={i} 
-                  href="#" 
-                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-colors"
-                >
-                  <Icon className="w-5 h-5" />
-                </a>
-              ))}
-            </div>
-
-            {/* Copyright */}
-            <div className="text-center text-gray-500 text-sm">
-              <p className="mb-4">
-                &copy; 2025 IntelliMark. All rights reserved. Empowering
-                education through innovation.
-              </p>
-              <div className="flex justify-center space-x-4 text-xs">
-                <a href="#" className="hover:text-emerald-400 transition-colors">Privacy Policy</a>
-                <a href="#" className="hover:text-emerald-400 transition-colors">Terms of Service</a>
-                <a href="#" className="hover:text-emerald-400 transition-colors">Cookie Policy</a>
-                <a href="#" className="hover:text-emerald-400 transition-colors">Sitemap</a>
-              </div>
-            </div>
-          </div>
-        </footer>
+        <Footer/>
+      
       </div>
     </div>
   );

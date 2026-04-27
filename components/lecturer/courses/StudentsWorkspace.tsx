@@ -19,15 +19,17 @@ type Student = {
   reg_number: string;
   firstname: string;
   surname: string;
-  othernames: string;
-  year_of_study: number;
-  semester: number;
-  email?: string;
+  othernames: string | null;
   user_id?: string;
-  courses: Array<{
+  hobbies?: string[];
+  units: Array<{
     id: string;
-    name: string;
-    code?: string;
+    unit_code: string;
+    unit_name: string;
+    level: number;
+    semester: number;
+    course_id: string;
+    unique_join_code?: string;
   }>;
 };
 
@@ -39,10 +41,12 @@ type Course = {
 
 interface StudentsWorkspaceProps {
   selectedCourseId: string;
+  selectedUnitId: string;
 }
 
 const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
   selectedCourseId,
+  selectedUnitId,
 }) => {
   const colors = useThemeColors();
   const [students, setStudents] = useState<Student[]>([]);
@@ -59,9 +63,11 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
   );
 
   const fetchStudents = async () => {
+    if (!selectedUnitId) return;
+    
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/lecturer/students`, {
+      const res = await fetch(`${API_BASE_URL}/auth/lecturer/students/unit/${selectedUnitId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -86,7 +92,7 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
 
   useEffect(() => {
     fetchStudents();
-  }, []);
+  }, [selectedUnitId]);
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -107,10 +113,6 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
   }, []);
 
   const filteredStudents = students.filter((s) => {
-    if (!selectedCourseId) return false;
-    const inCourse =
-      s.courses && s.courses.some((c) => c.id === selectedCourseId);
-    if (!inCourse) return false;
     const q = searchTerm.toLowerCase();
     return (
       s.firstname.toLowerCase().includes(q) ||
@@ -127,22 +129,16 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
         "First Name",
         "Surname",
         "Other Names",
-        "Email",
-        "Course Code",
-        "Course Name",
-        "Year of Study",
-        "Semester",
+        "Units",
+        "Hobbies",
       ];
       const rows = filteredStudents.map((s) => [
         `"${s.reg_number}"`,
         `"${s.firstname}"`,
         `"${s.surname}"`,
         `"${s.othernames || ""}"`,
-        `"${s.email || ""}"`,
-        `"${s.courses[0]?.code || ""}"`,
-        `"${s.courses.map((c) => c.name).join("; ")}"`,
-        s.year_of_study,
-        s.semester,
+        `"${s.units.map((u) => `${u.unit_code} - ${u.unit_name}`).join("; ")}"`,
+        `"${s.hobbies?.join("; ") || ""}"`,
       ]);
       const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join(
         "\n"
@@ -192,7 +188,7 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
     }
   };
 
-  if (!selectedCourseId) {
+  if (!selectedCourseId || !selectedUnitId) {
     return (
       <div 
         className="py-12 text-center rounded-2xl border border-dashed"
@@ -203,10 +199,10 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
       >
         <Users className="w-10 h-10 mx-auto mb-3" style={{ color: colors.primary }} />
         <p className="font-semibold mb-1" style={{ color: colors.textPrimary }}>
-          Select a course in the sidebar to see its students.
+          Select a course and unit in the sidebar to see its students.
         </p>
         <p className="text-sm" style={{ color: colors.textSecondary }}>
-          The shared Courses selection controls which students appear here.
+          The shared Courses and Unit selection controls which students appear here.
         </p>
       </div>
     );
@@ -309,10 +305,10 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
                   Reg No.
                 </th>
                 <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase" style={{ color: colors.textTertiary }}>
-                  Year
+                  Units
                 </th>
                 <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase" style={{ color: colors.textTertiary }}>
-                  Semester
+                  Hobbies
                 </th>
                 <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase" style={{ color: colors.textTertiary }}>
                   Actions
@@ -338,7 +334,7 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
                     className="px-4 py-8 text-center text-xs"
                     style={{ color: colors.textSecondary }}
                   >
-                    No students found for this course.
+                    No students found for this unit.
                   </td>
                 </tr>
               )}
@@ -357,34 +353,36 @@ const StudentsWorkspace: React.FC<StudentsWorkspaceProps> = ({
                   <td className="px-4 py-2 whitespace-nowrap" style={{ color: colors.textPrimary }}>
                     {s.reg_number}
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap">
-                    <span 
-                      className="px-2 py-1 rounded text-[11px] font-semibold"
-                      style={{
-                        backgroundColor: `${colors.info}20`,
-                        color: colors.info,
-                      }}
-                    >
-                      Year {s.year_of_study}
-                    </span>
+                  <td className="px-4 py-2">
+                    <div className="flex flex-wrap gap-1">
+                      {s.units.map((unit) => (
+                        <span 
+                          key={unit.id}
+                          className="px-2 py-1 rounded text-[11px] font-semibold whitespace-nowrap"
+                          style={{
+                            backgroundColor: `${colors.info}20`,
+                            color: colors.info,
+                          }}
+                        >
+                          {unit.unit_code}
+                        </span>
+                      ))}
+                    </div>
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap">
-                    <span 
-                      className="px-2 py-1 rounded text-[11px] font-semibold"
-                      style={{
-                        backgroundColor: `${colors.success}20`,
-                        color: colors.success,
-                      }}
-                    >
-                      Sem {s.semester}
-                    </span>
+                  <td className="px-4 py-2">
+                    <div className="text-xs" style={{ color: colors.textSecondary }}>
+                      {s.hobbies && s.hobbies.length > 0 
+                        ? s.hobbies.join(", ") 
+                        : "-"
+                      }
+                    </div>
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap">
                     <div className="flex space-x-1">
                       <button
                         onClick={() =>
                           alert(
-                            `Student: ${s.firstname} ${s.surname}\nReg: ${s.reg_number}`
+                            `Student: ${s.firstname} ${s.surname}\nReg: ${s.reg_number}\nUnits: ${s.units.map(u => u.unit_code).join(", ")}`
                           )
                         }
                         className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"

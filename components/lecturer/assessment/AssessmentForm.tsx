@@ -139,9 +139,6 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({
     }
     const submissionData = {
       ...formData,
-      deadline_date: formData.deadline_date|| "",
-      duration: formData.duration || "",
-      schedule_date: formData.schedule_date || "",
       course_id: selectedCourse,
       unit_id: selectedUnit,
       week: selectedWeek,
